@@ -57,10 +57,12 @@ async function main(): Promise<void> {
 
   const port = Number(values.port);
   const secret = process.env.MCP_HTTP_TOKEN?.trim();
-  if (!secret && values.host !== "127.0.0.1" && values.host !== "localhost") {
-    log(
-      "Listening beyond localhost without MCP_HTTP_TOKEN: anyone who can reach the port gets the WorldAPI token's powers",
-    );
+  const loopback = ["127.0.0.1", "::1", "localhost"].includes(values.host ?? "");
+  if (!secret && !loopback) {
+    // Anyone who reached the port would get the WorldAPI token's powers, so refuse instead of warning.
+    log(`Set MCP_HTTP_TOKEN to listen on ${values.host}; without it only 127.0.0.1, ::1, or localhost are allowed`);
+    // Exit outright: the scope probe may still hold a socket open.
+    process.exit(1);
   }
   const sessions = new Map<string, StreamableHTTPServerTransport>();
   const authorized = (request: IncomingMessage) => {

@@ -57,7 +57,7 @@ MCP_HTTP_TOKEN=a-long-random-secret WORLDAPI_URL=... WORLDAPI_TOKEN=... \
   npx -y github:MairwunNx/minecraft-mcp --http --host 0.0.0.0 --port 3333
 ```
 
-Clients connect to `http://host:3333/mcp`. With `MCP_HTTP_TOKEN` set, they must send it as `Authorization: Bearer …`. Without it, the server stays on `127.0.0.1` unless you pass `--host`, and then it warns you: whoever reaches the port gets your WorldAPI token’s powers.
+Clients connect to `http://host:3333/mcp`. With `MCP_HTTP_TOKEN` set, they must send it as `Authorization: Bearer …`. Without it, the server listens only on `127.0.0.1`, `::1`, or `localhost` and refuses to start on any other address: whoever reached the port would get your WorldAPI token’s powers.
 
 ## Configure
 
