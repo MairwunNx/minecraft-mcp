@@ -75,10 +75,14 @@ export function scriptTools(ctx: Context): void {
     name: "unload_java_script",
     title: "Unload a script",
     description:
-      "Run the script's disable(), remove its listeners and tasks, close its class loader, and delete a saved copy.",
+      "Run the script's disable(), remove its listeners and tasks, and close its class loader. A persistent script's saved copy is deleted too, unless keepSaved is true; then it loads again on the next server start.",
     scope: "code",
     effect: "destructive",
-    input: { id: z.string() },
-    run: (args) => unwrap(api.DELETE("/scripts/{id}", { params: { path: { id: args.id } } }), token),
+    input: { id: z.string(), keepSaved: z.boolean().optional() },
+    run: (args) =>
+      unwrap(
+        api.DELETE("/scripts/{id}", { params: { path: { id: args.id }, query: { keepSaved: args.keepSaved } } }),
+        token,
+      ),
   });
 }
