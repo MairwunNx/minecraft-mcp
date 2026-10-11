@@ -131,9 +131,9 @@ describe("the token stays secret", () => {
 describe("configuration", () => {
   it("reads the environment", () => {
     expect(
-      configFromEnv({ WORLDAPI_URL: "http://host:8100/api/v1/", WORLDAPI_TOKEN: " t ", WORLDAPI_READ_ONLY: "true" }),
+      configFromEnv({ WORLDAPI_URL: "http://host:8110/api/v1/", WORLDAPI_TOKEN: " t ", WORLDAPI_READ_ONLY: "true" }),
     ).toEqual({
-      url: "http://host:8100/api/v1",
+      url: "http://host:8110/api/v1",
       token: "t",
       readOnly: true,
     });

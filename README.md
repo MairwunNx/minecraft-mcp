@@ -44,7 +44,7 @@ Any MCP client that starts a command over stdio works the same way:
     "minecraft": {
       "command": "npx",
       "args": ["-y", "github:MairwunNx/minecraft-mcp"],
-      "env": { "WORLDAPI_URL": "http://localhost:8100/api/v1", "WORLDAPI_TOKEN": "your-token" }
+      "env": { "WORLDAPI_URL": "http://localhost:8110/api/v1", "WORLDAPI_TOKEN": "your-token" }
     }
   }
 }

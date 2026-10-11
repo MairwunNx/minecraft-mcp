@@ -1,6 +1,6 @@
 /** Settings from the environment. The token stays in memory and never reaches a log or a tool result. */
 export interface Config {
-  /** WorldAPI base URL including the base path, such as http://localhost:8100/api/v1. */
+  /** WorldAPI base URL including the base path, such as http://localhost:8110/api/v1. */
   url: string;
   token: string | undefined;
   readOnly: boolean;
@@ -8,7 +8,7 @@ export interface Config {
 
 export function configFromEnv(env: NodeJS.ProcessEnv = process.env): Config {
   const url = env.WORLDAPI_URL?.trim();
-  if (!url) throw new Error("Set WORLDAPI_URL to the WorldAPI base URL, such as http://localhost:8100/api/v1");
+  if (!url) throw new Error("Set WORLDAPI_URL to the WorldAPI base URL, such as http://localhost:8110/api/v1");
   let parsed: URL;
   try {
     parsed = new URL(url);
