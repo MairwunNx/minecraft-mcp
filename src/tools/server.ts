@@ -40,6 +40,7 @@ export function serverTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_events",
+    untrusted: true,
     title: "Event history",
     description:
       "Recorded events, newest first: player.join, player.leave, player.kick, player.death, player.advancement, player.chat (if the server records chat), world.night_skipped, entity.boss_killed, raid.start, raid.finish, server.status. Filter by type, player, and time.",
@@ -90,6 +91,7 @@ export function serverTools(ctx: Context): void {
 
   tool(ctx, {
     name: "run_command",
+    untrusted: true,
     title: "Run a console command",
     description:
       "Run any console command as the server console, without the leading slash, and get its output. Powerful: prefer a specific tool when one exists. Every call is audit-logged.",

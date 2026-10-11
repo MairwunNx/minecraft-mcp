@@ -26,6 +26,7 @@ export function playerTools(ctx: Context): void {
 
   tool(ctx, {
     name: "list_online_players",
+    untrusted: true,
     title: "Online players",
     description: "Who is playing now, with world, game mode, health, food, level, ping, idle time, and location.",
     scope: "read",
@@ -36,6 +37,7 @@ export function playerTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_player",
+    untrusted: true,
     title: "Player",
     description:
       "A player's profile and, while online, full state: game mode, health, food, XP, location, flight, speed, ping, client. Offline players show their last location.",
@@ -47,6 +49,7 @@ export function playerTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_player_inventory",
+    untrusted: true,
     title: "Inventory",
     description: `Main inventory, armor, and offhand with full item data. ${SLOT_LAYOUT} ${OFFLINE_NOTE}`,
     scope: "read",
@@ -57,6 +60,7 @@ export function playerTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_player_enderchest",
+    untrusted: true,
     title: "Ender chest",
     description: `Ender chest contents. ${OFFLINE_NOTE}`,
     scope: "read",

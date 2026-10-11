@@ -9,6 +9,7 @@ export function entityTools(ctx: Context): void {
 
   tool(ctx, {
     name: "list_entities",
+    untrusted: true,
     title: "Entities",
     description:
       "Loaded entities in a world, filtered by type and by a radius around x, y, z. Only loaded chunks count: entities far from players aren't listed.",
@@ -46,6 +47,7 @@ export function entityTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_entity",
+    untrusted: true,
     title: "Entity",
     description: "One entity in detail: position, health, equipment, effects, owner, tags.",
     scope: "read",

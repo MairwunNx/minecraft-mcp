@@ -14,6 +14,7 @@ export function scriptTools(ctx: Context): void {
 
   tool(ctx, {
     name: "execute_java",
+    untrusted: true,
     title: "Run Java once",
     description: `${API} Send either a full public class implementing WorldApiScript, or just the body of run: \`ctx\` and \`server\` are in scope, and org.bukkit.*, org.bukkit.entity.*, org.bukkit.block.*, org.bukkit.inventory.*, java.util.*, and java.util.stream.* are imported. End with \`return <value>;\`: maps, lists, and primitives come back as JSON. Example: \`return server.getOnlinePlayers().stream().map(Player::getName).toList();\`. thread \`main\` (default) may touch the world but blocks the tick while it runs; \`async\` runs beside the server and must use ctx.sync(...) for world access. The script unloads as soon as it returns, with anything it registered.`,
     scope: "code",
@@ -62,6 +63,7 @@ export function scriptTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_java_script_logs",
+    untrusted: true,
     title: "Script log",
     description: "The latest lines a script wrote with ctx.log, plus errors from its handlers and tasks.",
     scope: "code",

@@ -13,6 +13,7 @@ export function blockTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_block",
+    untrusted: true,
     title: "Block",
     description:
       "A block's type, full state, light, biome, redstone power, and contents of chests, signs, spawners, and similar. Chunks that were never generated give `chunk_not_generated`.",
