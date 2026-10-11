@@ -1,6 +1,6 @@
 # minecraft-mcp: notes for AI agents
 
-An MCP server that lets AI agents read and manage a Minecraft server through WorldAPI (MairwunNx/minecraft-worldapi). README.md explains it for humans; read it first.
+An MCP server that lets AI agents read and manage a Minecraft server through WorldAPI (MairwunNx/minecraft-worldapi). README.md explains it for humans; read it first. It isn't installed on the owner's server, Moonlands: it runs next to an AI client. Moonlands itself, and how plugins get onto it, live in `~/c/personal/minecraft` (MairwunNx/minecraft).
 
 ## Talking to the owner
 
