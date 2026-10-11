@@ -30,7 +30,7 @@ An MCP server that lets AI agents read and manage a Minecraft server through Wor
 ## Running and testing
 
 - `npm run lint`, `npm run typecheck`, and `npm test` must pass; CI runs the same. Tests use a mocked WorldAPI and never touch the network.
-- `scripts/live-check.mjs` runs the built server against a real WorldAPI. Moonlands' WorldAPI isn't public; reach it through `ssh moonlands` and the nginx path `/worldapi/` there, or the public `https://minecraft.mairwunnx.com/worldapi/api/v1` for what anonymous clients may read. Write tools against Moonlands change the live world: they need the owner's go-ahead first.
+- `scripts/live-check.mjs` runs the built server against a real WorldAPI. Moonlands' WorldAPI is at `https://minecraft.mairwunnx.com/worldapi/api/v1`: anonymous clients read what its config allows, and `WORLDAPI_TOKEN` gets the rest of its scopes. Write tools against Moonlands change the live world: they need the owner's go-ahead first.
 
 ## Commits
 
