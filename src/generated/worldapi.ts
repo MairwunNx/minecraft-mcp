@@ -587,8 +587,10 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Unload a script: remove its listeners and tasks, and forget a saved copy
-         * @description Scope: `code`.
+         * Unload a script: remove its listeners and tasks
+         * @description A persistent script's saved copy goes too, unless `keepSaved` is true; then it loads again on the next start.
+         *
+         *     Scope: `code`.
          */
         delete: operations["deleteScriptsId"];
         options?: never;
@@ -2119,8 +2121,7 @@ export interface components {
             environment: string;
             /** Format: int32 */
             players: number;
-            /** Format: int64 */
-            seed?: number | null;
+            seed?: string | null;
         };
         WorldTime: {
             /** Format: int64 */
@@ -2139,8 +2140,7 @@ export interface components {
             name: string;
             key: string;
             environment: string;
-            /** Format: int64 */
-            seed?: number | null;
+            seed?: string | null;
             time: components["schemas"]["WorldTime"];
             weather: components["schemas"]["Weather"];
             difficulty: string;
@@ -4920,7 +4920,10 @@ export interface operations {
     };
     deleteScriptsId: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Keep the saved copy of a persistent script */
+                keepSaved?: boolean;
+            };
             header?: never;
             path: {
                 /** @description Script id */
