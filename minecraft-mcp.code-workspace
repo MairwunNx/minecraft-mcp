@@ -1,0 +1,6 @@
+{
+  "folders": [{ "name": "minecraft-mcp", "path": "." }],
+  "extensions": {
+    "recommendations": ["biomejs.biome", "vitest.explorer", "github.vscode-github-actions", "redhat.vscode-yaml"]
+  }
+}
