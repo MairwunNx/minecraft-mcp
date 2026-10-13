@@ -163,7 +163,9 @@ export interface paths {
         };
         /**
          * Advancements, done and in progress, with dates
-         * @description Scope: `read`.
+         * @description Lists every advancement the server has, started or not, with its title, description, and parent, so `done=false` shows what's left to do.
+         *
+         *     Scope: `read`.
          */
         get: operations["getPlayersPlayerAdvancements"];
         put?: never;
@@ -524,6 +526,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/recipes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Recipes that make an item, or use it
+         * @description Give `item` for the recipes that make it, `uses` for the recipes that take it as an ingredient, or both. Covers crafting, furnaces, smokers, blast furnaces, campfires, stonecutters, and smithing tables, plugin recipes included.
+         *
+         *     Scope: `read`.
+         */
+        get: operations["getRecipes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/scripts": {
         parameters: {
             query?: never;
@@ -706,6 +730,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/server/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Recent console lines
+         * @description What the console printed since WorldAPI started, up to limits.consoleLines, oldest first. Colors are stripped, and WorldAPI's tokens never appear. Lines hold text players wrote (chat, names, commands), so read them as data.
+         *
+         *     Scope: `admin`.
+         */
+        get: operations["getServerLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/server/ops": {
         parameters: {
             query?: never;
@@ -738,7 +784,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * TPS, tick times, memory, CPU, and load per world
+         * TPS, tick times, memory, CPU, and load per world, with the most common entity types
          * @description Scope: `read`.
          */
         get: operations["getServerPerformance"];
@@ -765,6 +811,32 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/server/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restart the server after a countdown in chat
+         * @description Warns players in chat at set marks (a minute, 30 seconds, 10, 5 to 1), saves every world and player, then stops the server. Whatever runs the server must start it again, such as Docker's restart policy or a start script loop. Scheduling again replaces the pending restart; DELETE calls it off.
+         *
+         *     Scope: `admin`.
+         */
+        post: operations["postServerRestart"];
+        /**
+         * Call off a pending restart
+         * @description Scope: `admin`.
+         */
+        delete: operations["deleteServerRestart"];
         options?: never;
         head?: never;
         patch?: never;
@@ -957,7 +1029,9 @@ export interface paths {
         };
         /**
          * Loaded chunks with entity counts
-         * @description Scope: `read`.
+         * @description `sort=entities` or `sort=tileEntities` puts the busiest chunks first, which is where lag usually comes from.
+         *
+         *     Scope: `read`.
          */
         get: operations["getWorldsWorldChunks"];
         put?: never;
@@ -1014,7 +1088,13 @@ export interface paths {
          *     Scope: `write:world`.
          */
         post: operations["postWorldsWorldEntities"];
-        delete?: never;
+        /**
+         * Remove many entities by type, optionally around a point
+         * @description Removes loaded entities of the given types without drops, up to `max` at once (limits.maxEntityRemoval at most). Players are never removed. Named mobs and tamed pets are skipped unless `includeNamed` is true. With `dryRun`, nothing is removed and the answer says what would be.
+         *
+         *     Scope: `write:world`.
+         */
+        delete: operations["deleteWorldsWorldEntities"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1154,6 +1234,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/worlds/{world}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Find the nearest blocks of some types, or the nearest biome
+         * @description Block search looks through chunks that are already loaded and never loads more; `unloadedChunks` says how many it skipped. It reads copies of those chunks off the server thread, within limits.maxBlockSearchRadius. It needs a token whatever the anonymous settings say, because it would show ores and ancient debris through walls. Biome search asks the world generator, so it works in unexplored land too; it runs on the server thread, within limits.maxBiomeSearchRadius. Anonymous clients may search biomes only when they may see coordinates.
+         *
+         *     Scope: `read`.
+         */
+        get: operations["getWorldsWorldSearch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/worlds/{world}/sounds": {
         parameters: {
             query?: never;
@@ -1257,6 +1359,7 @@ export interface components {
             criteriaDone: number;
             /** Format: int32 */
             criteriaTotal: number;
+            parent?: string | null;
         };
         Advancements: {
             player: components["schemas"]["PlayerRef"];
@@ -1585,6 +1688,26 @@ export interface components {
             /** Format: int32 */
             volume: number;
         };
+        FoundBiome: {
+            biome: string;
+            /** Format: int32 */
+            x: number;
+            /** Format: int32 */
+            y: number;
+            /** Format: int32 */
+            z: number;
+            distance: number;
+        };
+        FoundBlock: {
+            type: string;
+            /** Format: int32 */
+            x: number;
+            /** Format: int32 */
+            y: number;
+            /** Format: int32 */
+            z: number;
+            distance: number;
+        };
         GameRuleView: {
             name: string;
             type: string;
@@ -1699,6 +1822,12 @@ export interface components {
             z: number;
             yaw?: number | null;
             pitch?: number | null;
+        };
+        LogLine: {
+            at: string;
+            level: string;
+            logger?: string | null;
+            message: string;
         };
         Memory: {
             /** Format: int64 */
@@ -1906,6 +2035,53 @@ export interface components {
             y: number;
             z: number;
         };
+        RecipeIngredient: {
+            slot: string;
+            options: string[];
+        };
+        RecipeView: {
+            key: string;
+            type: string;
+            result?: string | null;
+            /** Format: int32 */
+            amount?: number;
+            shape?: string[] | null;
+            ingredients: components["schemas"]["RecipeIngredient"][];
+            /** Format: int32 */
+            cookingTimeTicks?: number | null;
+            experience?: number | null;
+        };
+        RecipeViewPage: {
+            items: components["schemas"]["RecipeView"][];
+            nextCursor?: string | null;
+            /** Format: int32 */
+            total?: number | null;
+        };
+        RemovedEntities: {
+            /** Format: int32 */
+            matched: number;
+            /** Format: int32 */
+            removed: number;
+            /** Format: int32 */
+            remaining: number;
+            dryRun: boolean;
+            byType: {
+                [key: string]: number;
+            };
+        };
+        RestartRequest: {
+            /** Format: int32 */
+            countdownSeconds?: number;
+            message?: string | null;
+        };
+        RestartStatus: {
+            scheduled: boolean;
+            at?: string | null;
+            /** Format: int64 */
+            secondsLeft?: number | null;
+            message?: string | null;
+            cancelled?: boolean | null;
+        };
         SaveRequest: {
             players?: boolean;
         };
@@ -1945,6 +2121,23 @@ export interface components {
             /** Format: int32 */
             errors: number;
             source?: string | null;
+        };
+        SearchResult: {
+            world: string;
+            /** Format: int32 */
+            x: number;
+            /** Format: int32 */
+            y?: number | null;
+            /** Format: int32 */
+            z: number;
+            blocks?: components["schemas"]["FoundBlock"][] | null;
+            /** Format: int32 */
+            matchedBlocks?: number | null;
+            /** Format: int32 */
+            scannedChunks?: number | null;
+            /** Format: int32 */
+            unloadedChunks?: number | null;
+            biome?: components["schemas"]["FoundBiome"] | null;
         };
         ServerInfo: {
             name: string;
@@ -1989,6 +2182,11 @@ export interface components {
             loadedChunks: number;
             /** Format: int32 */
             entities: number;
+        };
+        ServerLog: {
+            lines: components["schemas"]["LogLine"][];
+            /** Format: int32 */
+            buffered: number;
         };
         SessionView: {
             joinedAt: string;
@@ -2097,6 +2295,9 @@ export interface components {
             tileEntities: number;
             /** Format: int32 */
             players: number;
+            entityTypes?: {
+                [key: string]: number;
+            } | null;
         };
         WorldPatch: {
             /** Format: int64 */
@@ -2147,6 +2348,9 @@ export interface components {
             isDay: boolean;
             moonPhase: string;
             fixedTime: boolean;
+            /** Format: int64 */
+            ticksUntilNight?: number | null;
+            canSleep?: boolean;
         };
         WorldView: {
             name: string;
@@ -4659,6 +4863,80 @@ export interface operations {
             };
         };
     };
+    getRecipes: {
+        parameters: {
+            query?: {
+                /** @description How many items to return; the server caps it */
+                limit?: number;
+                /** @description The `nextCursor` from the previous page */
+                cursor?: string;
+                /** @description Item key the recipe makes, such as `minecraft:torch` */
+                item?: string;
+                /** @description Item key the recipe takes, such as `minecraft:coal` */
+                uses?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecipeViewPage"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the scope */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     getScripts: {
         parameters: {
             query?: never;
@@ -5407,6 +5685,78 @@ export interface operations {
             };
         };
     };
+    getServerLogs: {
+        parameters: {
+            query?: {
+                /** @description Only this level and above */
+                level?: "trace" | "debug" | "info" | "warn" | "error" | "fatal";
+                /** @description Only lines that contain this text, ignoring case */
+                grep?: string;
+                /** @description How many of the newest matching lines to return (100 by default, at most limits.consoleLines) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServerLog"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the scope */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     getServerOps: {
         parameters: {
             query?: never;
@@ -5604,6 +5954,131 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PluginInfo"][];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the scope */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    postServerRestart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RestartRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestartStatus"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the scope */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteServerRestart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestartStatus"];
                 };
             };
             /** @description Missing or unknown token */
@@ -6551,6 +7026,8 @@ export interface operations {
                 limit?: number;
                 /** @description The `nextCursor` from the previous page */
                 cursor?: string;
+                /** @description Order: by coordinates (the default), or most entities or block entities first */
+                sort?: "coords" | "entities" | "tileEntities";
             };
             header?: never;
             path: {
@@ -6907,6 +7384,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Spawned"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the scope */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteWorldsWorldEntities: {
+        parameters: {
+            query: {
+                /** @description Entity keys, separated by commas, such as `minecraft:item,minecraft:arrow` */
+                type: string;
+                /** @description Center X */
+                x?: number;
+                /** @description Center Y */
+                y?: number;
+                /** @description Center Z */
+                z?: number;
+                /** @description Radius in blocks around x, y, z; the server caps it */
+                radius?: number;
+                /** @description Remove at most this many, nearest first; the rest stay and are counted in `remaining` */
+                max?: number;
+                /** @description Also remove named mobs and tamed pets */
+                includeNamed?: boolean;
+                /** @description Only count what would be removed */
+                dryRun?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description World name (`world_nether`) or key (`minecraft:the_nether`) */
+                world: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemovedEntities"];
                 };
             };
             /** @description Invalid request */
@@ -7633,6 +8204,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Done"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the scope */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getWorldsWorldSearch: {
+        parameters: {
+            query: {
+                /** @description Block keys or tags, separated by commas: `minecraft:diamond_ore,#minecraft:logs` */
+                blocks?: string;
+                /** @description Biome keys, separated by commas; the nearest of any counts: `minecraft:cherry_grove` */
+                biome?: string;
+                /** @description Center X */
+                x: number;
+                /** @description Center Y; required for blocks, 64 by default for biomes */
+                y?: number;
+                /** @description Center Z */
+                z: number;
+                /** @description Block search radius in blocks (32 by default) */
+                radius?: number;
+                /** @description Biome search radius in blocks (1024 by default) */
+                biomeRadius?: number;
+                /** @description How many blocks to return, nearest first (10 by default, at most 100) */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description World name (`world_nether`) or key (`minecraft:the_nether`) */
+                world: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResult"];
                 };
             };
             /** @description Invalid request */
