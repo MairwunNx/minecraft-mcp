@@ -21,41 +21,22 @@ export function worldTools(ctx: Context): void {
     name: "get_world",
     title: "World",
     description:
-      "Time of day (dayTime 0–23999: 0 sunrise, 6000 noon, 13000 night, 18000 midnight), day number, moon phase, weather, difficulty, spawn, border, game rules, and load.",
+      "Time of day (dayTime 0–23999: 0 sunrise, 6000 noon, 13000 night, 18000 midnight), day number, moon phase, ticks until night, whether beds work, weather, difficulty, PvP, spawn, the world border, game rule values, and load. ruleDetails adds each game rule's type and default; size adds chunks ever generated, explored area in km², and size on disk.",
     scope: "read",
     effect: "read",
-    input: { world },
-    run: (args) => unwrap(api.GET("/worlds/{world}", path(args.world)), token),
-  });
-
-  tool(ctx, {
-    name: "get_gamerules",
-    title: "Game rules",
-    description: "Every game rule with its type, value, and default. Names are snake_case, such as `keep_inventory`.",
-    scope: "read",
-    effect: "read",
-    input: { world },
-    run: (args) => unwrap(api.GET("/worlds/{world}/gamerules", path(args.world)), token),
-  });
-
-  tool(ctx, {
-    name: "get_world_border",
-    title: "World border",
-    description: "Border size, center, damage, and warning settings.",
-    scope: "read",
-    effect: "read",
-    input: { world },
-    run: (args) => unwrap(api.GET("/worlds/{world}/border", path(args.world)), token),
-  });
-
-  tool(ctx, {
-    name: "get_world_stats",
-    title: "World size",
-    description: "Chunks ever generated, explored area in km², region files, and size on disk.",
-    scope: "read",
-    effect: "read",
-    input: { world },
-    run: (args) => unwrap(api.GET("/worlds/{world}/stats", path(args.world)), token),
+    input: {
+      world,
+      ruleDetails: z.boolean().optional().describe("Add every game rule with its type and default"),
+      size: z.boolean().optional().describe("Add explored area and size on disk"),
+    },
+    run: async (args) => {
+      const [view, gameRuleDetails, size] = await Promise.all([
+        unwrap(api.GET("/worlds/{world}", path(args.world)), token),
+        args.ruleDetails ? unwrap(api.GET("/worlds/{world}/gamerules", path(args.world)), token) : undefined,
+        args.size ? unwrap(api.GET("/worlds/{world}/stats", path(args.world)), token) : undefined,
+      ]);
+      return { ...view, ...(gameRuleDetails && { gameRuleDetails }), ...(size && { size }) };
+    },
   });
 
   tool(ctx, {
@@ -86,82 +67,39 @@ export function worldTools(ctx: Context): void {
   });
 
   tool(ctx, {
-    name: "set_time",
-    title: "Set the time",
+    name: "set_world",
+    title: "Change a world",
     description:
-      "Set the time of day (dayTime 0–23999: 0 sunrise, 1000 morning, 6000 noon, 13000 night, 18000 midnight), or move the clock forward with addTicks.",
+      "Change any of these at once; only what you give changes. The time of day (dayTime 0–23999: 0 sunrise, 1000 morning, 6000 noon, 13000 night, 18000 midnight), or move the clock forward with addTicks (24000 is a day). The weather (clear, rain, thunder), optionally for durationTicks (20 per second). The difficulty, PvP, and the world spawn.",
     scope: "write:world",
     effect: "write",
     input: {
       world,
       dayTime: z.number().int().min(0).max(23999).optional(),
-      addTicks: z.number().int().optional().describe("24000 ticks are one day"),
-    },
-    run: (args) =>
-      unwrap(
-        api.PATCH("/worlds/{world}", { ...path(args.world), body: { dayTime: args.dayTime, addTime: args.addTicks } }),
-        token,
-      ),
-  });
-
-  tool(ctx, {
-    name: "set_weather",
-    title: "Set the weather",
-    description: "Clear, rain, or thunder, optionally for a number of ticks (20 per second).",
-    scope: "write:world",
-    effect: "idempotent",
-    input: {
-      world,
-      weather: z.enum(["clear", "rain", "thunder"]),
-      durationTicks: z.number().int().positive().optional(),
+      addTicks: z.number().int().optional().describe("Moves the clock forward; 24000 ticks are one day"),
+      weather: z.enum(["clear", "rain", "thunder"]).optional(),
+      durationTicks: z.number().int().positive().optional().describe("How long the new weather lasts"),
+      difficulty: z.enum(["peaceful", "easy", "normal", "hard"]).optional(),
+      pvp: z.boolean().optional().describe("Whether players can hurt each other"),
+      spawn: z
+        .object({ x: z.number().int(), y: z.number().int(), z: z.number().int(), angle: z.number().optional() })
+        .optional()
+        .describe("New world spawn point"),
     },
     run: (args) =>
       unwrap(
         api.PATCH("/worlds/{world}", {
           ...path(args.world),
           body: {
+            dayTime: args.dayTime,
+            addTime: args.addTicks,
             weather: args.weather,
-            weatherDurationTicks: args.weather === "clear" ? undefined : args.durationTicks,
+            weatherDurationTicks: args.weather && args.weather !== "clear" ? args.durationTicks : undefined,
             clearWeatherDurationTicks: args.weather === "clear" ? args.durationTicks : undefined,
+            difficulty: args.difficulty,
+            pvp: args.pvp,
+            spawn: args.spawn && { ...args.spawn, angle: args.spawn.angle ?? 0 },
           },
-        }),
-        token,
-      ),
-  });
-
-  tool(ctx, {
-    name: "set_difficulty",
-    title: "Set the difficulty",
-    description: "Set a world's difficulty.",
-    scope: "write:world",
-    effect: "idempotent",
-    input: { world, difficulty: z.enum(["peaceful", "easy", "normal", "hard"]) },
-    run: (args) =>
-      unwrap(api.PATCH("/worlds/{world}", { ...path(args.world), body: { difficulty: args.difficulty } }), token),
-  });
-
-  tool(ctx, {
-    name: "set_pvp",
-    title: "Turn PvP on or off",
-    description: "Whether players can hurt each other in a world.",
-    scope: "write:world",
-    effect: "idempotent",
-    input: { world, pvp: z.boolean() },
-    run: (args) => unwrap(api.PATCH("/worlds/{world}", { ...path(args.world), body: { pvp: args.pvp } }), token),
-  });
-
-  tool(ctx, {
-    name: "set_world_spawn",
-    title: "Set the world spawn",
-    description: "Move the world spawn point.",
-    scope: "write:world",
-    effect: "idempotent",
-    input: { world, x: z.number().int(), y: z.number().int(), z: z.number().int(), angle: z.number().optional() },
-    run: (args) =>
-      unwrap(
-        api.PATCH("/worlds/{world}", {
-          ...path(args.world),
-          body: { spawn: { x: args.x, y: args.y, z: args.z, angle: args.angle ?? 0 } },
         }),
         token,
       ),
@@ -171,7 +109,7 @@ export function worldTools(ctx: Context): void {
     name: "set_gamerule",
     title: "Set game rules",
     description:
-      'Set one or more game rules at once, such as { "keep_inventory": true, "players_sleeping_percentage": 50 }. Use get_gamerules for names and types.',
+      'Set one or more game rules at once, such as { "keep_inventory": true, "players_sleeping_percentage": 50 }. get_world with ruleDetails lists the names and types.',
     scope: "write:world",
     effect: "idempotent",
     input: { world, rules: z.record(z.string(), z.union([z.boolean(), z.number().int()])) },

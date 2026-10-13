@@ -11,9 +11,9 @@ describe("tools follow the token's scopes", () => {
   it("read shows only reads", async () => {
     const { client } = await connect(api.url, ["read"]);
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(30);
+    expect(tools.length).toBe(27);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
-    expect(tools.map((tool) => tool.name)).not.toContain("set_time");
+    expect(tools.map((tool) => tool.name)).not.toContain("set_world");
   });
 
   it("write scopes add their own writes only", async () => {
@@ -32,7 +32,7 @@ describe("tools follow the token's scopes", () => {
     expect(tools).not.toContain("execute_java");
     const all = (await connect(api.url, ["admin", "code"])).tools;
     expect(all).toContain("execute_java");
-    expect(all.length).toBe(78);
+    expect(all.length).toBe(71);
     expect(new Set(all).size).toBe(all.length);
   });
 

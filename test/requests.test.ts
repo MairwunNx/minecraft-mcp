@@ -61,6 +61,40 @@ describe("requests reach WorldAPI in its shape", () => {
     });
   });
 
+  it("sends one world change as one PATCH", async () => {
+    const { client } = await connect(api.url, ["admin"]);
+    await client.callTool({
+      name: "set_world",
+      arguments: { dayTime: 1000, weather: "clear", durationTicks: 6000, pvp: false, spawn: { x: 1, y: 70, z: 2 } },
+    });
+    expect(api.seen).toHaveLength(1);
+    expect(api.seen[0]).toMatchObject({
+      method: "PATCH",
+      url: "/api/v1/worlds/world",
+      body: {
+        dayTime: 1000,
+        weather: "clear",
+        clearWeatherDurationTicks: 6000,
+        pvp: false,
+        spawn: { x: 1, y: 70, z: 2, angle: 0 },
+      },
+    });
+  });
+
+  it("adds game rule details and size to get_world only when asked", async () => {
+    const { client } = await connect(api.url, ["read"]);
+    await client.callTool({ name: "get_world", arguments: {} });
+    expect(api.seen.map((seen) => seen.url)).toEqual(["/api/v1/worlds/world"]);
+    api.seen.length = 0;
+    const result = await client.callTool({ name: "get_world", arguments: { ruleDetails: true, size: true } });
+    expect(api.seen.map((seen) => seen.url).sort()).toEqual([
+      "/api/v1/worlds/world",
+      "/api/v1/worlds/world/gamerules",
+      "/api/v1/worlds/world/stats",
+    ]);
+    expect(JSON.parse(text(result))).toMatchObject({ ok: true, gameRuleDetails: { ok: true }, size: { ok: true } });
+  });
+
   it("turns a 204 into done", async () => {
     api.reply = () => ({ status: 204 });
     const { client } = await connect(api.url, ["admin"]);
@@ -73,7 +107,7 @@ describe("requests reach WorldAPI in its shape", () => {
 
   it("rejects bad input before calling WorldAPI", async () => {
     const { client } = await connect(api.url, ["admin"]);
-    const result = await client.callTool({ name: "set_time", arguments: { dayTime: 99999 } });
+    const result = await client.callTool({ name: "set_world", arguments: { dayTime: 99999 } });
     expect(result.isError).toBe(true);
     expect(api.seen).toHaveLength(0);
   });
