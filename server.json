@@ -1,0 +1,43 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.mairwunnx/minecraft-mcp",
+  "title": "Minecraft",
+  "description": "Ask an AI about your Minecraft server and let it run it: players, worlds, stats, and live events.",
+  "repository": {
+    "url": "https://github.com/MairwunNx/minecraft-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/MairwunNx/minecraft-mcp#readme",
+  "version": "0.0.0-dev",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "minecraft-mcp",
+      "version": "0.0.0-dev",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "WORLDAPI_URL",
+          "description": "WorldAPI base URL including /api/v1, such as http://localhost:8110/api/v1",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "WORLDAPI_TOKEN",
+          "description": "A WorldAPI token; its scopes decide which tools the agent gets. Leave empty for what anonymous clients may read.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "WORLDAPI_READ_ONLY",
+          "description": "1 hides every tool that changes the server",
+          "isRequired": false,
+          "format": "boolean"
+        }
+      ]
+    }
+  ]
+}
