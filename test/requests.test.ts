@@ -172,6 +172,16 @@ describe("requests reach WorldAPI in its shape", () => {
     expect(missing.isError).toBe(true);
   });
 
+  it("lists the leaderboards without a statistic", async () => {
+    const { client } = await connect(api.url, ["read"]);
+    await client.callTool({ name: "get_leaderboard", arguments: {} });
+    await client.callTool({ name: "get_leaderboard", arguments: { statistic: "custom:jump" } });
+    expect(api.seen.map((seen) => seen.url)).toEqual([
+      "/api/v1/leaderboards",
+      "/api/v1/leaderboards/custom%3Ajump?limit=10",
+    ]);
+  });
+
   it("turns a 204 into done", async () => {
     api.reply = () => ({ status: 204 });
     const { client } = await connect(api.url, ["admin"]);
