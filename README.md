@@ -18,6 +18,7 @@ It talks to [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi), a Paper
 ## What you get
 
 - 🧰 **59 tools** for the server, worlds, blocks, entities, players, leaderboards, recipes, and Java scripts. Related actions share one tool, so the agent picks fast and doesn’t get lost.
+- 🎒 **Inventories in depth.** Ask “what’s the best sword in my chest?” or “which of my books has Mending?”: the agent sees every item’s enchantments, attributes, durability, potion effects, armor trim, and what’s inside shulker boxes and bundles.
 - 🔑 **Only the tools your token can use.** A read token shows 27 tools that only look. `WORLDAPI_READ_ONLY=1` hides every write, whatever the token allows.
 - 🙋 **“Me” means you.** Set `WORLDAPI_PLAYER`, and the agent knows who “I” is.
 - ⏳ **Live events.** The agent can wait for something to happen: “tell me when Steve joins”.
