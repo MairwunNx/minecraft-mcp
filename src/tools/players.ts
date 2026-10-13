@@ -1,13 +1,24 @@
 import { z } from "zod";
 import { unwrap } from "../client.js";
 import { type Context, tool } from "../tool.js";
-import { cursor, format, item, limit, location, OFFLINE_NOTE, player, SLOT_LAYOUT } from "./common.js";
+import {
+  player as anyPlayer,
+  cursor,
+  format,
+  item,
+  limit,
+  location,
+  OFFLINE_NOTE,
+  playerOrMe,
+  SLOT_LAYOUT,
+} from "./common.js";
 
 const container = z.enum(["inventory", "enderchest"]).default("inventory");
 
 export function playerTools(ctx: Context): void {
   const { api, token } = ctx;
   const who = (name: string) => ({ params: { path: { player: name } } });
+  const player = playerOrMe(ctx.player);
 
   tool(ctx, {
     name: "list_players",
@@ -210,7 +221,7 @@ export function playerTools(ctx: Context): void {
     description: "Disconnect a player with an optional reason.",
     scope: "admin",
     effect: "destructive",
-    input: { player, reason: z.string().optional(), format },
+    input: { player: anyPlayer, reason: z.string().optional(), format },
     run: ({ player: name, ...body }) => unwrap(api.POST("/players/{player}/kick", { ...who(name), body }), token),
   });
 

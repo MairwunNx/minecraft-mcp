@@ -4,6 +4,8 @@ export interface Config {
   url: string;
   token: string | undefined;
   readOnly: boolean;
+  /** The user's own player, from WORLDAPI_PLAYER: tools that take a player default to it. */
+  player?: string | undefined;
 }
 
 export function configFromEnv(env: NodeJS.ProcessEnv = process.env): Config {
@@ -21,6 +23,7 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): Config {
     url: url.replace(/\/+$/, ""),
     token: env.WORLDAPI_TOKEN?.trim() || undefined,
     readOnly: ["1", "true", "yes"].includes((env.WORLDAPI_READ_ONLY ?? "").toLowerCase()),
+    player: env.WORLDAPI_PLAYER?.trim() || undefined,
   };
 }
 

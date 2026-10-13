@@ -7,6 +7,11 @@ export const world = z
 
 export const player = z.string().min(1).describe("Player name or UUID");
 
+/** A player argument that falls back to the user's own player (WORLDAPI_PLAYER) when one is set. */
+export function playerOrMe(me: string | undefined) {
+  return me ? player.default(me).describe(`Player name or UUID; ${me}, the user, when left out`) : player;
+}
+
 export const location = z
   .object({
     world: z.string().describe("World name"),

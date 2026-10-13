@@ -25,6 +25,8 @@ Environment:
   WORLDAPI_URL        WorldAPI base URL, such as http://localhost:8110/api/v1 (required)
   WORLDAPI_TOKEN      WorldAPI token; its scopes decide which tools appear
   WORLDAPI_READ_ONLY  1 hides every tool that changes the server
+  WORLDAPI_PLAYER     Your player name: “me” means this player, and tools that
+                      take a player use it when the agent leaves one out
   MCP_HTTP_TOKEN      With --http, clients must send it as a bearer token
 `;
 

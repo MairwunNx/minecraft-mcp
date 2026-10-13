@@ -26,6 +26,8 @@ export interface Context {
   scopes: ReadonlySet<Scope>;
   readOnly: boolean;
   token: string | undefined;
+  /** The user's own player from WORLDAPI_PLAYER, if set. */
+  player: string | undefined;
   /** Names of the tools this context registered, in order. */
   registered: string[];
 }

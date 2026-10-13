@@ -211,6 +211,27 @@ describe("requests reach WorldAPI in its shape", () => {
   });
 });
 
+describe("the user's own player", () => {
+  it("fills in for a left-out player and is named in the instructions", async () => {
+    const { client } = await connect(api.url, ["admin"], { player: "Steve" });
+    await client.callTool({ name: "get_player", arguments: {} });
+    expect(api.seen[0]?.url).toBe("/api/v1/players/Steve");
+    await client.callTool({ name: "get_player", arguments: { player: "Alex" } });
+    expect(api.seen[1]?.url).toBe("/api/v1/players/Alex");
+    expect(client.getInstructions()).toMatch(/plays as Steve/);
+    const kick = await client.callTool({ name: "kick_player", arguments: {} });
+    expect(kick.isError).toBe(true);
+  });
+
+  it("stays required without WORLDAPI_PLAYER", async () => {
+    const { client } = await connect(api.url, ["admin"]);
+    const result = await client.callTool({ name: "get_player", arguments: {} });
+    expect(result.isError).toBe(true);
+    expect(api.seen).toHaveLength(0);
+    expect(client.getInstructions()).not.toMatch(/plays as/);
+  });
+});
+
 describe("errors", () => {
   it("carry WorldAPI's code and message", async () => {
     api.reply = () => ({ status: 409, body: { error: { code: "player_offline", message: "Steve isn't online" } } });
@@ -263,11 +284,17 @@ describe("the token stays secret", () => {
 describe("configuration", () => {
   it("reads the environment", () => {
     expect(
-      configFromEnv({ WORLDAPI_URL: "http://host:8110/api/v1/", WORLDAPI_TOKEN: " t ", WORLDAPI_READ_ONLY: "true" }),
+      configFromEnv({
+        WORLDAPI_URL: "http://host:8110/api/v1/",
+        WORLDAPI_TOKEN: " t ",
+        WORLDAPI_READ_ONLY: "true",
+        WORLDAPI_PLAYER: " Steve ",
+      }),
     ).toEqual({
       url: "http://host:8110/api/v1",
       token: "t",
       readOnly: true,
+      player: "Steve",
     });
     expect(configFromEnv({ WORLDAPI_URL: "http://host" }).token).toBeUndefined();
     expect(() => configFromEnv({})).toThrow(/WORLDAPI_URL/);
