@@ -32,7 +32,7 @@ describe("tools follow the token's scopes", () => {
     expect(tools).not.toContain("execute_java");
     const all = (await connect(api.url, ["admin", "code"])).tools;
     expect(all).toContain("execute_java");
-    expect(all.length).toBe(65);
+    expect(all.length).toBe(62);
     expect(new Set(all).size).toBe(all.length);
   });
 

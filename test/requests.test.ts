@@ -112,6 +112,24 @@ describe("requests reach WorldAPI in its shape", () => {
     expect(api.seen.map((seen) => seen.url).sort()).toEqual(["/api/v1/server", "/api/v1/server/performance"]);
   });
 
+  it("routes each world effect to its endpoint", async () => {
+    const { client } = await connect(api.url, ["admin"]);
+    const location = { world: "world", x: 0, y: 64, z: 0 };
+    await client.callTool({ name: "world_effect", arguments: { kind: "explosion", location } });
+    expect(api.seen[0]).toMatchObject({
+      url: "/api/v1/worlds/world/explosions",
+      body: { location, power: 4, fire: false, breakBlocks: false },
+    });
+    await client.callTool({ name: "world_effect", arguments: { kind: "particles", location, particle: "heart" } });
+    expect(api.seen[1]).toMatchObject({
+      url: "/api/v1/worlds/world/particles",
+      body: { particle: "heart", count: 10 },
+    });
+    const missing = await client.callTool({ name: "world_effect", arguments: { kind: "sound", location } });
+    expect(missing.isError).toBe(true);
+    expect(api.seen).toHaveLength(2);
+  });
+
   it("turns a 204 into done", async () => {
     api.reply = () => ({ status: 204 });
     const { client } = await connect(api.url, ["admin"]);

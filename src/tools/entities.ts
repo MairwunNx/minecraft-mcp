@@ -125,67 +125,85 @@ export function entityTools(ctx: Context): void {
   });
 
   tool(ctx, {
-    name: "strike_lightning",
-    title: "Strike lightning",
-    description: "Strike lightning at a location; effectOnly makes it harmless.",
-    scope: "write:world",
-    effect: "write",
-    input: { world, location, effectOnly: z.boolean().default(false) },
-    run: ({ world: name, ...body }) =>
-      unwrap(api.POST("/worlds/{world}/lightning", { params: { path: { world: name } }, body }), token),
-  });
-
-  tool(ctx, {
-    name: "create_explosion",
-    title: "Explode",
-    description: "Make an explosion. TNT has power 4. breakBlocks destroys terrain; fire sets things alight.",
+    name: "world_effect",
+    title: "Lightning, explosions, sounds, particles",
+    description:
+      "Make something happen at a location. `lightning` strikes (effectOnly makes it harmless). `explosion` blows up with power (TNT is 4); breakBlocks destroys terrain and fire sets things alight. `sound` plays a sound such as `minecraft:entity.ender_dragon.growl` for everyone nearby. `particles` shows particles such as `minecraft:heart` or `minecraft:flame`; ones that need extra data (dust, block) aren't supported.",
     scope: "write:world",
     effect: "destructive",
     input: {
       world,
+      kind: z.enum(["lightning", "explosion", "sound", "particles"]),
       location,
-      power: z.number().min(0).default(4),
-      fire: z.boolean().default(false),
-      breakBlocks: z.boolean().default(false),
+      effectOnly: z.boolean().optional().describe("lightning: only the flash and the sound"),
+      power: z.number().min(0).optional().describe("explosion: 4 by default"),
+      fire: z.boolean().optional().describe("explosion"),
+      breakBlocks: z.boolean().optional().describe("explosion"),
+      sound: z.string().optional().describe("sound: the sound key"),
+      volume: z.number().min(0).max(16).optional().describe("sound"),
+      pitch: z.number().min(0.5).max(2).optional().describe("sound"),
+      category: z.string().optional().describe("sound: `master` by default"),
+      particle: z.string().optional().describe("particles: the particle key"),
+      count: z.number().int().min(1).optional().describe("particles: 10 by default"),
+      offset: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe("particles: spread"),
+      speed: z.number().min(0).optional().describe("particles"),
     },
-    run: ({ world: name, ...body }) =>
-      unwrap(api.POST("/worlds/{world}/explosions", { params: { path: { world: name } }, body }), token),
-  });
-
-  tool(ctx, {
-    name: "play_sound",
-    title: "Play a sound",
-    description: "Play a sound at a location for everyone nearby, such as `minecraft:entity.ender_dragon.growl`.",
-    scope: "write:world",
-    effect: "write",
-    input: {
-      world,
-      sound: z.string().min(1),
-      location,
-      volume: z.number().min(0).max(16).default(1),
-      pitch: z.number().min(0.5).max(2).default(1),
-      category: z.string().default("master"),
+    run: (args) => {
+      const params = { params: { path: { world: args.world } } };
+      const location = args.location;
+      switch (args.kind) {
+        case "lightning":
+          return unwrap(
+            api.POST("/worlds/{world}/lightning", {
+              ...params,
+              body: { location, effectOnly: args.effectOnly ?? false },
+            }),
+            token,
+          );
+        case "explosion":
+          return unwrap(
+            api.POST("/worlds/{world}/explosions", {
+              ...params,
+              body: {
+                location,
+                power: args.power ?? 4,
+                fire: args.fire ?? false,
+                breakBlocks: args.breakBlocks ?? false,
+              },
+            }),
+            token,
+          );
+        case "sound":
+          if (!args.sound) throw new Error("kind sound needs sound");
+          return unwrap(
+            api.POST("/worlds/{world}/sounds", {
+              ...params,
+              body: {
+                sound: args.sound,
+                location,
+                volume: args.volume ?? 1,
+                pitch: args.pitch ?? 1,
+                category: args.category ?? "master",
+              },
+            }),
+            token,
+          );
+        case "particles":
+          if (!args.particle) throw new Error("kind particles needs particle");
+          return unwrap(
+            api.POST("/worlds/{world}/particles", {
+              ...params,
+              body: {
+                particle: args.particle,
+                location,
+                count: args.count ?? 10,
+                offset: args.offset,
+                speed: args.speed ?? 0,
+              },
+            }),
+            token,
+          );
+      }
     },
-    run: ({ world: name, ...body }) =>
-      unwrap(api.POST("/worlds/{world}/sounds", { params: { path: { world: name } }, body }), token),
-  });
-
-  tool(ctx, {
-    name: "spawn_particles",
-    title: "Show particles",
-    description:
-      "Show particles at a location, such as `minecraft:heart` or `minecraft:flame`. Particles that need extra data (dust, block) aren't supported.",
-    scope: "write:world",
-    effect: "write",
-    input: {
-      world,
-      particle: z.string().min(1),
-      location,
-      count: z.number().int().min(1).default(10),
-      offset: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional(),
-      speed: z.number().min(0).default(0),
-    },
-    run: ({ world: name, ...body }) =>
-      unwrap(api.POST("/worlds/{world}/particles", { params: { path: { world: name } }, body }), token),
   });
 }
