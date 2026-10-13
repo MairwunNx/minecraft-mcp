@@ -32,6 +32,14 @@ An MCP server that lets AI agents read and manage a Minecraft server through Wor
 - `npm run lint`, `npm run typecheck`, and `npm test` must pass; CI runs the same. Tests use a mocked WorldAPI and never touch the network.
 - `scripts/live-check.mjs` runs the built server against a real WorldAPI. Moonlands' WorldAPI is at `https://minecraft.mairwunnx.com/worldapi/api/v1`: anonymous clients read what its config allows, and `WORLDAPI_TOKEN` gets the rest of its scopes. Write tools against Moonlands change the live world: they need the owner's go-ahead first.
 
+## Docs and releases
+
+- README.md and README.RU.md are for people who use the server: who it's for, install, tools, safety. Change both together. Internals (the code map above, `scripts/live-check.mjs`) stay here.
+- Add a “## X.Y.Z” section to CHANGELOG.md, then run the “Release” workflow: `gh workflow run release.yml -R MairwunNx/minecraft-mcp -f version=X.Y.Z -f npm=true -f registry=true`. The repository keeps `0.0.0-dev` in package.json, manifest.json, and server.json; the workflow stamps the version, packs `minecraft-mcp-X.Y.Z.mcpb` (`npm run pack:mcpb`), tags `vX.Y.Z`, and attaches the bundle to a GitHub release.
+- npm: the package `minecraft-mcp`, published with provenance. It uses the `NPM_TOKEN` secret, or npm's trusted publishing for this workflow once it's set up on npmjs.com.
+- MCP Registry: `server.json`, name `com.mairwunnx/minecraft-mcp`, which must match `mcpName` in package.json. The registry checks a DNS TXT record on mairwunnx.com (`v=MCPv1; k=ed25519; …`, in Cloudflare); the matching private key is `~/.secrets/mcp_registry_ed25519.pem` locally and the `MCP_REGISTRY_KEY` secret (hex) in GitHub. The registry needs the npm version to exist first.
+- `MIN_WORLDAPI` in `src/version.ts` is the oldest WorldAPI whose endpoints match the generated client; raise it when a release depends on new endpoints.
+
 ## Commits
 
 Short one-line imperative English messages, one logical change per commit: “Fence chat and sign text as game data”.
