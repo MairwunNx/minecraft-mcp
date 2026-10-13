@@ -19,7 +19,7 @@ export function statsTools(ctx: Context): void {
     name: "get_leaderboard",
     title: "Leaderboard",
     description:
-      "Players ranked by a statistic; ties share a place. Presets: playtime (hours), diamonds, advancements, mobs, travel (km), deaths, blocks, fish, damage (hearts). Or any statistic as `category:key`, such as `custom:jump`, `mined:diamond_ore`, `killed:*`.",
+      "Players ranked by a statistic; ties share a place. Presets: playtime (hours), diamonds, advancements, mobs, travel (km), deaths, blocks, fish, damage (hearts), netherite (ancient debris mined), experience (xp gained; a lower bound, since vanilla keeps no lifetime total). Or any statistic as `category:key`, such as `custom:jump`, `mined:diamond_ore`, `killed:*`.",
     scope: "read",
     effect: "read",
     input: { statistic: z.string().min(1), limit: z.number().int().min(1).max(500).optional() },

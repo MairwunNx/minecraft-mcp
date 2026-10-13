@@ -76,7 +76,7 @@ Scopes come from WorldAPI: `admin` includes `read`, `write:world`, and `write:pl
 
 **Read** (`read`)
 
-- `get_server_status`: version, build, players, uptime, settings
+- `get_server_status`: version, build, players, uptime, settings, and current TPS, tick time, memory, chunks, and entities
 - `get_performance`: TPS, tick times with percentiles, memory, CPU, load per world
 - `list_plugins`: installed plugins
 - `get_events`: recorded joins, leaves, deaths, advancements, skipped nights, boss kills, and more, with filters

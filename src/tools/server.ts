@@ -10,7 +10,7 @@ export function serverTools(ctx: Context): void {
     name: "get_server_status",
     title: "Server status",
     description:
-      "Version, Paper build, MOTD, players online and max, uptime, difficulty, view distance, worlds, tick rate.",
+      "Version, Paper build, MOTD, players online and max, uptime, difficulty, view distance, worlds, tick rate, and current load: TPS over 1, 5, and 15 minutes (20 is perfect), milliseconds per tick, memory used and max in MB, loaded chunks, and entities. For percentiles, CPU, and per-world numbers, use get_performance.",
     scope: "read",
     effect: "read",
     input: {},
