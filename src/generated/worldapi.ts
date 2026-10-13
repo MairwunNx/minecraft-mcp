@@ -75,7 +75,7 @@ export interface paths {
         };
         /**
          * Players ranked by a statistic, ties sharing a place
-         * @description Online players count live. Use a preset or any statistic as `category:key`, such as `custom:jump`, `mined:diamond_ore`, or `killed:*`.
+         * @description Online players count live. Use a preset or any statistic as `category:key`, such as `custom:jump`, `mined:diamond_ore`, or `killed:*`. The `experience` preset starts each player from the game's `XpTotal` (experience since their last death, so a lower bound) and adds every pickup after that, since vanilla keeps no lifetime statistic.
          *
          *     Scope: `read`.
          */
@@ -626,7 +626,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Server version, players, and settings
+         * Server version, players, settings, and current load
          * @description Scope: `read`.
          */
         get: operations["getServer"];
@@ -1977,6 +1977,18 @@ export interface components {
             currentTick: number;
             tickRate: number;
             frozen: boolean;
+            tps: number;
+            tps5m: number;
+            tps15m: number;
+            mspt: number;
+            /** Format: int64 */
+            memoryUsedMb: number;
+            /** Format: int64 */
+            memoryMaxMb: number;
+            /** Format: int32 */
+            loadedChunks: number;
+            /** Format: int32 */
+            entities: number;
         };
         SessionView: {
             joinedAt: string;
