@@ -193,6 +193,32 @@ describe("requests reach WorldAPI in its shape", () => {
     expect(api.seen[0]?.body).toEqual({ countdownSeconds: 60, message: "updates" });
   });
 
+  it("finds blocks and biomes around a point", async () => {
+    const { client } = await connect(api.url, ["read"]);
+    await client.callTool({
+      name: "find_nearby",
+      arguments: {
+        blocks: ["minecraft:diamond_ore", "#minecraft:logs"],
+        biomes: ["minecraft:desert"],
+        x: 1,
+        y: 12,
+        z: -3,
+      },
+    });
+    expect(api.seen[0]?.url).toBe(
+      "/api/v1/worlds/world/search?blocks=minecraft%3Adiamond_ore%2C%23minecraft%3Alogs&biome=minecraft%3Adesert&x=1&y=12&z=-3",
+    );
+    const empty = await client.callTool({ name: "find_nearby", arguments: { x: 1, z: 2 } });
+    expect(empty.isError).toBe(true);
+  });
+
+  it("looks up recipes both ways", async () => {
+    const { client } = await connect(api.url, ["read"]);
+    await client.callTool({ name: "get_recipes", arguments: { uses: "minecraft:coal" } });
+    expect(api.seen[0]?.url).toBe("/api/v1/recipes?uses=minecraft%3Acoal&limit=20");
+    expect((await client.callTool({ name: "get_recipes", arguments: {} })).isError).toBe(true);
+  });
+
   it("turns a 204 into done", async () => {
     api.reply = () => ({ status: 204 });
     const { client } = await connect(api.url, ["admin"]);
@@ -221,6 +247,18 @@ describe("the user's own player", () => {
     expect(client.getInstructions()).toMatch(/plays as Steve/);
     const kick = await client.callTool({ name: "kick_player", arguments: {} });
     expect(kick.isError).toBe(true);
+  });
+
+  it("centers find_nearby on the user's player", async () => {
+    api.reply = (seen) =>
+      seen.url === "/api/v1/players/Steve"
+        ? { status: 200, body: { name: "Steve", location: { world: "world_nether", x: 10.7, y: 64.2, z: -5.5 } } }
+        : { status: 200, body: { ok: true } };
+    const { client } = await connect(api.url, ["read"], { player: "Steve" });
+    await client.callTool({ name: "find_nearby", arguments: { blocks: ["minecraft:ancient_debris"] } });
+    expect(api.seen[1]?.url).toBe(
+      "/api/v1/worlds/world_nether/search?blocks=minecraft%3Aancient_debris&x=10&y=64&z=-6",
+    );
   });
 
   it("stays required without WORLDAPI_PLAYER", async () => {

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { unwrap } from "../client.js";
 import { type Context, tool } from "../tool.js";
+import { cursor, limit } from "./common.js";
 
 export function statsTools(ctx: Context): void {
   const { api, token } = ctx;
@@ -25,6 +26,25 @@ export function statsTools(ctx: Context): void {
             token,
           )
         : unwrap(api.GET("/leaderboards"), token),
+  });
+
+  tool(ctx, {
+    name: "get_recipes",
+    title: "Recipes",
+    description:
+      "How to make an item (`item`) or what an item is good for (`uses`), or both: crafting grids with their shape, furnace, smoker, blast furnace, and campfire cooking with time and experience, stonecutting, and smithing. Plugin recipes count too. Each ingredient lists the items that fit.",
+    scope: "read",
+    effect: "read",
+    input: {
+      item: z.string().min(1).optional().describe("What the recipe makes, such as `minecraft:torch`"),
+      uses: z.string().min(1).optional().describe("What the recipe takes, such as `minecraft:coal`"),
+      limit,
+      cursor,
+    },
+    run: (args) => {
+      if (!args.item && !args.uses) throw new Error("Give item, uses, or both");
+      return unwrap(api.GET("/recipes", { params: { query: { ...args, limit: args.limit ?? 20 } } }), token);
+    },
   });
 
   tool(ctx, {

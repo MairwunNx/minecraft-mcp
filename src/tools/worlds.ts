@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { unwrap } from "../client.js";
 import { type Context, tool } from "../tool.js";
-import { world } from "./common.js";
+import { player, world } from "./common.js";
 
 export function worldTools(ctx: Context): void {
   const { api, token } = ctx;
@@ -64,6 +64,60 @@ export function worldTools(ctx: Context): void {
         }),
         token,
       ),
+  });
+
+  tool(ctx, {
+    name: "find_nearby",
+    title: "Find nearby blocks or biomes",
+    description:
+      "The nearest blocks of some types and the nearest biome, around a point or a player. Blocks take keys or tags: `minecraft:diamond_ore`, `#minecraft:logs`, `#minecraft:iron_ores`. Block search reads only loaded chunks (those near players), 32 blocks around by default and 64 at most, and says how many chunks in range it couldn't read. Biome search asks the world generator, so it reaches unexplored land, 1024 blocks around by default. Without x and z it searches around the player: the user's own when WORLDAPI_PLAYER is set.",
+    scope: "read",
+    effect: "read",
+    input: {
+      blocks: z.array(z.string().min(1)).optional().describe('Such as ["minecraft:diamond_ore", "#minecraft:logs"]'),
+      biomes: z.array(z.string().min(1)).optional().describe('Such as ["minecraft:cherry_grove"]; the nearest of any'),
+      world: z.string().optional().describe("World name; the player's world, or `world`, when left out"),
+      x: z.number().int().optional(),
+      y: z.number().int().optional().describe("Needed for blocks when x and z are given"),
+      z: z.number().int().optional(),
+      player: player.optional().describe("Search around this player instead of x, y, z"),
+      radius: z.number().int().min(1).optional().describe("Block search radius"),
+      biomeRadius: z.number().int().min(1).optional().describe("Biome search radius"),
+      limit: z.number().int().min(1).max(100).optional().describe("Blocks to return, nearest first; 10 by default"),
+    },
+    run: async (args) => {
+      if (!args.blocks?.length && !args.biomes?.length) throw new Error("Give blocks, biomes, or both");
+      let { world: name, x, y, z } = args;
+      if (x === undefined || z === undefined) {
+        const who = args.player ?? ctx.player;
+        if (!who) throw new Error("Give x and z, or a player");
+        const view = await unwrap(api.GET("/players/{player}", { params: { path: { player: who } } }), token);
+        const at = "location" in view ? view.location : undefined;
+        if (!at) throw new Error(`${who}'s location isn't known`);
+        name ??= at.world;
+        x = Math.floor(at.x);
+        y = Math.floor(at.y);
+        z = Math.floor(at.z);
+      }
+      return unwrap(
+        api.GET("/worlds/{world}/search", {
+          params: {
+            path: { world: name ?? "world" },
+            query: {
+              blocks: args.blocks?.join(","),
+              biome: args.biomes?.join(","),
+              x,
+              y,
+              z,
+              radius: args.radius,
+              biomeRadius: args.biomeRadius,
+              limit: args.limit,
+            },
+          },
+        }),
+        token,
+      );
+    },
   });
 
   tool(ctx, {
