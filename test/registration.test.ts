@@ -32,7 +32,7 @@ describe("tools follow the token's scopes", () => {
     expect(tools).not.toContain("execute_java");
     const all = (await connect(api.url, ["admin", "code"])).tools;
     expect(all).toContain("execute_java");
-    expect(all.length).toBe(54);
+    expect(all.length).toBe(56);
     expect(new Set(all).size).toBe(all.length);
   });
 
@@ -59,6 +59,8 @@ describe("tools follow the token's scopes", () => {
     expect(byName.execute_java).toMatchObject({ destructiveHint: true });
     expect(byName.manage_bans).toMatchObject({ readOnlyHint: false, destructiveHint: true });
     expect(byName.get_access).toMatchObject({ readOnlyHint: true });
+    expect(byName.restart_server).toMatchObject({ destructiveHint: true });
+    expect(byName.get_server_log).toMatchObject({ readOnlyHint: true });
   });
 
   it("resources and prompts are there", async () => {

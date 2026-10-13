@@ -97,6 +97,46 @@ export function serverTools(ctx: Context): void {
   });
 
   tool(ctx, {
+    name: "get_server_log",
+    untrusted: true,
+    title: "Console log",
+    description:
+      "Recent console lines, oldest first: errors, warnings, plugin messages, joins, chat, and commands players ran. WorldAPI keeps them from its own start (1000 by default) and blanks out its tokens. Filter by the lowest level and by text, such as a player's name or a plugin's.",
+    scope: "admin",
+    effect: "read",
+    input: {
+      level: z
+        .enum(["trace", "debug", "info", "warn", "error", "fatal"])
+        .optional()
+        .describe("Only this level and above"),
+      grep: z.string().min(1).optional().describe("Only lines that contain this text, ignoring case"),
+      limit: z.number().int().min(1).optional().describe("Newest matching lines to return; 100 by default"),
+    },
+    run: (args) => unwrap(api.GET("/server/logs", { params: { query: args } }), token),
+  });
+
+  tool(ctx, {
+    name: "restart_server",
+    title: "Restart the server",
+    description:
+      "Restart after a countdown in chat: players see warnings at set marks, then every world and player is saved and the server stops. Whatever runs the server must start it again (Docker's restart policy, a start script loop); otherwise it stays off. Scheduling again replaces a pending restart; cancel calls it off. Everyone online gets disconnected, so confirm with the user first.",
+    scope: "admin",
+    effect: "destructive",
+    input: {
+      countdownSeconds: z.number().int().min(0).max(3600).default(60),
+      message: z.string().optional().describe("Said with each warning, such as the reason"),
+      cancel: z.boolean().optional().describe("Call off a pending restart instead"),
+    },
+    run: (args) =>
+      args.cancel
+        ? unwrap(api.DELETE("/server/restart"), token)
+        : unwrap(
+            api.POST("/server/restart", { body: { countdownSeconds: args.countdownSeconds, message: args.message } }),
+            token,
+          ),
+  });
+
+  tool(ctx, {
     name: "save_worlds",
     title: "Save worlds",
     description: "Save every world, and player data, to disk now.",

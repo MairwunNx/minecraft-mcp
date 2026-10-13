@@ -182,6 +182,17 @@ describe("requests reach WorldAPI in its shape", () => {
     ]);
   });
 
+  it("schedules and calls off restarts", async () => {
+    const { client } = await connect(api.url, ["admin"]);
+    await client.callTool({ name: "restart_server", arguments: { message: "updates" } });
+    await client.callTool({ name: "restart_server", arguments: { cancel: true } });
+    expect(api.seen.map((seen) => `${seen.method} ${seen.url}`)).toEqual([
+      "POST /api/v1/server/restart",
+      "DELETE /api/v1/server/restart",
+    ]);
+    expect(api.seen[0]?.body).toEqual({ countdownSeconds: 60, message: "updates" });
+  });
+
   it("turns a 204 into done", async () => {
     api.reply = () => ({ status: 204 });
     const { client } = await connect(api.url, ["admin"]);
