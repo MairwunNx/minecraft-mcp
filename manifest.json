@@ -1,0 +1,71 @@
+{
+  "manifest_version": "0.3",
+  "name": "minecraft-mcp",
+  "display_name": "Minecraft",
+  "version": "0.0.0-dev",
+  "description": "Ask about your Minecraft server and let Claude run it: players, worlds, stats, and live events.",
+  "long_description": "Connects Claude to a Paper server that runs the WorldAPI plugin. Ask who’s online, why the server lags, who played the most this week, or have it set the time, give items, and kick a griefer. The WorldAPI token you enter decides what Claude may do: a read token only looks.",
+  "author": {
+    "name": "Pavel Erokhin (MairwunNx)",
+    "url": "https://github.com/MairwunNx"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MairwunNx/minecraft-mcp.git"
+  },
+  "homepage": "https://github.com/MairwunNx/minecraft-mcp",
+  "documentation": "https://github.com/MairwunNx/minecraft-mcp#readme",
+  "support": "https://github.com/MairwunNx/minecraft-mcp/issues",
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "WORLDAPI_URL": "${user_config.worldapi_url}",
+        "WORLDAPI_TOKEN": "${user_config.worldapi_token}",
+        "WORLDAPI_PLAYER": "${user_config.player}",
+        "WORLDAPI_READ_ONLY": "${user_config.read_only}"
+      }
+    }
+  },
+  "tools_generated": true,
+  "user_config": {
+    "worldapi_url": {
+      "type": "string",
+      "title": "WorldAPI URL",
+      "description": "Your server’s WorldAPI address including /api/v1, such as http://localhost:8110/api/v1",
+      "required": true
+    },
+    "worldapi_token": {
+      "type": "string",
+      "title": "WorldAPI token",
+      "description": "A token from WorldAPI’s in-game menu or config.yml. Empty gives what anonymous visitors may read.",
+      "sensitive": true,
+      "required": false
+    },
+    "player": {
+      "type": "string",
+      "title": "Your player name",
+      "description": "Optional: who “I” and “me” mean when you ask about yourself",
+      "required": false
+    },
+    "read_only": {
+      "type": "boolean",
+      "title": "Read only",
+      "description": "Hide every tool that changes the server",
+      "default": false,
+      "required": false
+    }
+  },
+  "keywords": ["minecraft", "paper", "server", "worldapi", "admin"],
+  "license": "MIT",
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=22.0.0"
+    }
+  }
+}
