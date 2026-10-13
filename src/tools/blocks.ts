@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { unwrap } from "../client.js";
 import { type Context, tool } from "../tool.js";
-import { blockPosition, cursor, limit, world } from "./common.js";
+import { blockPosition, cursor, ITEM_DETAIL, limit, world } from "./common.js";
 
 const xyz = { x: z.number().int(), y: z.number().int(), z: z.number().int() };
 
@@ -15,8 +15,7 @@ export function blockTools(ctx: Context): void {
     name: "get_block",
     untrusted: true,
     title: "Block",
-    description:
-      "A block's type, full state, light, biome, redstone power, and contents of chests, signs, spawners, and similar. Chunks that were never generated give `chunk_not_generated`.",
+    description: `A block's type, full state, light, biome, redstone power, and contents of chests, signs, spawners, and similar. ${ITEM_DETAIL} Chunks that were never generated give \`chunk_not_generated\`.`,
     scope: "read",
     effect: "read",
     input: { world, ...xyz },

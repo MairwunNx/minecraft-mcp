@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { unwrap } from "../client.js";
 import { type Context, tool } from "../tool.js";
-import { cursor, format, limit, location, world } from "./common.js";
+import { cursor, format, ITEM_DETAIL, limit, location, world } from "./common.js";
 
 export function entityTools(ctx: Context): void {
   const { api, token } = ctx;
@@ -49,7 +49,7 @@ export function entityTools(ctx: Context): void {
     name: "get_entity",
     untrusted: true,
     title: "Entity",
-    description: "One entity in detail: position, health, equipment, effects, owner, tags.",
+    description: `One entity in detail: position, health, equipment, effects, owner, tags. ${ITEM_DETAIL}`,
     scope: "read",
     effect: "read",
     input: { world, uuid: z.string() },
