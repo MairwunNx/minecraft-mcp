@@ -48,6 +48,7 @@ export function buildServer(
     scopes,
     readOnly: config.readOnly,
     token: config.token,
+    url: config.url,
     player: config.player,
     registered: [],
   };

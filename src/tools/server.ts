@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { unwrap } from "../client.js";
+import { waitForEvent } from "../events.js";
 import { type Context, tool } from "../tool.js";
 import { cursor, format, limit, player } from "./common.js";
 
@@ -66,6 +67,27 @@ export function serverTools(ctx: Context): void {
           },
         }),
         token,
+      ),
+  });
+
+  tool(ctx, {
+    name: "wait_for_event",
+    untrusted: true,
+    title: "Wait for something to happen",
+    description:
+      "Wait until an event happens live and get it, or time out. Types are WebSocket topics: player.join, player.leave, player.death, player.advancement, player.chat (if the server records chat), player.command (admin), player.respawn, player.level_up, player.sleep, player.world_change, player.kill, player.craft, block.break, block.place, world.weather, world.night_skipped, entity.boss_killed, raid.start, raid.finish, server.status, and more. Narrow it to one player or world. Use it for “tell me when Steve logs in” or “wait until night is skipped”. Keep timeoutSeconds within what your client lets a tool run.",
+    scope: "read",
+    effect: "read",
+    input: {
+      types: z.array(z.string().min(1)).min(1).describe('Such as ["player.join"]'),
+      player: player.optional().describe("Only this player's events"),
+      world: z.string().optional().describe("Only this world's events"),
+      timeoutSeconds: z.number().int().min(1).max(300).default(60),
+    },
+    run: (args) =>
+      waitForEvent(
+        { url: ctx.url, token },
+        { types: args.types, player: args.player, world: args.world, timeoutMs: args.timeoutSeconds * 1000 },
       ),
   });
 

@@ -24,6 +24,81 @@ export interface StreamedEvent {
   data: Record<string, unknown>;
 }
 
+export interface EventWait {
+  types: string[];
+  player?: string | undefined;
+  world?: string | undefined;
+  timeoutMs: number;
+}
+
+export type WaitResult =
+  | { event: StreamedEvent; topic: string; skipped?: string[] }
+  | { timedOut: true; waitedSeconds: number; skipped?: string[] };
+
+/**
+ * Opens a WebSocket of its own, subscribes to [wait.types] (narrowed to a player or world on the
+ * server side), and settles with the first event, or with a timeout. Snapshots of state topics
+ * don't count: only something that happens after the call does.
+ */
+export function waitForEvent(config: Pick<Config, "url" | "token">, wait: EventWait): Promise<WaitResult> {
+  return new Promise<WaitResult>((resolve, reject) => {
+    const socket = new WebSocket(webSocketUrl(config.url));
+    let skipped: string[] | undefined;
+    let done = false;
+    const finish = (settle: () => void) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      socket.close();
+      settle();
+    };
+    const timer = setTimeout(
+      () =>
+        finish(() =>
+          resolve({ timedOut: true, waitedSeconds: Math.round(wait.timeoutMs / 1000), ...(skipped && { skipped }) }),
+        ),
+      wait.timeoutMs,
+    );
+    const subscribe = (available: string[]) => {
+      const topics = wait.types.filter((type) => available.includes(type));
+      const missing = wait.types.filter((type) => !available.includes(type));
+      if (missing.length > 0) skipped = missing;
+      if (topics.length === 0) {
+        finish(() =>
+          reject(
+            new Error(`None of ${wait.types.join(", ")} is open to this token; it may follow ${available.join(", ")}`),
+          ),
+        );
+        return;
+      }
+      const filter = wait.player || wait.world ? { player: wait.player, world: wait.world } : undefined;
+      socket.send(JSON.stringify({ op: "subscribe", topics, ...(filter && { filter }) }));
+    };
+    socket.addEventListener("message", (message) => {
+      const frame = JSON.parse(String(message.data)) as {
+        op: string;
+        topic?: string;
+        event?: StreamedEvent;
+        topics?: string[];
+        error?: { message?: string };
+      };
+      if (frame.op === "hello") {
+        if (config.token) socket.send(JSON.stringify({ op: "auth", token: config.token }));
+        else subscribe(frame.topics ?? []);
+      } else if (frame.op === "authenticated") {
+        subscribe(frame.topics ?? []);
+      } else if (frame.op === "event" && frame.event) {
+        const event = frame.event;
+        finish(() => resolve({ event, topic: frame.topic ?? event.type, ...(skipped && { skipped }) }));
+      } else if (frame.op === "error") {
+        finish(() => reject(new Error(frame.error?.message ?? "WorldAPI refused the subscription")));
+      }
+    });
+    socket.addEventListener("close", () => finish(() => reject(new Error("WorldAPI closed the connection"))));
+    socket.addEventListener("error", () => finish(() => reject(new Error("Can't reach WorldAPI's WebSocket"))));
+  });
+}
+
 /**
  * Keeps the latest events from WorldAPI's WebSocket in memory, reconnecting with backoff.
  * Topics the token may not see are skipped by the server, so the buffer only holds allowed ones.
