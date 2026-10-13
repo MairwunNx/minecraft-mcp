@@ -1,14 +1,37 @@
 {
   "name": "minecraft-mcp",
-  "version": "1.0.0",
+  "version": "0.0.0-dev",
+  "mcpName": "com.mairwunnx/minecraft-mcp",
   "description": "MCP server that lets AI agents read and manage a Minecraft server through WorldAPI",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "minecraft",
+    "minecraft-server",
+    "paper",
+    "papermc",
+    "worldapi",
+    "ai-agent",
+    "claude"
+  ],
+  "homepage": "https://github.com/MairwunNx/minecraft-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/MairwunNx/minecraft-mcp/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MairwunNx/minecraft-mcp.git"
+  },
+  "license": "MIT",
+  "author": "Pavel Erokhin (MairwunNx)",
   "type": "module",
-  "private": true,
   "bin": {
     "minecraft-mcp": "dist/index.js"
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "openapi"
   ],
   "engines": {
@@ -22,7 +45,8 @@
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "pack:mcpb": "node scripts/pack-mcpb.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
