@@ -4,10 +4,12 @@ import { createServer, type IncomingMessage } from "node:http";
 import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { createWorldApi } from "./client.js";
 import { configFromEnv } from "./config.js";
 import { EventFeed } from "./events.js";
 import { discoverScopes } from "./scopes.js";
-import { buildServer, VERSION } from "./server.js";
+import { buildServer } from "./server.js";
+import { checkWorldApi, VERSION } from "./version.js";
 
 const HELP = `minecraft-mcp ${VERSION}: an MCP server for a Minecraft server running WorldAPI
 
@@ -43,10 +45,15 @@ async function main(): Promise<void> {
   if (values.version) return void process.stdout.write(`${VERSION}\n`);
 
   const config = configFromEnv();
-  const scopes = await discoverScopes(config, log);
+  const [scopes, worldApiVersion] = await Promise.all([
+    discoverScopes(config, log),
+    checkWorldApi(createWorldApi(config), log),
+  ]);
   const feed = new EventFeed(config);
   feed.start();
-  log(`WorldAPI at ${config.url}; scopes: ${[...scopes].join(", ") || "none"}${config.readOnly ? "; read-only" : ""}`);
+  log(
+    `WorldAPI ${worldApiVersion ?? "(version unknown)"} at ${config.url}; scopes: ${[...scopes].join(", ") || "none"}${config.readOnly ? "; read-only" : ""}`,
+  );
 
   if (!values.http) {
     const { server, tools } = buildServer(config, scopes, feed);

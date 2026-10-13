@@ -13,8 +13,7 @@ import { scriptTools } from "./tools/scripts.js";
 import { serverTools } from "./tools/server.js";
 import { statsTools } from "./tools/stats.js";
 import { worldTools } from "./tools/worlds.js";
-
-export const VERSION = "1.0.0";
+import { VERSION } from "./version.js";
 
 export interface Built {
   server: McpServer;
