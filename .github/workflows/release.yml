@@ -92,6 +92,15 @@ jobs:
         run: gh release create "v$VERSION" --target "$GITHUB_SHA" --title "minecraft-mcp $VERSION" --notes-file "$NOTES" "build/minecraft-mcp-$VERSION.mcpb"
         env:
           GH_TOKEN: ${{ github.token }}
+      - name: Drop the Moonlands section from the npm README
+        if: inputs.npm
+        # npm shows the README from the package; the Moonlands invitation belongs on GitHub only.
+        shell: python
+        run: |
+          import re
+          text = open("README.md", encoding="utf-8").read()
+          text = re.sub(r"^## Try it live\n.*?(?=^## )", "", text, flags=re.M | re.S)
+          open("README.md", "w", encoding="utf-8").write(text)
       - name: Publish to npm
         if: inputs.npm
         # Without NPM_TOKEN, npm falls back to trusted publishing set up on npmjs.com.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+
+- The npm page no longer carries the Moonlands invitation; it stays on GitHub. Nothing else changed.
+
 ## 2.1.0
 
 - **Agents see what an item really is.** `get_player_inventory`, `get_block`, and `get_entity` now explain the item detail WorldAPI 2.1.0 sends: enchantments stored in books, attack damage and armor attributes, potion and tipped arrow effects, armor trims, dye colors, anvil repair cost, book titles, fireworks, and what’s inside shulker boxes and bundles. Ask “which of my swords hits hardest?” or “what’s in the shulker in my ender chest?” and get a real answer.
