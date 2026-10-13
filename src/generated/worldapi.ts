@@ -1392,6 +1392,13 @@ export interface components {
             legs?: components["schemas"]["ItemView"] | null;
             feet?: components["schemas"]["ItemView"] | null;
         };
+        AttributeModifierView: {
+            attribute: string;
+            amount: number;
+            operation: string;
+            slot: string;
+            id: string;
+        };
         BanRequest: {
             player: string;
             reason?: string | null;
@@ -1456,6 +1463,13 @@ export interface components {
             id: string;
             title: string;
             unit?: string | null;
+        };
+        BookView: {
+            title: string;
+            author: string;
+            generation: string;
+            /** Format: int32 */
+            pages: number;
         };
         Border: {
             size: number;
@@ -1688,6 +1702,18 @@ export interface components {
             /** Format: int32 */
             volume: number;
         };
+        FireworkExplosionView: {
+            shape: string;
+            colors: string[];
+            fadeColors?: string[] | null;
+            trail?: boolean | null;
+            twinkle?: boolean | null;
+        };
+        FireworkView: {
+            /** Format: int32 */
+            flight?: number | null;
+            explosions?: components["schemas"]["FireworkExplosionView"][];
+        };
         FoundBiome: {
             biome: string;
             /** Format: int32 */
@@ -1780,6 +1806,18 @@ export interface components {
             /** Format: int32 */
             customModelData?: number | null;
             rarity?: string | null;
+            storedEnchantments?: {
+                [key: string]: number;
+            } | null;
+            attributes?: components["schemas"]["AttributeModifierView"][] | null;
+            potion?: components["schemas"]["PotionView"] | null;
+            trim?: components["schemas"]["TrimView"] | null;
+            dyedColor?: string | null;
+            /** Format: int32 */
+            repairCost?: number | null;
+            book?: components["schemas"]["BookView"] | null;
+            firework?: components["schemas"]["FireworkView"] | null;
+            contents?: components["schemas"]["ItemView"][] | null;
             components: string;
         };
         KickRequest: {
@@ -2035,6 +2073,18 @@ export interface components {
             y: number;
             z: number;
         };
+        PotionEffectView: {
+            type: string;
+            /** Format: int32 */
+            amplifier: number;
+            /** Format: int32 */
+            duration: number;
+        };
+        PotionView: {
+            type?: string | null;
+            effects?: components["schemas"]["PotionEffectView"][];
+            color?: string | null;
+        };
         RecipeIngredient: {
             slot: string;
             options: string[];
@@ -2262,6 +2312,10 @@ export interface components {
             oneMinute: number;
             fiveMinutes: number;
             fifteenMinutes: number;
+        };
+        TrimView: {
+            material: string;
+            pattern: string;
         };
         Weather: {
             state: string;
