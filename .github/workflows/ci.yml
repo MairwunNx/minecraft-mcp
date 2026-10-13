@@ -2,7 +2,11 @@ name: CI
 
 on:
   push:
+    branches: [master]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   check:
@@ -18,3 +22,9 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Pack the Claude Desktop bundle
+        run: npm run pack:mcpb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: minecraft-mcp
+          path: build/*.mcpb

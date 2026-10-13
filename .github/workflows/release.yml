@@ -1,0 +1,108 @@
+name: Release
+
+# Run by hand: Actions → Release → Run workflow, with the new version.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version, like 2.0.0"
+        required: true
+      changelog:
+        description: "Changelog in Markdown; leave empty to take the version's section from CHANGELOG.md"
+        required: false
+      npm:
+        description: "Also publish to npm (needs the NPM_TOKEN secret or trusted publishing)"
+        type: boolean
+        default: false
+      registry:
+        description: "Also publish to the MCP Registry (needs npm and the MCP_REGISTRY_KEY secret)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  # npm provenance and trusted publishing sign with the workflow's identity.
+  id-token: write
+
+concurrency:
+  group: release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      CHANGELOG: ${{ inputs.changelog }}
+      # Outside the package files, which package.json lists, so npm never ships it.
+      NOTES: release-notes.md
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check the version
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || { echo "::error::$VERSION isn't a version like 2.0.0"; exit 1; }
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::v$VERSION is already released"; exit 1
+          fi
+          if [[ "${{ inputs.registry }}" == "true" && "${{ inputs.npm }}" != "true" ]] && ! npm view "minecraft-mcp@$VERSION" version >/dev/null 2>&1; then
+            echo "::error::The MCP Registry points at the npm package, so publish $VERSION to npm too"; exit 1
+          fi
+      - name: Write the release notes
+        shell: python
+        run: |
+          import os, re, sys
+          version, typed = os.environ["VERSION"], os.environ["CHANGELOG"].strip()
+          if typed:
+              notes = typed
+          else:
+              text = open("CHANGELOG.md", encoding="utf-8").read()
+              match = re.search(rf"^## {re.escape(version)}\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
+              notes = match.group(1).strip() if match else ""
+          if not notes:
+              sys.exit(f"::error::No changelog: add a “## {version}” section to CHANGELOG.md or fill the changelog field")
+          open(os.environ["NOTES"], "w", encoding="utf-8").write(notes + "\n")
+          print(notes)
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      # npm ci also runs prepare, which builds dist/.
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: Stamp the version
+        # The repository keeps 0.0.0-dev; the release input is the only place a version comes from.
+        # After the checks, which would flag json.dump formatting; the server reads its version at runtime.
+        shell: python
+        run: |
+          import json, os
+          version = os.environ["VERSION"]
+          for path in ("package.json", "manifest.json", "server.json"):
+              data = json.load(open(path, encoding="utf-8"))
+              data["version"] = version
+              for package in data.get("packages", []):
+                  package["version"] = version
+              with open(path, "w", encoding="utf-8") as file:
+                  json.dump(data, file, indent=2, ensure_ascii=False)
+                  file.write("\n")
+      - name: Pack the Claude Desktop bundle
+        run: npm run pack:mcpb
+      - name: Publish the GitHub release
+        run: gh release create "v$VERSION" --target "$GITHUB_SHA" --title "minecraft-mcp $VERSION" --notes-file "$NOTES" "build/minecraft-mcp-$VERSION.mcpb"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Publish to npm
+        if: inputs.npm
+        # Without NPM_TOKEN, npm falls back to trusted publishing set up on npmjs.com.
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to the MCP Registry
+        if: inputs.registry
+        run: |
+          curl -sL https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz | tar xz mcp-publisher
+          ./mcp-publisher login dns --domain mairwunnx.com --private-key "$MCP_REGISTRY_KEY"
+          ./mcp-publisher publish
+        env:
+          MCP_REGISTRY_KEY: ${{ secrets.MCP_REGISTRY_KEY }}
