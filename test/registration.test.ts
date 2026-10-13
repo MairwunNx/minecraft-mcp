@@ -73,6 +73,31 @@ describe("tools follow the token's scopes", () => {
       "worldapi://events/recent",
     ]);
     const { prompts } = await client.listPrompts();
-    expect(prompts.map((prompt) => prompt.name)).toEqual(["player_whereabouts", "server_health_check"]);
+    expect(prompts.map((prompt) => prompt.name)).toEqual([
+      "player_whereabouts",
+      "server_health_check",
+      "investigate_lag",
+      "new_player_guide",
+      "investigate_grief",
+    ]);
+    const lag = await client.getPrompt({ name: "investigate_lag", arguments: {} });
+    expect(JSON.stringify(lag.messages)).toContain("sort entities");
+  });
+
+  it("prompts and instructions only name tools that exist", async () => {
+    const { client, tools } = await connect(api.url, ["admin", "code"], { player: "Steve" });
+    const texts = [client.getInstructions() ?? ""];
+    for (const prompt of (await client.listPrompts()).prompts) {
+      const result = await client.getPrompt({
+        name: prompt.name,
+        arguments: { player: "Steve", where: "world 0 64 0" },
+      });
+      texts.push(JSON.stringify(result.messages));
+    }
+    for (const tool of (await client.listTools()).tools) texts.push(tool.description ?? "");
+    const named = new Set(
+      texts.join(" ").match(/\b(?:get|list|set|find|wait|remove|send|edit|manage|run|locate)_[a-z_]+\b/g),
+    );
+    expect([...named].filter((name) => !tools.includes(name))).toEqual([]);
   });
 });
