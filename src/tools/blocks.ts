@@ -58,14 +58,19 @@ export function blockTools(ctx: Context): void {
     name: "list_chunks",
     title: "Loaded chunks",
     description:
-      "Loaded chunks with entity counts. A chunk is 16×16 blocks; chunk X is block X divided by 16, rounded down.",
+      "Loaded chunks with entity and block entity counts. sort `entities` or `tileEntities` puts the busiest first, which is where lag usually sits. A chunk is 16×16 blocks; chunk X is block X divided by 16, rounded down.",
     scope: "read",
     effect: "read",
-    input: { world, limit, cursor },
+    input: {
+      world,
+      sort: z.enum(["coords", "entities", "tileEntities"]).optional().describe("`coords` by default"),
+      limit,
+      cursor,
+    },
     run: (args) =>
       unwrap(
         api.GET("/worlds/{world}/chunks", {
-          params: { path: { world: args.world }, query: { limit: args.limit, cursor: args.cursor } },
+          params: { path: { world: args.world }, query: { sort: args.sort, limit: args.limit, cursor: args.cursor } },
         }),
         token,
       ),

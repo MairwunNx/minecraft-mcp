@@ -219,6 +219,21 @@ describe("requests reach WorldAPI in its shape", () => {
     expect((await client.callTool({ name: "get_recipes", arguments: {} })).isError).toBe(true);
   });
 
+  it("removes one entity by uuid or many by type", async () => {
+    const { client } = await connect(api.url, ["admin"]);
+    await client.callTool({
+      name: "remove_entity",
+      arguments: { types: ["minecraft:item", "minecraft:arrow"], x: 0, y: 64, z: 0, radius: 20, dryRun: true },
+    });
+    expect(api.seen[0]).toMatchObject({
+      method: "DELETE",
+      url: "/api/v1/worlds/world/entities?type=minecraft%3Aitem%2Cminecraft%3Aarrow&x=0&y=64&z=0&radius=20&dryRun=true",
+    });
+    expect((await client.callTool({ name: "remove_entity", arguments: {} })).isError).toBe(true);
+    await client.callTool({ name: "list_chunks", arguments: { sort: "entities", limit: 5 } });
+    expect(api.seen[1]?.url).toBe("/api/v1/worlds/world/chunks?sort=entities&limit=5");
+  });
+
   it("turns a 204 into done", async () => {
     api.reply = () => ({ status: 204 });
     const { client } = await connect(api.url, ["admin"]);

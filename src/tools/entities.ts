@@ -116,12 +116,57 @@ export function entityTools(ctx: Context): void {
 
   tool(ctx, {
     name: "remove_entity",
-    title: "Remove an entity",
-    description: "Remove an entity from the world without drops. Players can't be removed.",
+    title: "Remove entities",
+    description:
+      "Remove entities without drops: one by uuid, or many by types, such as dropped items, arrows, or a mob farm's overflow, optionally within a radius of x, y, z. Many at once never touches players, skips named mobs and tamed pets unless includeNamed is true, takes the nearest first up to max, and dryRun only counts. Try dryRun first and tell the user what would go.",
     scope: "write:world",
     effect: "destructive",
-    input: { world, uuid: z.string() },
-    run: (args) => unwrap(api.DELETE("/worlds/{world}/entities/{uuid}", one(args)), token),
+    input: {
+      world,
+      uuid: z.string().optional().describe("One entity"),
+      types: z
+        .array(z.string().min(1))
+        .optional()
+        .describe('Entity keys, such as ["minecraft:item", "minecraft:arrow"]'),
+      x: z.number().optional(),
+      y: z.number().optional(),
+      z: z.number().optional(),
+      radius: z.number().positive().optional().describe("Blocks around x, y, z"),
+      max: z
+        .number()
+        .int()
+        .min(1)
+        .optional()
+        .describe("Remove at most this many; the server caps it (1000 by default)"),
+      includeNamed: z.boolean().optional().describe("Also remove named mobs and tamed pets"),
+      dryRun: z.boolean().optional().describe("Only count what would be removed"),
+    },
+    run: (args) => {
+      if (args.uuid)
+        return unwrap(
+          api.DELETE("/worlds/{world}/entities/{uuid}", one({ world: args.world, uuid: args.uuid })),
+          token,
+        );
+      if (!args.types?.length) throw new Error("Give uuid, or types for many at once");
+      return unwrap(
+        api.DELETE("/worlds/{world}/entities", {
+          params: {
+            path: { world: args.world },
+            query: {
+              type: args.types.join(","),
+              x: args.x,
+              y: args.y,
+              z: args.z,
+              radius: args.radius,
+              max: args.max,
+              includeNamed: args.includeNamed,
+              dryRun: args.dryRun,
+            },
+          },
+        }),
+        token,
+      );
+    },
   });
 
   tool(ctx, {
