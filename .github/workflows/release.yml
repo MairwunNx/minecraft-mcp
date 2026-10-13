@@ -101,6 +101,11 @@ jobs:
       - name: Publish to the MCP Registry
         if: inputs.registry
         run: |
+          # The registry checks the npm package, which npm serves a minute or two after publishing.
+          for attempt in $(seq 1 30); do
+            npm view "@mairwunnx/minecraft-mcp@$VERSION" version >/dev/null 2>&1 && break
+            sleep 10
+          done
           curl -sL https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz | tar xz mcp-publisher
           ./mcp-publisher login dns --domain mairwunnx.com --private-key "$MCP_REGISTRY_KEY"
           ./mcp-publisher publish
