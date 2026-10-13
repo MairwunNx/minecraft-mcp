@@ -53,24 +53,27 @@ export function scriptTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_java_script",
-    title: "Script",
-    description: "One resident script with its source.",
-    scope: "code",
-    effect: "read",
-    input: { id: z.string() },
-    run: (args) => unwrap(api.GET("/scripts/{id}", { params: { path: { id: args.id } } }), token),
-  });
-
-  tool(ctx, {
-    name: "get_java_script_logs",
     untrusted: true,
-    title: "Script log",
-    description: "The latest lines a script wrote with ctx.log, plus errors from its handlers and tasks.",
+    title: "Script and its log",
+    description:
+      "One resident script with its source, plus the latest lines it wrote with ctx.log and errors from its handlers and tasks. logs false leaves the log out.",
     scope: "code",
     effect: "read",
-    input: { id: z.string(), limit: z.number().int().min(1).max(10000).optional() },
-    run: (args) =>
-      unwrap(api.GET("/scripts/{id}/logs", { params: { path: { id: args.id }, query: { limit: args.limit } } }), token),
+    input: {
+      id: z.string(),
+      logs: z.boolean().default(true),
+      limit: z.number().int().min(1).max(10000).optional().describe("Log lines to return"),
+    },
+    run: async (args) => {
+      const path = { id: args.id };
+      const [script, logs] = await Promise.all([
+        unwrap(api.GET("/scripts/{id}", { params: { path } }), token),
+        args.logs
+          ? unwrap(api.GET("/scripts/{id}/logs", { params: { path, query: { limit: args.limit } } }), token)
+          : undefined,
+      ]);
+      return logs ? { script, logs } : { script };
+    },
   });
 
   tool(ctx, {
