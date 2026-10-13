@@ -12,7 +12,7 @@
   "packages": [
     {
       "registryType": "npm",
-      "identifier": "minecraft-mcp",
+      "identifier": "@mairwunnx/minecraft-mcp",
       "version": "0.0.0-dev",
       "transport": {
         "type": "stdio"

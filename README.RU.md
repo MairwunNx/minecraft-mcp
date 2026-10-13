@@ -29,7 +29,7 @@
 Moonlands — мой хардкорный сервер с друзьями — работает на WorldAPI и открыт для чтения всем. Направьте агента туда без токена и спросите о настоящем сервере:
 
 ```sh
-claude mcp add moonlands -e WORLDAPI_URL=https://minecraft.mairwunnx.com/worldapi/api/v1 -- npx -y minecraft-mcp
+claude mcp add moonlands -e WORLDAPI_URL=https://minecraft.mairwunnx.com/worldapi/api/v1 -- npx -y @mairwunnx/minecraft-mcp
 ```
 
 [![Играйте на Moonlands: чистая ваниль, сложные мобы, ИИ, приваты. ru.minecraft.mairwunnx.com](https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/og-adv-image.ru.png)](https://minecraft.mairwunnx.com)
@@ -50,7 +50,7 @@ claude mcp add moonlands -e WORLDAPI_URL=https://minecraft.mairwunnx.com/worldap
 claude mcp add minecraft \
   -e WORLDAPI_URL=https://your-server.example.com/worldapi/api/v1 \
   -e WORLDAPI_TOKEN=your-token \
-  -- npx -y minecraft-mcp
+  -- npx -y @mairwunnx/minecraft-mcp
 ```
 
 Наберите `/mcp` в Claude Code, чтобы увидеть инструменты.
@@ -64,7 +64,7 @@ claude mcp add minecraft \
   "mcpServers": {
     "minecraft": {
       "command": "npx",
-      "args": ["-y", "minecraft-mcp"],
+      "args": ["-y", "@mairwunnx/minecraft-mcp"],
       "env": {
         "WORLDAPI_URL": "http://localhost:8110/api/v1",
         "WORLDAPI_TOKEN": "your-token"
@@ -80,7 +80,7 @@ claude mcp add minecraft \
 
 ```sh
 MCP_HTTP_TOKEN=a-long-random-secret WORLDAPI_URL=... WORLDAPI_TOKEN=... \
-  npx -y minecraft-mcp --http --host 0.0.0.0 --port 3333
+  npx -y @mairwunnx/minecraft-mcp --http --host 0.0.0.0 --port 3333
 ```
 
 Клиенты подключаются к `http://host:3333/mcp` и передают `Authorization: Bearer <MCP_HTTP_TOKEN>`. Без этого токена сервер слушает только `localhost`.

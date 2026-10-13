@@ -43,7 +43,7 @@ jobs:
           if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
             echo "::error::v$VERSION is already released"; exit 1
           fi
-          if [[ "${{ inputs.registry }}" == "true" && "${{ inputs.npm }}" != "true" ]] && ! npm view "minecraft-mcp@$VERSION" version >/dev/null 2>&1; then
+          if [[ "${{ inputs.registry }}" == "true" && "${{ inputs.npm }}" != "true" ]] && ! npm view "@mairwunnx/minecraft-mcp@$VERSION" version >/dev/null 2>&1; then
             echo "::error::The MCP Registry points at the npm package, so publish $VERSION to npm too"; exit 1
           fi
       - name: Write the release notes

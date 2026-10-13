@@ -2,7 +2,7 @@
 
 ## 2.0.0
 
-minecraft-mcp goes public: MIT-licensed, on npm as `minecraft-mcp`, in the MCP Registry as `com.mairwunnx/minecraft-mcp`, and as a one-click bundle for Claude Desktop. It needs WorldAPI 2.0.0 and warns at start when the plugin is older.
+minecraft-mcp goes public: MIT-licensed, on npm as `@mairwunnx/minecraft-mcp`, in the MCP Registry as `com.mairwunnx/minecraft-mcp`, and as a one-click bundle for Claude Desktop. It needs WorldAPI 2.0.0 and warns at start when the plugin is older.
 
 - **Fewer, broader tools: 59 instead of 78.** Related actions share one tool, so agents pick faster:
   - `set_world` replaces `set_time`, `set_weather`, `set_difficulty`, `set_pvp`, and `set_world_spawn`.

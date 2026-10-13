@@ -29,7 +29,7 @@ It talks to [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi), a Paper
 Moonlands, my hard survival server with friends, runs WorldAPI and lets anyone read it. Point the agent there without a token and ask about a real server:
 
 ```sh
-claude mcp add moonlands -e WORLDAPI_URL=https://minecraft.mairwunnx.com/worldapi/api/v1 -- npx -y minecraft-mcp
+claude mcp add moonlands -e WORLDAPI_URL=https://minecraft.mairwunnx.com/worldapi/api/v1 -- npx -y @mairwunnx/minecraft-mcp
 ```
 
 [![Play on Moonlands: pure vanilla, hard mobs, AI, claims. minecraft.mairwunnx.com](https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/og-adv-image.png)](https://minecraft.mairwunnx.com)
@@ -50,7 +50,7 @@ Download `minecraft-mcp-<version>.mcpb` from [Releases](https://github.com/Mairw
 claude mcp add minecraft \
   -e WORLDAPI_URL=https://your-server.example.com/worldapi/api/v1 \
   -e WORLDAPI_TOKEN=your-token \
-  -- npx -y minecraft-mcp
+  -- npx -y @mairwunnx/minecraft-mcp
 ```
 
 Run `/mcp` in Claude Code to see the tools.
@@ -64,7 +64,7 @@ Any client that starts a server over stdio takes the same block:
   "mcpServers": {
     "minecraft": {
       "command": "npx",
-      "args": ["-y", "minecraft-mcp"],
+      "args": ["-y", "@mairwunnx/minecraft-mcp"],
       "env": {
         "WORLDAPI_URL": "http://localhost:8110/api/v1",
         "WORLDAPI_TOKEN": "your-token"
@@ -80,7 +80,7 @@ For agents on another machine:
 
 ```sh
 MCP_HTTP_TOKEN=a-long-random-secret WORLDAPI_URL=... WORLDAPI_TOKEN=... \
-  npx -y minecraft-mcp --http --host 0.0.0.0 --port 3333
+  npx -y @mairwunnx/minecraft-mcp --http --host 0.0.0.0 --port 3333
 ```
 
 Clients connect to `http://host:3333/mcp` and send `Authorization: Bearer <MCP_HTTP_TOKEN>`. Without that token, the server listens only on `localhost`.
