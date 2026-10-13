@@ -50,23 +50,15 @@ export function playerTools(ctx: Context): void {
   tool(ctx, {
     name: "get_player_inventory",
     untrusted: true,
-    title: "Inventory",
-    description: `Main inventory, armor, and offhand with full item data. ${SLOT_LAYOUT} ${OFFLINE_NOTE}`,
+    title: "Inventory or ender chest",
+    description: `Main inventory, armor, and offhand with full item data, or the ender chest. ${SLOT_LAYOUT} ${OFFLINE_NOTE}`,
     scope: "read",
     effect: "read",
-    input: { player },
-    run: (args) => unwrap(api.GET("/players/{player}/inventory", who(args.player)), token),
-  });
-
-  tool(ctx, {
-    name: "get_player_enderchest",
-    untrusted: true,
-    title: "Ender chest",
-    description: `Ender chest contents. ${OFFLINE_NOTE}`,
-    scope: "read",
-    effect: "read",
-    input: { player },
-    run: (args) => unwrap(api.GET("/players/{player}/enderchest", who(args.player)), token),
+    input: { player, container },
+    run: (args) =>
+      args.container === "enderchest"
+        ? unwrap(api.GET("/players/{player}/enderchest", who(args.player)), token)
+        : unwrap(api.GET("/players/{player}/inventory", who(args.player)), token),
   });
 
   tool(ctx, {
@@ -239,16 +231,39 @@ export function playerTools(ctx: Context): void {
   });
 
   tool(ctx, {
-    name: "set_inventory_slot",
-    title: "Set a slot",
-    description: `Put an item in one slot, replacing what was there. ${SLOT_LAYOUT} ${OFFLINE_NOTE}`,
+    name: "edit_inventory",
+    title: "Edit an inventory",
+    description: `Change a player's inventory or ender chest: \`set\` puts an item in a slot, replacing what was there; \`clear_slot\` empties one slot; \`clear\` empties everything, armor and offhand included. Cleared items are gone. To add items without picking a slot, use give_item. ${SLOT_LAYOUT} ${OFFLINE_NOTE}`,
     scope: "write:players",
-    effect: "idempotent",
-    input: { player, slot: z.number().int().min(0), item, container },
+    effect: "destructive",
+    input: {
+      player,
+      action: z.enum(["set", "clear_slot", "clear"]),
+      slot: z.number().int().min(0).optional().describe("For set and clear_slot"),
+      item: item.optional().describe("For set"),
+      container,
+    },
     run: (args) => {
+      const ender = args.container === "enderchest";
+      if (args.action === "clear")
+        return unwrap(
+          ender
+            ? api.DELETE("/players/{player}/enderchest", who(args.player))
+            : api.DELETE("/players/{player}/inventory", who(args.player)),
+          token,
+        );
+      if (args.slot === undefined) throw new Error(`${args.action} needs slot`);
       const params = { params: { path: { player: args.player, slot: args.slot } } };
+      if (args.action === "clear_slot")
+        return unwrap(
+          ender
+            ? api.DELETE("/players/{player}/enderchest/slots/{slot}", params)
+            : api.DELETE("/players/{player}/inventory/slots/{slot}", params),
+          token,
+        );
+      if (!args.item) throw new Error("set needs item");
       return unwrap(
-        args.container === "enderchest"
+        ender
           ? api.PATCH("/players/{player}/enderchest/slots/{slot}", { ...params, body: args.item })
           : api.PATCH("/players/{player}/inventory/slots/{slot}", { ...params, body: args.item }),
         token,
@@ -256,116 +271,59 @@ export function playerTools(ctx: Context): void {
     },
   });
 
-  tool(ctx, {
-    name: "clear_inventory_slot",
-    title: "Empty a slot",
-    description: `Empty one slot. ${SLOT_LAYOUT} ${OFFLINE_NOTE}`,
-    scope: "write:players",
-    effect: "destructive",
-    input: { player, slot: z.number().int().min(0), container },
-    run: (args) => {
-      const params = { params: { path: { player: args.player, slot: args.slot } } };
-      return unwrap(
-        args.container === "enderchest"
-          ? api.DELETE("/players/{player}/enderchest/slots/{slot}", params)
-          : api.DELETE("/players/{player}/inventory/slots/{slot}", params),
-        token,
-      );
-    },
+  const effect = z.object({
+    type: z.string().min(1).describe("Such as `minecraft:speed`"),
+    durationSeconds: z.number().int().positive().optional().describe("Leave out for an infinite effect"),
+    amplifier: z.number().int().min(0).max(255).default(0).describe("0 is level I"),
+    ambient: z.boolean().default(false),
+    particles: z.boolean().default(true),
+    icon: z.boolean().default(true),
   });
 
   tool(ctx, {
-    name: "clear_inventory",
-    title: "Empty an inventory",
-    description: `Empty a player's whole inventory, armor and offhand included, or their ender chest. The items are gone. ${OFFLINE_NOTE}`,
-    scope: "write:players",
-    effect: "destructive",
-    input: { player, container },
-    run: (args) =>
-      unwrap(
-        args.container === "enderchest"
-          ? api.DELETE("/players/{player}/enderchest", who(args.player))
-          : api.DELETE("/players/{player}/inventory", who(args.player)),
-        token,
-      ),
-  });
-
-  tool(ctx, {
-    name: "add_effect",
-    title: "Give an effect",
-    description: `Give a potion effect such as \`minecraft:speed\`. Amplifier 0 is level I; leave out durationSeconds for an infinite effect. ${OFFLINE_NOTE}`,
+    name: "set_effects",
+    title: "Change potion effects",
+    description: `Give, take away, or clear a player's potion effects, in that order: clear first, then remove, then add. Answers with the effects the player has afterwards. ${OFFLINE_NOTE}`,
     scope: "write:players",
     effect: "write",
     input: {
       player,
-      type: z.string().min(1),
-      durationSeconds: z.number().int().positive().optional(),
-      amplifier: z.number().int().min(0).max(255).default(0),
-      ambient: z.boolean().default(false),
-      particles: z.boolean().default(true),
-      icon: z.boolean().default(true),
+      add: z.array(effect).optional(),
+      remove: z.array(z.string().min(1)).optional().describe("Effect keys to take away"),
+      clear: z.boolean().optional().describe("Take away every effect first"),
     },
-    run: ({ player: name, ...body }) => unwrap(api.POST("/players/{player}/effects", { ...who(name), body }), token),
+    run: async (args) => {
+      if (args.clear) await unwrap(api.DELETE("/players/{player}/effects", who(args.player)), token);
+      for (const type of args.remove ?? [])
+        await unwrap(
+          api.DELETE("/players/{player}/effects/{effect}", { params: { path: { player: args.player, effect: type } } }),
+          token,
+        );
+      for (const body of args.add ?? [])
+        await unwrap(api.POST("/players/{player}/effects", { ...who(args.player), body }), token);
+      return unwrap(api.GET("/players/{player}/effects", who(args.player)), token);
+    },
   });
 
   tool(ctx, {
-    name: "remove_effect",
-    title: "Remove an effect",
-    description: `Remove one potion effect. ${OFFLINE_NOTE}`,
+    name: "set_advancement",
+    title: "Grant or revoke an advancement",
+    description: `Complete every criterion of an advancement for a player (done true), or take them all back (done false). ${OFFLINE_NOTE}`,
     scope: "write:players",
     effect: "idempotent",
-    input: { player, type: z.string().min(1) },
-    run: (args) =>
-      unwrap(
-        api.DELETE("/players/{player}/effects/{effect}", {
-          params: { path: { player: args.player, effect: args.type } },
-        }),
+    input: {
+      player,
+      key: z.string().min(1).describe("Advancement key, such as `minecraft:story/mine_diamond`"),
+      done: z.boolean(),
+    },
+    run: (args) => {
+      const params = { params: { path: { player: args.player, key: args.key } } };
+      return unwrap(
+        args.done
+          ? api.POST("/players/{player}/advancements/{key}", { ...params, body: {} })
+          : api.DELETE("/players/{player}/advancements/{key}", params),
         token,
-      ),
-  });
-
-  tool(ctx, {
-    name: "clear_effects",
-    title: "Remove all effects",
-    description: `Remove every potion effect. ${OFFLINE_NOTE}`,
-    scope: "write:players",
-    effect: "idempotent",
-    input: { player },
-    run: (args) => unwrap(api.DELETE("/players/{player}/effects", who(args.player)), token),
-  });
-
-  const advancement = z.string().min(1).describe("Advancement key, such as `minecraft:story/mine_diamond`");
-
-  tool(ctx, {
-    name: "grant_advancement",
-    title: "Grant an advancement",
-    description: `Complete every criterion of an advancement for a player. ${OFFLINE_NOTE}`,
-    scope: "write:players",
-    effect: "idempotent",
-    input: { player, key: advancement },
-    run: (args) =>
-      unwrap(
-        api.POST("/players/{player}/advancements/{key}", {
-          params: { path: { player: args.player, key: args.key } },
-          body: {},
-        }),
-        token,
-      ),
-  });
-
-  tool(ctx, {
-    name: "revoke_advancement",
-    title: "Revoke an advancement",
-    description: `Take back every criterion of an advancement. ${OFFLINE_NOTE}`,
-    scope: "write:players",
-    effect: "idempotent",
-    input: { player, key: advancement },
-    run: (args) =>
-      unwrap(
-        api.DELETE("/players/{player}/advancements/{key}", {
-          params: { path: { player: args.player, key: args.key } },
-        }),
-        token,
-      ),
+      );
+    },
   });
 }

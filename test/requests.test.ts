@@ -45,8 +45,8 @@ describe("requests reach WorldAPI in its shape", () => {
       body: { item: { type: "minecraft:bread", amount: 16 } },
     });
     await client.callTool({
-      name: "grant_advancement",
-      arguments: { player: "Steve", key: "minecraft:story/mine_diamond" },
+      name: "set_advancement",
+      arguments: { player: "Steve", key: "minecraft:story/mine_diamond", done: true },
     });
     expect(api.seen[2]?.url).toBe("/api/v1/players/Steve/advancements/minecraft%3Astory%2Fmine_diamond");
     await client.callTool({
@@ -128,6 +128,48 @@ describe("requests reach WorldAPI in its shape", () => {
     const missing = await client.callTool({ name: "world_effect", arguments: { kind: "sound", location } });
     expect(missing.isError).toBe(true);
     expect(api.seen).toHaveLength(2);
+  });
+
+  it("applies effect changes in order and answers with what's left", async () => {
+    const { client } = await connect(api.url, ["admin"]);
+    await client.callTool({
+      name: "set_effects",
+      arguments: { player: "Steve", clear: true, remove: ["minecraft:poison"], add: [{ type: "minecraft:speed" }] },
+    });
+    expect(api.seen.map((seen) => `${seen.method} ${seen.url}`)).toEqual([
+      "DELETE /api/v1/players/Steve/effects",
+      "DELETE /api/v1/players/Steve/effects/minecraft%3Apoison",
+      "POST /api/v1/players/Steve/effects",
+      "GET /api/v1/players/Steve/effects",
+    ]);
+    expect(api.seen[2]?.body).toEqual({
+      type: "minecraft:speed",
+      amplifier: 0,
+      ambient: false,
+      particles: true,
+      icon: true,
+    });
+  });
+
+  it("edits one slot or a whole inventory", async () => {
+    const { client } = await connect(api.url, ["admin"]);
+    await client.callTool({
+      name: "edit_inventory",
+      arguments: { player: "Steve", action: "set", slot: 0, item: { type: "minecraft:torch", amount: 4 } },
+    });
+    await client.callTool({
+      name: "edit_inventory",
+      arguments: { player: "Steve", action: "clear", container: "enderchest" },
+    });
+    expect(api.seen.map((seen) => `${seen.method} ${seen.url}`)).toEqual([
+      "PATCH /api/v1/players/Steve/inventory/slots/0",
+      "DELETE /api/v1/players/Steve/enderchest",
+    ]);
+    const missing = await client.callTool({
+      name: "edit_inventory",
+      arguments: { player: "Steve", action: "clear_slot" },
+    });
+    expect(missing.isError).toBe(true);
   });
 
   it("turns a 204 into done", async () => {
