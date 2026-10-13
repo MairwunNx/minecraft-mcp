@@ -10,22 +10,17 @@ export function serverTools(ctx: Context): void {
     name: "get_server_status",
     title: "Server status",
     description:
-      "Version, Paper build, MOTD, players online and max, uptime, difficulty, view distance, worlds, tick rate, and current load: TPS over 1, 5, and 15 minutes (20 is perfect), milliseconds per tick, memory used and max in MB, loaded chunks, and entities. For percentiles, CPU, and per-world numbers, use get_performance.",
+      "Version, Paper build, MOTD, players online and max, uptime, difficulty, view distance, worlds, tick rate, and current load: TPS over 1, 5, and 15 minutes (20 is perfect), milliseconds per tick, memory used and max in MB, loaded chunks, and entities. detail adds tick time percentiles (under 50 ms keeps 20 TPS), CPU, and chunks, entities, and the most common entity types per world.",
     scope: "read",
     effect: "read",
-    input: {},
-    run: () => unwrap(api.GET("/server"), token),
-  });
-
-  tool(ctx, {
-    name: "get_performance",
-    title: "Server performance",
-    description:
-      "TPS over 1, 5, and 15 minutes (20 is perfect), milliseconds per tick with percentiles (under 50 keeps 20 TPS), memory, CPU load, and loaded chunks and entities per world.",
-    scope: "read",
-    effect: "read",
-    input: {},
-    run: () => unwrap(api.GET("/server/performance"), token),
+    input: { detail: z.boolean().optional().describe("Add percentiles, CPU, and per-world load") },
+    run: async (args) => {
+      const [status, performance] = await Promise.all([
+        unwrap(api.GET("/server"), token),
+        args.detail ? unwrap(api.GET("/server/performance"), token) : undefined,
+      ]);
+      return performance ? { ...status, performance } : status;
+    },
   });
 
   tool(ctx, {
@@ -112,13 +107,21 @@ export function serverTools(ctx: Context): void {
   });
 
   tool(ctx, {
-    name: "get_whitelist",
-    title: "Whitelist",
-    description: "Whether the whitelist is on and enforced, and who is on it.",
+    name: "get_access",
+    title: "Whitelist, operators, and bans",
+    description:
+      "Who may play and who runs the server: whether the whitelist is on and enforced and who is on it, the operators, and banned players and IP addresses with reasons and expiry.",
     scope: "admin",
     effect: "read",
     input: {},
-    run: () => unwrap(api.GET("/server/whitelist"), token),
+    run: async () => {
+      const [whitelist, operators, bans] = await Promise.all([
+        unwrap(api.GET("/server/whitelist"), token),
+        unwrap(api.GET("/server/ops"), token),
+        unwrap(api.GET("/server/bans"), token),
+      ]);
+      return { whitelist, operators, bans };
+    },
   });
 
   tool(ctx, {
@@ -141,16 +144,6 @@ export function serverTools(ctx: Context): void {
   });
 
   tool(ctx, {
-    name: "get_operators",
-    title: "Operators",
-    description: "Players with operator rights.",
-    scope: "admin",
-    effect: "read",
-    input: {},
-    run: () => unwrap(api.GET("/server/ops"), token),
-  });
-
-  tool(ctx, {
     name: "set_operator",
     title: "Grant or revoke operator",
     description: "Make a player an operator, or take it away.",
@@ -166,58 +159,35 @@ export function serverTools(ctx: Context): void {
       ),
   });
 
-  tool(ctx, {
-    name: "get_bans",
-    title: "Bans",
-    description: "Banned players and IP addresses with reasons and expiry.",
-    scope: "admin",
-    effect: "read",
-    input: {},
-    run: () => unwrap(api.GET("/server/bans"), token),
+  const ban = z.object({
+    reason: z.string().optional(),
+    durationSeconds: z.number().int().positive().optional().describe("Leave out for a permanent ban"),
   });
 
   tool(ctx, {
-    name: "ban_player",
-    title: "Ban a player",
+    name: "manage_bans",
+    title: "Ban or pardon",
     description:
-      "Ban a player by name or UUID; an online player gets kicked. Leave out durationSeconds for a permanent ban.",
+      "Ban players by name or UUID, or IP addresses; anyone online who is banned gets kicked. Pardon lifts a ban. Give any of the four lists in one call.",
     scope: "admin",
     effect: "destructive",
-    input: { player, reason: z.string().optional(), durationSeconds: z.number().int().positive().optional() },
+    input: {
+      ban: z.array(ban.extend({ player: z.string().min(1) })).optional(),
+      pardon: z.array(z.string().min(1)).optional().describe("Player names or UUIDs"),
+      banIps: z.array(ban.extend({ ip: z.string().min(1) })).optional(),
+      pardonIps: z.array(z.string().min(1)).optional(),
+    },
     run: (args) =>
-      unwrap(api.PATCH("/server/bans", { body: { ban: [args], pardon: [], banIps: [], pardonIps: [] } }), token),
-  });
-
-  tool(ctx, {
-    name: "pardon_player",
-    title: "Pardon a player",
-    description: "Lift a player's ban.",
-    scope: "admin",
-    effect: "idempotent",
-    input: { player },
-    run: (args) =>
-      unwrap(api.PATCH("/server/bans", { body: { ban: [], pardon: [args.player], banIps: [], pardonIps: [] } }), token),
-  });
-
-  tool(ctx, {
-    name: "ban_ip",
-    title: "Ban an IP address",
-    description: "Ban an IP address; players connected from it get kicked.",
-    scope: "admin",
-    effect: "destructive",
-    input: { ip: z.string(), reason: z.string().optional(), durationSeconds: z.number().int().positive().optional() },
-    run: (args) =>
-      unwrap(api.PATCH("/server/bans", { body: { ban: [], pardon: [], banIps: [args], pardonIps: [] } }), token),
-  });
-
-  tool(ctx, {
-    name: "pardon_ip",
-    title: "Pardon an IP address",
-    description: "Lift an IP ban.",
-    scope: "admin",
-    effect: "idempotent",
-    input: { ip: z.string() },
-    run: (args) =>
-      unwrap(api.PATCH("/server/bans", { body: { ban: [], pardon: [], banIps: [], pardonIps: [args.ip] } }), token),
+      unwrap(
+        api.PATCH("/server/bans", {
+          body: {
+            ban: args.ban ?? [],
+            pardon: args.pardon ?? [],
+            banIps: args.banIps ?? [],
+            pardonIps: args.pardonIps ?? [],
+          },
+        }),
+        token,
+      ),
   });
 }

@@ -50,14 +50,14 @@ describe("requests reach WorldAPI in its shape", () => {
     });
     expect(api.seen[2]?.url).toBe("/api/v1/players/Steve/advancements/minecraft%3Astory%2Fmine_diamond");
     await client.callTool({
-      name: "ban_player",
-      arguments: { player: "Griefer", reason: "lava", durationSeconds: 3600 },
+      name: "manage_bans",
+      arguments: { ban: [{ player: "Griefer", reason: "lava", durationSeconds: 3600 }], pardonIps: ["10.0.0.1"] },
     });
     expect(api.seen[3]?.body).toEqual({
       ban: [{ player: "Griefer", reason: "lava", durationSeconds: 3600 }],
       pardon: [],
       banIps: [],
-      pardonIps: [],
+      pardonIps: ["10.0.0.1"],
     });
   });
 
@@ -93,6 +93,23 @@ describe("requests reach WorldAPI in its shape", () => {
       "/api/v1/worlds/world/stats",
     ]);
     expect(JSON.parse(text(result))).toMatchObject({ ok: true, gameRuleDetails: { ok: true }, size: { ok: true } });
+  });
+
+  it("reads the whole access list in one call", async () => {
+    const { client } = await connect(api.url, ["admin"]);
+    const result = await client.callTool({ name: "get_access", arguments: {} });
+    expect(api.seen.map((seen) => seen.url).sort()).toEqual([
+      "/api/v1/server/bans",
+      "/api/v1/server/ops",
+      "/api/v1/server/whitelist",
+    ]);
+    expect(Object.keys(JSON.parse(text(result)))).toEqual(["whitelist", "operators", "bans"]);
+  });
+
+  it("adds performance to the status only with detail", async () => {
+    const { client } = await connect(api.url, ["read"]);
+    await client.callTool({ name: "get_server_status", arguments: { detail: true } });
+    expect(api.seen.map((seen) => seen.url).sort()).toEqual(["/api/v1/server", "/api/v1/server/performance"]);
   });
 
   it("turns a 204 into done", async () => {

@@ -38,7 +38,7 @@ export function registerPrompts(server: McpServer): void {
             type: "text",
             text: [
               "Check the health of the Minecraft server.",
-              "Use get_server_status and get_performance: TPS should be near 20 and the p95 tick time under 50 ms; memory use near the max is a warning sign.",
+              "Use get_server_status with detail: TPS should be near 20 and the p95 tick time under 50 ms; memory use near the max is a warning sign.",
               "Use list_worlds and get_world with size to see which world carries the most chunks and entities, and get_events for recent server.status changes, kicks, and deaths.",
               "Report what is fine, what needs attention, and one concrete next step for each problem. Don't change anything.",
             ].join("\n"),
