@@ -189,9 +189,9 @@ AI wrote most of the code and the documentation from my task descriptions, and I
 
 [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi)—🌍 the Paper plugin that puts your server on HTTP; this server talks to it.
 
-[MCBuddy Server](https://github.com/mcbuddy-ai/mcbuddy-server)—🛠️⚡ the backend for MCBuddy, an AI assistant for Minecraft, built on OpenRouter.
+[Allay Server](https://github.com/allay-ai/server)—🛠️⚡ the backend for Allay, an AI helper for Minecraft, built on OpenRouter.
 
-[MCBuddy Spigot](https://github.com/mcbuddy-ai/mcbuddy-spigot)—💬 brings MCBuddy into the game: ask the AI anything with `/ask`, right in the chat. 🎮
+[Allay](https://github.com/allay-ai/minecraft)—🪽 brings Allay into the game: ask the AI anything with `/ask`, right in the chat. 🎮
 
 ## From the same author
 

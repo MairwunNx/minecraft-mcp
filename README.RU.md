@@ -189,9 +189,9 @@ npm run pack:mcpb    # бандл для Claude Desktop в build/
 
 [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi) — 🌍 плагин для Paper, который выводит сервер в HTTP; этот сервер работает через него.
 
-[MCBuddy Server](https://github.com/mcbuddy-ai/mcbuddy-server) — 🛠️⚡ бэкенд MCBuddy, ИИ-помощника для Minecraft на OpenRouter.
+[Allay Server](https://github.com/allay-ai/server) — 🛠️⚡ бэкенд Allay, ИИ-помощника для Minecraft, на OpenRouter.
 
-[MCBuddy Spigot](https://github.com/mcbuddy-ai/mcbuddy-spigot) — 💬 приводит MCBuddy в игру: спросите ИИ о чём угодно через `/ask` прямо в чате. 🎮
+[Allay](https://github.com/allay-ai/minecraft) — 🪽 приводит Allay в игру: спрашивайте ИИ о чём угодно командой `/ask` прямо в чате. 🎮
 
 ## От того же автора
 
