@@ -32,9 +32,25 @@ An MCP server that lets AI agents read and manage a Minecraft server through Wor
 - `npm run lint`, `npm run typecheck`, and `npm test` must pass; CI runs the same. Tests use a mocked WorldAPI and never touch the network.
 - `scripts/live-check.mjs` runs the built server against a real WorldAPI. Moonlands' WorldAPI is at `https://minecraft.mairwunnx.com/worldapi/api/v1`: anonymous clients read what its config allows, and `WORLDAPI_TOKEN` gets the rest of its scopes. Write tools against Moonlands change the live world: they need the owner's go-ahead first.
 
+## Checking a change
+
+1. `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
+2. `node scripts/live-check.mjs` against Moonlands' WorldAPI, read-only. Write tools change the live world and need the owner's go-ahead.
+3. A change to the bundle: `npm run pack:mcpb`, then install the `.mcpb` in Claude Desktop and call one tool.
+
+## Versions
+
+Where the versions live, for `/update-deps` (in `.claude/skills/`, the same file in every project of the family). This project has no Minecraft version to move: it follows WorldAPI's endpoints, not the game.
+
+- Packages: `package.json`, locked in `package-lock.json`. `npm outdated` lists what's behind. `@modelcontextprotocol/sdk` moves the protocol: read its changelog before a minor.
+- Node: `engines.node` in `package.json`, `node-version` in `.github/workflows/`, and `@types/node`.
+- After an `openapi-typescript` update, `npm run generate` regenerates the client; `git diff` should show only formatting the new version changed.
+- GitHub Actions in `.github/workflows/`.
+
 ## Docs and releases
 
 - README.md and README.RU.md are for people who use the server: who it's for, install, tools, safety. Change both together. The release drops the “Try it live” section from the README it publishes to npm: the Moonlands invitation stays on GitHub. Internals (the code map above, `scripts/live-check.mjs`) stay here.
+- After a change that reaches what the project ships, add it to CHANGELOG.md in the same push: under the topmost “## X.Y.Z” section while that version isn't released (`gh release view vX.Y.Z` fails), or under a new section with the next version: patch for fixes, minor for features, major for breaking changes. A release then needs only the workflow, and the workflow runs only when the owner asks.
 - Add a “## X.Y.Z” section to CHANGELOG.md, then run the “Release” workflow: `gh workflow run release.yml -R MairwunNx/minecraft-mcp -f version=X.Y.Z -f npm=true -f registry=true`. The repository keeps `0.0.0-dev` in package.json, manifest.json, and server.json; the workflow stamps the version, packs `minecraft-mcp-X.Y.Z.mcpb` (`npm run pack:mcpb`), tags `vX.Y.Z`, and attaches the bundle to a GitHub release.
 - npm: the package `@mairwunnx/minecraft-mcp` (plain `minecraft-mcp` belongs to someone else), published with provenance; the command it installs is still `minecraft-mcp`. It uses the `NPM_TOKEN` secret, a granular token that can bypass 2FA (npm refuses to publish otherwise); npm's trusted publishing for this workflow would replace it once set up on npmjs.com. npm made a `0.0.0-stage` placeholder version on the first publish; it's npm's own and harmless.
 - MCP Registry: `server.json`, name `com.mairwunnx/minecraft-mcp`, which must match `mcpName` in package.json. The registry checks a DNS TXT record on mairwunnx.com (`v=MCPv1; k=ed25519; …`, in Cloudflare); the matching private key is `~/.secrets/mcp_registry_ed25519.pem` locally and the `MCP_REGISTRY_KEY` secret (hex) in GitHub. The registry needs the npm version to exist first, and npm serves a new version a minute or two after publishing, so the workflow waits for it. If the registry step fails anyway, publish locally: stamp `server.json` with the version, then `mcp-publisher login dns --domain mairwunnx.com --private-key <hex>` and `mcp-publisher publish`.
