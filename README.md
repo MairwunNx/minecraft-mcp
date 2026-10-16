@@ -100,7 +100,7 @@ Clients connect to `http://host:3333/mcp` and send `Authorization: Bearer <MCP_H
 
 Scopes come from WorldAPI: `admin` includes `read`, `write:world`, and `write:players`, but not `code`.
 
-**Read** (`read`, 27)
+**Read** (`read`, 29)
 
 - `get_server_status`: version, players, uptime, TPS, memory; `detail` adds tick percentiles, CPU, and load per world
 - `list_plugins`, `get_events`, `wait_for_event`: plugins, recorded events, and waiting for a live one
@@ -110,6 +110,7 @@ Scopes come from WorldAPI: `admin` includes `read`, `write:world`, and `write:pl
 - `list_entities`, `get_entity`: mobs and items around a point
 - `list_players`, `list_online_players`, `get_player`, `get_player_inventory`, `get_player_effects`, `get_player_statistics`, `get_player_advancements`, `get_player_sessions`, `check_permission`
 - `get_leaderboard`, `get_aggregates`, `get_recipes`: rankings, server totals, and how to craft anything
+- `list_extensions`, `read_extension`: data other plugins share through WorldAPI, whatever the server runs; their events come through `get_events` and `wait_for_event` too
 
 **World** (`write:world`, 10)
 

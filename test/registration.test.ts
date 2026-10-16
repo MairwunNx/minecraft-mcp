@@ -11,7 +11,7 @@ describe("tools follow the token's scopes", () => {
   it("read shows only reads", async () => {
     const { client } = await connect(api.url, ["read"]);
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(27);
+    expect(tools.length).toBe(29);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
     expect(tools.map((tool) => tool.name)).not.toContain("set_world");
   });
@@ -32,7 +32,7 @@ describe("tools follow the token's scopes", () => {
     expect(tools).not.toContain("execute_java");
     const all = (await connect(api.url, ["admin", "code"])).tools;
     expect(all).toContain("execute_java");
-    expect(all.length).toBe(59);
+    expect(all.length).toBe(61);
     expect(new Set(all).size).toBe(all.length);
   });
 

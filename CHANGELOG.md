@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0
+
+- **Agents read what other plugins share.** WorldAPI 2.3.0 lets plugins share their own data, and two new tools reach it, whatever the server runs: `list_extensions` shows which plugins share what, and `read_extension` reads one of their resources, such as a plugin’s leaderboard or a player’s card. Their events come through `get_events` and `wait_for_event` like any other type.
+- Needs WorldAPI 2.3.0 for those two; with an older one, the server warns at start and the rest works as before.
+
 ## 2.1.1
 
 - The npm page no longer carries the Moonlands invitation; it stays on GitHub. Nothing else changed.

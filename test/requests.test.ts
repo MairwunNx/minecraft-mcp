@@ -28,6 +28,15 @@ describe("requests reach WorldAPI in its shape", () => {
     });
   });
 
+  it("reads a plugin's resource with its slashes and options", async () => {
+    const { client } = await connect(api.url, ["read"]);
+    await client.callTool({
+      name: "read_extension",
+      arguments: { namespace: "mobosses", path: "players/Steve Jobs/bestiary", query: { limit: "5" } },
+    });
+    expect(api.seen[0]?.url).toBe("/api/v1/extensions/mobosses/players/Steve%20Jobs/bestiary?limit=5");
+  });
+
   it("builds query strings and paths", async () => {
     const { client } = await connect(api.url, ["admin"]);
     await client.callTool({

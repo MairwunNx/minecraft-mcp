@@ -100,7 +100,7 @@ MCP_HTTP_TOKEN=a-long-random-secret WORLDAPI_URL=... WORLDAPI_TOKEN=... \
 
 Права берутся из WorldAPI: `admin` включает `read`, `write:world` и `write:players`, но не `code`.
 
-**Чтение** (`read`, 27)
+**Чтение** (`read`, 29)
 
 - `get_server_status`: версия, игроки, аптайм, TPS, память; `detail` добавляет перцентили тика, CPU и нагрузку по мирам
 - `list_plugins`, `get_events`, `wait_for_event`: плагины, записанные события и ожидание живого
@@ -110,6 +110,7 @@ MCP_HTTP_TOKEN=a-long-random-secret WORLDAPI_URL=... WORLDAPI_TOKEN=... \
 - `list_entities`, `get_entity`: мобы и предметы вокруг точки
 - `list_players`, `list_online_players`, `get_player`, `get_player_inventory`, `get_player_effects`, `get_player_statistics`, `get_player_advancements`, `get_player_sessions`, `check_permission`
 - `get_leaderboard`, `get_aggregates`, `get_recipes`: рейтинги, итоги сервера и как скрафтить что угодно
+- `list_extensions`, `read_extension`: данные, которыми другие плагины делятся через WorldAPI, — какие бы плагины ни стояли на сервере; их события тоже приходят через `get_events` и `wait_for_event`
 
 **Мир** (`write:world`, 10)
 

@@ -46,6 +46,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/extensions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Other plugins’ data: their namespaces, resources, and event topics
+         * @description Plugins register these through the extension bridge (see the reference). Anonymous clients see only what the plugin marks public.
+         *
+         *     Scope: `read`.
+         */
+        get: operations["getExtensions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/extensions/{namespace}/{path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One resource of a plugin, read from the plugin as it is now
+         * @description Query parameters pass through to the plugin; each resource documents its own.
+         *
+         *     Scope: `read`.
+         */
+        get: operations["getExtensionsNamespacePath"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/leaderboards": {
         parameters: {
             query?: never;
@@ -1688,6 +1732,25 @@ export interface components {
             fire?: boolean;
             breakBlocks?: boolean;
         };
+        ExtensionInfo: {
+            namespace: string;
+            plugin: string;
+            version: string;
+            description: string;
+            resources: components["schemas"]["ExtensionResourceInfo"][];
+            topics: components["schemas"]["ExtensionTopicInfo"][];
+        };
+        ExtensionResourceInfo: {
+            path: string;
+            description: string;
+            public: boolean;
+        };
+        ExtensionTopicInfo: {
+            topic: string;
+            description: string;
+            public: boolean;
+            recorded: boolean;
+        };
         FillRequest: {
             from: components["schemas"]["BlockPosition"];
             to: components["schemas"]["BlockPosition"];
@@ -2558,6 +2621,141 @@ export interface operations {
             };
             /** @description The token lacks the scope */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getExtensions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtensionInfo"][];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the scope */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getExtensionsNamespacePath: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description namespace */
+                namespace: string;
+                /** @description path */
+                path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the scope */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

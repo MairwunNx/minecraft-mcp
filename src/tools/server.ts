@@ -39,7 +39,7 @@ export function serverTools(ctx: Context): void {
     untrusted: true,
     title: "Event history",
     description:
-      "Recorded events, newest first: player.join, player.leave, player.kick, player.death, player.advancement, player.chat (if the server records chat), world.night_skipped, entity.boss_killed, raid.start, raid.finish, server.status. Filter by type, player, and time.",
+      "Recorded events, newest first: player.join, player.leave, player.kick, player.death, player.advancement, player.chat (if the server records chat), world.night_skipped, entity.boss_killed, raid.start, raid.finish, server.status, and plugins’ own `ext.<namespace>.<event>` types from `list_extensions`. Filter by type, player, and time.",
     scope: "read",
     effect: "read",
     input: {

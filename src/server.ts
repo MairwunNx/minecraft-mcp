@@ -8,6 +8,7 @@ import type { Scope } from "./scopes.js";
 import type { Context } from "./tool.js";
 import { blockTools } from "./tools/blocks.js";
 import { entityTools } from "./tools/entities.js";
+import { extensionTools } from "./tools/extensions.js";
 import { playerTools } from "./tools/players.js";
 import { scriptTools } from "./tools/scripts.js";
 import { serverTools } from "./tools/server.js";
@@ -59,6 +60,7 @@ export function buildServer(
   playerTools(ctx);
   statsTools(ctx);
   scriptTools(ctx);
+  extensionTools(ctx);
   registerResources(server, ctx.api, config.token, feed);
   registerPrompts(server);
   return { server, tools: ctx.registered };
