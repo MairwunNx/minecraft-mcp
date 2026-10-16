@@ -3,6 +3,7 @@
 ## 2.2.0
 
 - **Agents read what other plugins share.** WorldAPI 2.3.0 lets plugins share their own data, and two new tools reach it, whatever the server runs: `list_extensions` shows which plugins share what, and `read_extension` reads one of their resources, such as a plugin’s leaderboard or a player’s card. Their events come through `get_events` and `wait_for_event` like any other type.
+- `get_leaderboard` knows the `tamed` preset of WorldAPI 2.4.0: animals each player has tamed.
 - Needs WorldAPI 2.3.0 for those two; with an older one, the server warns at start and the rest works as before.
 
 ## 2.1.1

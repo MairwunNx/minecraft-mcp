@@ -119,7 +119,7 @@ export interface paths {
         };
         /**
          * Players ranked by a statistic, ties sharing a place
-         * @description Online players count live. Use a preset or any statistic as `category:key`, such as `custom:jump`, `mined:diamond_ore`, or `killed:*`. The `experience` preset starts each player from the game's `XpTotal` (experience since their last death, so a lower bound) and adds every pickup after that, since vanilla keeps no lifetime statistic.
+         * @description Online players count live. Use a preset or any statistic as `category:key`, such as `custom:jump`, `mined:diamond_ore`, or `killed:*`. The `experience` preset starts each player from the game's `XpTotal` (experience since their last death, so a lower bound) and adds every pickup after that, since vanilla keeps no lifetime statistic. The `tamed` preset starts from the pets each player owns in the world, counted once, and adds every taming after that.
          *
          *     Scope: `read`.
          */
