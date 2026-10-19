@@ -89,7 +89,11 @@ jobs:
       - name: Pack the Claude Desktop bundle
         run: npm run pack:mcpb
       - name: Publish the GitHub release
-        run: gh release create "v$VERSION" --target "$GITHUB_SHA" --title "minecraft-mcp $VERSION" --notes-file "$NOTES" "build/minecraft-mcp-$VERSION.mcpb"
+        # The version-less copy keeps releases/latest/download/minecraft-mcp.mcpb pointing at the newest bundle.
+        run: |
+          cp "build/minecraft-mcp-$VERSION.mcpb" build/minecraft-mcp.mcpb
+          gh release create "v$VERSION" --target "$GITHUB_SHA" --title "minecraft-mcp $VERSION" --notes-file "$NOTES" \
+            "build/minecraft-mcp-$VERSION.mcpb" build/minecraft-mcp.mcpb
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Drop the Moonlands section from the npm README
