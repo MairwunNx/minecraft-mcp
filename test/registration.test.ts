@@ -145,3 +145,15 @@ describe("tools follow the token's permissions", () => {
     expect([...named].filter((name) => !tools.includes(name))).toEqual([]);
   });
 });
+
+describe("instructions", () => {
+  it("say what the token can't do, so the agent asks for a better one", async () => {
+    const { instructions } = await import("../src/server.js");
+    const config = { url: "http://x/api/v1", readOnly: false } as Parameters<typeof instructions>[0];
+    const viewer = instructions(config, new Set(VIEWER));
+    expect(viewer).toContain("send chat messages");
+    expect(viewer).toContain("admin or owner group");
+    expect(instructions(config, new Set(OWNER))).not.toContain("This token can't");
+    expect(instructions({ ...config, readOnly: true }, new Set(OWNER))).toContain("Read-only mode is on");
+  });
+});

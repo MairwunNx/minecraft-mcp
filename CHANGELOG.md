@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.1
+
+- The agent learns what its token can’t do. When a token lacks a permission, such as `players:write` for chat messages, the server’s instructions say so and name the group that would, so the agent tells the user instead of searching for a tool that isn’t there.
+- The MCP Registry entry keeps its description under the registry’s 100 characters.
+
 ## 3.0.0
 
 minecraft-mcp follows WorldAPI 3.0: permissions instead of scopes, configs and logs, containers, and one call for a whole player. It needs WorldAPI 3.0.0; with an older one, the server warns at start and many tools fail.
