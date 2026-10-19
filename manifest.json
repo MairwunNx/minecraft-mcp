@@ -14,7 +14,7 @@
     "url": "https://github.com/MairwunNx/minecraft-mcp.git"
   },
   "homepage": "https://github.com/MairwunNx/minecraft-mcp",
-  "documentation": "https://github.com/MairwunNx/minecraft-mcp#readme",
+  "documentation": "https://github.com/MairwunNx/minecraft-mcp/wiki",
   "support": "https://github.com/MairwunNx/minecraft-mcp/issues",
   "icon": "icon.png",
   "server": {
