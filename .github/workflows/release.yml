@@ -36,7 +36,7 @@ jobs:
       # Outside the package files, which package.json lists, so npm never ships it.
       NOTES: release-notes.md
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Check the version
         run: |
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || { echo "::error::$VERSION isn't a version like 2.0.0"; exit 1; }
@@ -61,7 +61,7 @@ jobs:
               sys.exit(f"::error::No changelog: add a “## {version}” section to CHANGELOG.md or fill the changelog field")
           open(os.environ["NOTES"], "w", encoding="utf-8").write(notes + "\n")
           print(notes)
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
