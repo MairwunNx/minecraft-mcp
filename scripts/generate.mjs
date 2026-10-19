@@ -10,7 +10,21 @@ const text = /^https?:/.test(source) ? await (await fetch(source)).text() : awai
 const document = JSON.parse(text);
 document.servers = [{ url: "/api/v1" }];
 await writeFile("openapi/worldapi.json", `${JSON.stringify(document, null, 2)}\n`);
-execFileSync("npx", ["openapi-typescript", "openapi/worldapi.json", "-o", "src/generated/worldapi.ts"], {
-  stdio: "inherit",
-});
+// openapi-typescript builds the client through TypeScript 5's API, which TypeScript 7 no longer has,
+// so it runs with its own TypeScript instead of the project's.
+execFileSync(
+  "npx",
+  [
+    "--yes",
+    "-p",
+    "openapi-typescript@7.13.0",
+    "-p",
+    "typescript@5.9.3",
+    "openapi-typescript",
+    "openapi/worldapi.json",
+    "-o",
+    "src/generated/worldapi.ts",
+  ],
+  { stdio: "inherit" },
+);
 console.log(`WorldAPI ${document.info.version}: ${Object.keys(document.paths).length} paths`);

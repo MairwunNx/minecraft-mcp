@@ -44,7 +44,7 @@ Where the versions live, for `/update-deps` (in `.claude/skills/`, the same file
 
 - Packages: `package.json`, locked in `package-lock.json`. `npm outdated` lists what's behind. `@modelcontextprotocol/sdk` moves the protocol: read its changelog before a minor.
 - Node: `engines.node` in `package.json`, `node-version` in `.github/workflows/`, and `@types/node`.
-- After an `openapi-typescript` update, `npm run generate` regenerates the client; `git diff` should show only formatting the new version changed.
+- `openapi-typescript` and the TypeScript 5 it needs are pinned in `scripts/generate.mjs`, not in `package.json`: it builds the client through TypeScript 5's API, which TypeScript 7 dropped. Check them with `npm view openapi-typescript version` and its `peerDependencies`. After an update, `npm run generate` regenerates the client; `git diff` should show only formatting the new version changed.
 - GitHub Actions in `.github/workflows/`.
 
 ## Docs and releases
