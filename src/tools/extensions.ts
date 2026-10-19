@@ -10,7 +10,7 @@ export function extensionTools(ctx: Context): void {
     title: "Plugins’ data",
     description:
       "Other plugins on the server that share their own data through WorldAPI: each one’s namespace, its resources (paths to read with `read_extension`), and its event topics (`ext.<namespace>.<event>`, which `get_events` and `wait_for_event` take like any type). What’s here depends on the server; call this first instead of guessing.",
-    scope: "read",
+    scope: "server:read",
     effect: "read",
     untrusted: true,
     input: {},
@@ -22,7 +22,7 @@ export function extensionTools(ctx: Context): void {
     title: "Read a plugin’s data",
     description:
       'One resource of a plugin from `list_extensions`, read from the plugin as it is now. Fill the path’s `{parameters}`, such as `players/Steve` for `players/{player}`; `query` passes the resource’s own options, such as `{ "limit": "5" }`.',
-    scope: "read",
+    scope: "server:read",
     effect: "read",
     untrusted: true,
     input: {

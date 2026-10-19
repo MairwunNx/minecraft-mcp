@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { unwrap, type WorldApi } from "./client.js";
 import { redact } from "./config.js";
 import type { EventFeed } from "./events.js";
+import { grants, type Scope } from "./scopes.js";
 
 const json = (uri: URL, value: unknown, token: string | undefined) => ({
   contents: [{ uri: uri.href, mimeType: "application/json", text: redact(JSON.stringify(value), token) }],
@@ -12,6 +13,7 @@ export function registerResources(
   server: McpServer,
   api: WorldApi,
   token: string | undefined,
+  scopes: ReadonlySet<Scope>,
   feed: EventFeed | undefined,
 ): void {
   server.registerResource(
@@ -53,7 +55,8 @@ export function registerResources(
     "worldapi://events/recent",
     {
       title: "Recent events",
-      description: "Joins, leaves, deaths, advancements, skipped nights, boss kills, and server status, newest first",
+      description:
+        "Joins, leaves, deaths, advancements, chat (with chat:read), skipped nights, boss kills, and server status, newest first",
       mimeType: "application/json",
     },
     async (uri) => {
@@ -64,4 +67,22 @@ export function registerResources(
       return json(uri, { source: "history", events: (history as { items?: unknown[] }).items ?? [] }, token);
     },
   );
+
+  if (grants(scopes, "logs:read"))
+    server.registerResource(
+      "console",
+      "worldapi://server/console",
+      {
+        title: "Console",
+        description: "The newest console lines, live from the server.console topic; players write parts of them",
+        mimeType: "application/json",
+      },
+      async (uri) => {
+        // Lines seen live, oldest first like a console; before there are any, WorldAPI's buffer fills in.
+        const live = feed?.consoleLines() ?? [];
+        if (live.length > 0)
+          return json(uri, { source: "live", lines: live.reverse().map((event) => event.data) }, token);
+        return json(uri, { source: "buffer", ...(await unwrap(api.GET("/server/logs"), token)) }, token);
+      },
+    );
 }

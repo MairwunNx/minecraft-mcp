@@ -16,6 +16,9 @@ export const RECORDED_TOPICS = [
   "server.status",
 ];
 
+/** Console lines stream on their own topic (logs:read) and keep a buffer of their own, so they don't push events out. */
+export const CONSOLE_TOPIC = "server.console";
+
 export interface StreamedEvent {
   type: string;
   at: string;
@@ -105,6 +108,7 @@ export function waitForEvent(config: Pick<Config, "url" | "token">, wait: EventW
  */
 export class EventFeed {
   private readonly events: StreamedEvent[] = [];
+  private readonly console: StreamedEvent[] = [];
   private socket: WebSocket | undefined;
   private stopped = false;
   private delay = 1000;
@@ -131,8 +135,9 @@ export class EventFeed {
         this.connected = true;
         this.delay = 1000;
       } else if (frame.op === "event" && frame.event) {
-        this.events.unshift(frame.event);
-        this.events.length = Math.min(this.events.length, this.size);
+        const buffer = frame.event.type === CONSOLE_TOPIC ? this.console : this.events;
+        buffer.unshift(frame.event);
+        buffer.length = Math.min(buffer.length, this.size);
         this.onEvent();
       }
     });
@@ -146,12 +151,17 @@ export class EventFeed {
   }
 
   private subscribe(available: string[]): void {
-    const topics = RECORDED_TOPICS.filter((topic) => available.includes(topic));
+    const topics = [...RECORDED_TOPICS, CONSOLE_TOPIC].filter((topic) => available.includes(topic));
     if (topics.length > 0) this.socket?.send(JSON.stringify({ op: "subscribe", topics }));
   }
 
   recent(): StreamedEvent[] {
     return [...this.events];
+  }
+
+  /** Console lines seen live, newest first. */
+  consoleLines(): StreamedEvent[] {
+    return [...this.console];
   }
 
   stop(): void {

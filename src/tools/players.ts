@@ -24,8 +24,9 @@ export function playerTools(ctx: Context): void {
   tool(ctx, {
     name: "list_players",
     title: "Players",
-    description: "Everyone who has played here: online state, first and last seen, playtime in seconds.",
-    scope: "read",
+    description:
+      "Everyone who has played here: online state, first and last seen, playtime in seconds. limit 0 only counts them.",
+    scope: "players:read",
     effect: "read",
     input: {
       online: z.boolean().optional(),
@@ -41,7 +42,7 @@ export function playerTools(ctx: Context): void {
     untrusted: true,
     title: "Online players",
     description: "Who is playing now, with world, game mode, health, food, level, ping, idle time, and location.",
-    scope: "read",
+    scope: "players:read",
     effect: "read",
     input: {},
     run: () => unwrap(api.GET("/players/online"), token),
@@ -51,36 +52,23 @@ export function playerTools(ctx: Context): void {
     name: "get_player",
     untrusted: true,
     title: "Player",
-    description:
-      "A player's profile and, while online, full state: game mode, health, food, XP, location, flight, speed, ping, client. Offline players show their last location.",
-    scope: "read",
+    description: `A player's profile and, while online, full state: game mode, health, food, XP, location, flight, speed, ping, client. Offline players show their last location. include adds parts in the same call: \`inventory\` and \`enderchest\` (from the saved player file while offline; ${SLOT_LAYOUT}), \`effects\` (online only), \`deaths\` (the last death place and the newest 5 with causes and killers), \`sessions\` (the newest 5), \`statistics\` (the general ones; get_player_statistics has every category), and \`advancements\` (counts and the newest 5; get_player_advancements lists them all). Coordinates, inventories, and death places need players:private. ${ITEM_DETAIL}`,
+    scope: "players:read",
     effect: "read",
-    input: { player },
-    run: (args) => unwrap(api.GET("/players/{player}", who(args.player)), token),
-  });
-
-  tool(ctx, {
-    name: "get_player_inventory",
-    untrusted: true,
-    title: "Inventory or ender chest",
-    description: `Main inventory, armor, and offhand with full item data, or the ender chest. ${ITEM_DETAIL} ${SLOT_LAYOUT} ${OFFLINE_NOTE}`,
-    scope: "read",
-    effect: "read",
-    input: { player, container },
+    input: {
+      player,
+      include: z
+        .array(z.enum(["inventory", "enderchest", "effects", "deaths", "sessions", "statistics", "advancements"]))
+        .optional()
+        .describe('Parts to add, such as ["inventory", "deaths"]'),
+    },
     run: (args) =>
-      args.container === "enderchest"
-        ? unwrap(api.GET("/players/{player}/enderchest", who(args.player)), token)
-        : unwrap(api.GET("/players/{player}/inventory", who(args.player)), token),
-  });
-
-  tool(ctx, {
-    name: "get_player_effects",
-    title: "Effects",
-    description: `Active potion effects. ${OFFLINE_NOTE}`,
-    scope: "read",
-    effect: "read",
-    input: { player },
-    run: (args) => unwrap(api.GET("/players/{player}/effects", who(args.player)), token),
+      unwrap(
+        api.GET("/players/{player}", {
+          params: { path: { player: args.player }, query: { include: args.include?.join(",") } },
+        }),
+        token,
+      ),
   });
 
   tool(ctx, {
@@ -88,7 +76,7 @@ export function playerTools(ctx: Context): void {
     title: "Statistics",
     description:
       "Vanilla statistics by category (custom, mined, broken, crafted, used, picked_up, dropped, killed, killed_by); live while online. play_time is in ticks (20 per second); distances in centimeters.",
-    scope: "read",
+    scope: "players:read",
     effect: "read",
     input: { player, category: z.string().optional().describe("Only one category, such as `mined`") },
     run: (args) =>
@@ -105,7 +93,7 @@ export function playerTools(ctx: Context): void {
     title: "Advancements",
     description:
       "Every advancement on the server with its title, description, frame, and parent, done or not, and when it was finished. done false lists what's left: with the parents, it shows what to go for next.",
-    scope: "read",
+    scope: "players:read",
     effect: "read",
     input: { player, done: z.boolean().optional().describe("Only finished (true) or unfinished (false)") },
     run: (args) =>
@@ -118,26 +106,11 @@ export function playerTools(ctx: Context): void {
   });
 
   tool(ctx, {
-    name: "get_player_sessions",
-    title: "Play sessions",
-    description: "When the player joined and left, newest first, as WorldAPI recorded them.",
-    scope: "read",
-    effect: "read",
-    input: { player, limit, cursor },
-    run: (args) =>
-      unwrap(
-        api.GET("/players/{player}/sessions", {
-          params: { path: { player: args.player }, query: { limit: args.limit, cursor: args.cursor } },
-        }),
-        token,
-      ),
-  });
-
-  tool(ctx, {
     name: "check_permission",
     title: "Permissions",
-    description: "Whether a player is an operator and, if online, whether they have a permission node.",
-    scope: "read",
+    description:
+      "Whether a player is an operator and, if online, whether they have a permission node (a server permission, not a WorldAPI one).",
+    scope: "players:read",
     effect: "read",
     input: { player, node: z.string().optional().describe("Such as `worldedit.wand`") },
     run: (args) =>
@@ -153,7 +126,7 @@ export function playerTools(ctx: Context): void {
     name: "teleport_player",
     title: "Teleport a player",
     description: `Teleport to coordinates, to another player, or to a world's spawn; give exactly one. Check get_highest_block first to land on solid ground. ${OFFLINE_NOTE}`,
-    scope: "write:players",
+    scope: "players:write",
     effect: "write",
     input: {
       player,
@@ -175,7 +148,7 @@ export function playerTools(ctx: Context): void {
     name: "set_player_property",
     title: "Change a player",
     description: `Set game mode, health, food (0–20), saturation, XP level or progress, flight, walk or fly speed (-1 to 1; defaults 0.2 and 0.1), display or tab-list name, invulnerability, fire, or air. ${OFFLINE_NOTE}`,
-    scope: "write:players",
+    scope: "players:write",
     effect: "write",
     input: {
       player,
@@ -204,7 +177,7 @@ export function playerTools(ctx: Context): void {
     name: "send_message",
     title: "Message a player",
     description: `Send one player a chat message, title, or action bar text, optionally with a sound. ${OFFLINE_NOTE}`,
-    scope: "write:players",
+    scope: "players:write",
     effect: "write",
     input: {
       player,
@@ -220,8 +193,8 @@ export function playerTools(ctx: Context): void {
   tool(ctx, {
     name: "kick_player",
     title: "Kick a player",
-    description: "Disconnect a player with an optional reason.",
-    scope: "admin",
+    description: "Disconnect a player with an optional reason. Needs players:moderate.",
+    scope: "players:moderate",
     effect: "destructive",
     input: { player: anyPlayer, reason: z.string().optional(), format },
     run: ({ player: name, ...body }) => unwrap(api.POST("/players/{player}/kick", { ...who(name), body }), token),
@@ -231,7 +204,7 @@ export function playerTools(ctx: Context): void {
     name: "give_item",
     title: "Give an item",
     description: `Add an item to a player's inventory (what doesn't fit drops at their feet) or ender chest. ${OFFLINE_NOTE}`,
-    scope: "write:players",
+    scope: "players:write",
     effect: "write",
     input: { player, item, container },
     run: (args) =>
@@ -247,7 +220,7 @@ export function playerTools(ctx: Context): void {
     name: "edit_inventory",
     title: "Edit an inventory",
     description: `Change a player's inventory or ender chest: \`set\` puts an item in a slot, replacing what was there; \`clear_slot\` empties one slot; \`clear\` empties everything, armor and offhand included. Cleared items are gone. To add items without picking a slot, use give_item. ${SLOT_LAYOUT} ${OFFLINE_NOTE}`,
-    scope: "write:players",
+    scope: "players:write",
     effect: "destructive",
     input: {
       player,
@@ -297,7 +270,7 @@ export function playerTools(ctx: Context): void {
     name: "set_effects",
     title: "Change potion effects",
     description: `Give, take away, or clear a player's potion effects, in that order: clear first, then remove, then add. Answers with the effects the player has afterwards. ${OFFLINE_NOTE}`,
-    scope: "write:players",
+    scope: "players:write",
     effect: "write",
     input: {
       player,
@@ -322,7 +295,7 @@ export function playerTools(ctx: Context): void {
     name: "set_advancement",
     title: "Grant or revoke an advancement",
     description: `Complete every criterion of an advancement for a player (done true), or take them all back (done false). ${OFFLINE_NOTE}`,
-    scope: "write:players",
+    scope: "players:write",
     effect: "idempotent",
     input: {
       player,

@@ -4,7 +4,7 @@ import type { AddressInfo, Socket } from "node:net";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { Config } from "../src/config.js";
-import type { Scope } from "../src/scopes.js";
+import { PERMISSIONS, type Scope } from "../src/scopes.js";
 import { buildServer } from "../src/server.js";
 
 export interface Seen {
@@ -122,6 +122,11 @@ export class MockWorldApi {
 }
 
 export const TOKEN = "secret-token-0123456789abcdef";
+
+/** WorldAPI's default groups, resolved as its hello lists them. */
+export const VIEWER: Scope[] = ["server:read", "players:read", "players:private", "events:read", "chat:read"];
+export const ADMIN: Scope[] = PERMISSIONS.filter((scope) => scope !== "files:write" && scope !== "code");
+export const OWNER: Scope[] = [...PERMISSIONS];
 
 /** An MCP client connected in memory to a server built for these scopes. */
 export async function connect(url: string, scopes: Scope[], options: Partial<Config> = {}) {

@@ -24,7 +24,8 @@ const calls = process.argv[2]
       ["get_world", { world: "world" }],
       ["get_leaderboard", { statistic: "playtime" }],
       ["get_events", { limit: 3 }],
-      ["locate_structure", { type: "village", radius: 50 }],
+      ["get_entity_summary", { world: "world" }],
+      ["locate", { kind: "structure", targets: ["village"], radius: 50 }],
     ];
 for (const [name, args] of calls) {
   const result = await client.callTool({ name, arguments: args });

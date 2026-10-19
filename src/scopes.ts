@@ -1,10 +1,37 @@
 import { type Config, redact } from "./config.js";
 
-export type Scope = "read" | "write:world" | "write:players" | "admin" | "code";
+/** WorldAPI's permissions. The WebSocket hello lists a token's own, with its groups resolved. */
+export const PERMISSIONS = [
+  "server:read",
+  "players:read",
+  "players:private",
+  "events:read",
+  "chat:read",
+  "logs:read",
+  "system:read",
+  "world:write",
+  "players:write",
+  "players:moderate",
+  "server:console",
+  "server:control",
+  "files:read",
+  "files:write",
+  "tokens:manage",
+  "code",
+] as const;
 
-/** admin includes every scope except code, as in WorldAPI. */
-export function grants(scopes: ReadonlySet<Scope>, needed: Scope): boolean {
-  return scopes.has(needed) || (needed !== "code" && scopes.has("admin"));
+export type Scope = (typeof PERMISSIONS)[number];
+
+/** What a tool needs: one permission, every one of a list, or any one of a list. */
+export type Need = Scope | { all: Scope[] } | { any: Scope[] };
+
+/** What anonymous clients may ever have; also the guess when the WebSocket doesn't answer. */
+export const ANONYMOUS: Scope[] = ["server:read", "players:read", "events:read"];
+
+export function grants(scopes: ReadonlySet<Scope>, needed: Need): boolean {
+  if (typeof needed === "string") return scopes.has(needed);
+  if ("all" in needed) return needed.all.every((scope) => scopes.has(scope));
+  return needed.any.some((scope) => scopes.has(scope));
 }
 
 export function webSocketUrl(base: string): string {
@@ -12,7 +39,7 @@ export function webSocketUrl(base: string): string {
 }
 
 /**
- * Asks WorldAPI which scopes the token has. The WebSocket greets every client with its scopes;
+ * Asks WorldAPI which permissions the token has. The WebSocket greets every client with them;
  * the token goes in the first message, never in the URL. Without a token, the answer is what
  * anonymous clients get.
  */
@@ -31,7 +58,8 @@ export async function discoverScopes(
       const finish = (scopes: string[]) => {
         clearTimeout(timer);
         socket.close();
-        resolve(new Set(scopes as Scope[]));
+        // Names this server doesn't know, such as 2.x scopes from an older WorldAPI, grant nothing.
+        resolve(new Set(scopes.filter((scope): scope is Scope => (PERMISSIONS as readonly string[]).includes(scope))));
       };
       socket.addEventListener("message", (event) => {
         const message = JSON.parse(String(event.data)) as {
@@ -58,10 +86,10 @@ export async function discoverScopes(
   } catch (error) {
     log(
       redact(
-        `Couldn't read the token's scopes over the WebSocket (${(error as Error).message}); assuming read only`,
+        `Couldn't read the token's permissions over the WebSocket (${(error as Error).message}); assuming what anonymous clients get`,
         config.token,
       ),
     );
-    return new Set(["read"]);
+    return new Set(ANONYMOUS);
   }
 }

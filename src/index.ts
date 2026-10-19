@@ -23,7 +23,7 @@ Usage: minecraft-mcp [--http] [--host 127.0.0.1] [--port 3333]
 
 Environment:
   WORLDAPI_URL        WorldAPI base URL, such as http://localhost:8110/api/v1 (required)
-  WORLDAPI_TOKEN      WorldAPI token; its scopes decide which tools appear
+  WORLDAPI_TOKEN      WorldAPI token; its permissions decide which tools appear
   WORLDAPI_READ_ONLY  1 hides every tool that changes the server
   WORLDAPI_PLAYER     Your player name: “me” means this player, and tools that
                       take a player use it when the agent leaves one out
@@ -54,7 +54,7 @@ async function main(): Promise<void> {
   const feed = new EventFeed(config);
   feed.start();
   log(
-    `WorldAPI ${worldApiVersion ?? "(version unknown)"} at ${config.url}; scopes: ${[...scopes].join(", ") || "none"}${config.readOnly ? "; read-only" : ""}`,
+    `WorldAPI ${worldApiVersion ?? "(version unknown)"} at ${config.url}; permissions: ${[...scopes].join(", ") || "none"}${config.readOnly ? "; read-only" : ""}`,
   );
 
   if (!values.http) {

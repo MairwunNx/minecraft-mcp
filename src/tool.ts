@@ -3,7 +3,7 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { z } from "zod";
 import { type WorldApi, WorldApiError } from "./client.js";
 import { redact } from "./config.js";
-import { grants, type Scope } from "./scopes.js";
+import { grants, type Need, type Scope } from "./scopes.js";
 
 /** How a tool affects the server; it decides the MCP annotations. */
 export type Effect = "read" | "write" | "idempotent" | "destructive";
@@ -12,7 +12,8 @@ export interface ToolSpec<Shape extends z.ZodRawShape> {
   name: string;
   title: string;
   description: string;
-  scope: Scope;
+  /** The WorldAPI permission the endpoint needs; the tool appears only when the token has it. */
+  scope: Need;
   effect: Effect;
   input: Shape;
   run: (args: z.infer<z.ZodObject<Shape>>) => Promise<unknown>;
@@ -34,7 +35,7 @@ export interface Context {
   registered: string[];
 }
 
-/** Registers a tool if the token's scopes allow it and, for writes, read-only mode is off. */
+/** Registers a tool if the token's permissions allow it and, for writes, read-only mode is off. */
 export function tool<Shape extends z.ZodRawShape>(ctx: Context, spec: ToolSpec<Shape>): void {
   if (!grants(ctx.scopes, spec.scope)) return;
   if (spec.effect !== "read" && ctx.readOnly) return;

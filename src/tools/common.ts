@@ -30,7 +30,13 @@ export const format = z
   .default("plain")
   .describe("`minimessage` reads tags like `<green>Hi` or `<bold>`; `plain` sends the text as is");
 
-export const limit = z.number().int().min(1).max(500).optional().describe("How many items to return");
+export const limit = z
+  .number()
+  .int()
+  .min(0)
+  .max(500)
+  .optional()
+  .describe("How many items to return; 0 answers only the total, to count without listing");
 export const cursor = z.string().optional().describe("`nextCursor` from the previous page");
 
 export const item = z

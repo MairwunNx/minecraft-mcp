@@ -10,8 +10,8 @@ export function statsTools(ctx: Context): void {
     name: "get_leaderboard",
     title: "Leaderboards",
     description:
-      "Players ranked by a statistic; ties share a place. Presets: playtime (hours), diamonds, advancements, mobs, travel (km), deaths, blocks, fish, damage (hearts), netherite (ancient debris mined), experience (xp gained; a lower bound, since vanilla keeps no lifetime total), tamed (animals tamed, WorldAPI 2.4 and newer; also a lower bound). Or any statistic as `category:key`, such as `custom:jump`, `mined:diamond_ore`, `killed:*`. Without a statistic, lists the presets and their units.",
-    scope: "read",
+      "Players ranked by a statistic; ties share a place. Presets: playtime (hours), diamonds, advancements, mobs, travel (km), deaths, blocks, fish, damage (hearts), netherite (ancient debris mined), experience (xp gained; a lower bound, since vanilla keeps no lifetime total), tamed (animals tamed; also a lower bound). Or any statistic as `category:key`, such as `custom:jump`, `mined:diamond_ore`, `killed:*`. Without a statistic, lists the presets and their units.",
+    scope: "players:read",
     effect: "read",
     input: {
       statistic: z.string().min(1).optional(),
@@ -33,7 +33,7 @@ export function statsTools(ctx: Context): void {
     title: "Recipes",
     description:
       "How to make an item (`item`) or what an item is good for (`uses`), or both: crafting grids with their shape, furnace, smoker, blast furnace, and campfire cooking with time and experience, stonecutting, and smithing. Plugin recipes count too. Each ingredient lists the items that fit.",
-    scope: "read",
+    scope: "server:read",
     effect: "read",
     input: {
       item: z.string().min(1).optional().describe("What the recipe makes, such as `minecraft:torch`"),
@@ -52,7 +52,7 @@ export function statsTools(ctx: Context): void {
     title: "Server totals",
     description:
       "Everyone's statistics added up: hours played, blocks mined and the top block, mobs killed and the top mob, deaths, advancements, world day.",
-    scope: "read",
+    scope: "players:read",
     effect: "read",
     input: {},
     run: () => unwrap(api.GET("/aggregates"), token),

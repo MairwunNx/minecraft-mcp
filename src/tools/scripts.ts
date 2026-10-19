@@ -3,7 +3,7 @@ import { unwrap } from "../client.js";
 import { type Context, tool } from "../tool.js";
 
 const API = [
-  "Scripts are Java, compiled and run inside the Minecraft server. This is arbitrary code: it needs the token's `code` scope and scripts.enabled in WorldAPI's config.",
+  "Scripts are Java, compiled and run inside the Minecraft server. This is arbitrary code: it needs the token's `code` permission and scripts.enabled in WorldAPI's config.",
   "Only Java and the Paper/Bukkit API are visible (plus Adventure, Guava, Brigadier, JOML); process, file, reflection, and class-loading calls are blocked at compile time.",
   "Interface: `com.mairwunnx.worldapi.script.api.WorldApiScript` with `Object run(ScriptContext ctx)`, `void enable(ScriptContext ctx)`, `void disable()`.",
   "ScriptContext: `server()`, `log(String)`, `on(EventClass.class, e -> …)`, `on(type, priority, ignoreCancelled, handler)`, `later(ticks, task)`, `every(delay, period, task)`, `async(task)`, `sync(callable)`, `memory()`.",
