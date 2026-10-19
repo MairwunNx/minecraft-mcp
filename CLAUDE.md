@@ -38,9 +38,13 @@ An MCP server that lets AI agents read and manage a Minecraft server through Wor
 2. `node scripts/live-check.mjs` against Moonlands' WorldAPI, read-only. Write tools change the live world and need the owner's go-ahead.
 3. A change to the bundle: `npm run pack:mcpb`, then install the `.mcpb` in Claude Desktop and call one tool.
 
+## Autopilot
+
+`.github/workflows/autopilot.yml` runs Claude every Monday at 03:00 UTC: `/update-deps`, a fix for whatever it breaks, a push to `master`, and the “Release” workflow to npm and the MCP Registry when the package changed. It needs the `CLAUDE_CODE_OAUTH_TOKEN` secret. “Autopilot” in `~/c/personal/minecraft/CLAUDE.md` explains the family's runs. A session with the owner still releases only when the owner asks.
+
 ## Versions
 
-Where the versions live, for `/update-deps` (in `.claude/skills/`, the same file in every project of the family). This project has no Minecraft version to move: it follows WorldAPI's endpoints, not the game.
+Where the versions live, for `/update-deps` and `/update-minecraft` (both in `.claude/skills/`, the same files in every project of the family). This project has no Minecraft version to move, so `/update-minecraft` stops at once: it follows WorldAPI's endpoints, not the game.
 
 - Packages: `package.json`, locked in `package-lock.json`. `npm outdated` lists what's behind. `@modelcontextprotocol/sdk` moves the protocol: read its changelog before a minor.
 - Node: `engines.node` in `package.json`, `node-version` in `.github/workflows/`, and `@types/node`.
