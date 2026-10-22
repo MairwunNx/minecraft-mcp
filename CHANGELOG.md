@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.1.0
+
+- 📍 **The spawn point.** `get_spawn` tells where players join and respawn without a bed, with the respawn radius and spawn protection; `set_spawn` moves it, to another world too. `set_world` now says its `spawn` is that world's own point for teleports. Needs WorldAPI 3.3.0, which the server now expects.
+
 ## 3.0.1
 
 - The agent learns what its token can’t do. When a token lacks a permission, such as `players:write` for chat messages, the server’s instructions say so and name the group that would, so the agent tells the user instead of searching for a tool that isn’t there.
