@@ -430,6 +430,117 @@
         }
       }
     },
+    "/accounts/{name}/reset": {
+      "post": {
+        "operationId": "postAccountsNameReset",
+        "summary": "Make a code that sets a new password for an account",
+        "description": "For someone who forgot their password and can't run /worldapi admin in game. They enter the code on the sign-in page, under “I have a code”, with a new password, within 30 minutes; their sessions end. A caller hands out only permissions it has itself.\n\nPermission: `tokens:manage`.",
+        "tags": [
+          "Access control"
+        ],
+        "x-scope": "tokens:manage",
+        "security": [
+          {
+            "bearer": [
+              "tokens:manage"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCode"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/aggregates": {
       "get": {
         "operationId": "getAggregates",
@@ -1038,7 +1149,7 @@
       "post": {
         "operationId": "postFilesEdit",
         "summary": "Replace exact text in a file",
-        "description": "Each edit's oldText must appear exactly once (copy it from /files/read without the line numbers), unless replaceAll. Edits apply in order, all or none. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, and files the server keeps in memory (ops.json, whitelist.json, banned-*.json, usercache.json), can't be written: their endpoints change them. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.\n\nPermission: `files:write`.",
+        "description": "Each edit's oldText must appear exactly once (copy it from /files/read without the line numbers), unless replaceAll. Edits apply in order, all or none. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.\n\nPermission: `files:write`.",
         "tags": [
           "Files"
         ],
@@ -1277,7 +1388,7 @@
       "post": {
         "operationId": "postFilesSet",
         "summary": "Set values in a YAML, .properties, or JSON config by dotted path",
-        "description": "`{\"chunks.auto-save-interval\": 6000}` sets one key, creating the sections on the way; null removes a key. YAML keeps its comments, though spacing and quotes may change; .properties changes only the lines it sets. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, and files the server keeps in memory (ops.json, whitelist.json, banned-*.json, usercache.json), can't be written: their endpoints change them. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.\n\nPermission: `files:write`.",
+        "description": "`{\"chunks.auto-save-interval\": 6000}` sets one key, creating the sections on the way; null removes a key. YAML keeps its comments, though spacing and quotes may change; .properties changes only the lines it sets. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.\n\nPermission: `files:write`.",
         "tags": [
           "Files"
         ],
@@ -1367,7 +1478,7 @@
       "put": {
         "operationId": "putFilesWrite",
         "summary": "Create a file or replace it whole",
-        "description": "Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, and files the server keeps in memory (ops.json, whitelist.json, banned-*.json, usercache.json), can't be written: their endpoints change them. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.\n\nPermission: `files:write`.",
+        "description": "Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.\n\nPermission: `files:write`.",
         "tags": [
           "Files"
         ],
@@ -1762,6 +1873,15 @@
                 "last_seen",
                 "playtime"
               ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Only players whose name contains this, ignoring case",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -3410,6 +3530,126 @@
         }
       }
     },
+    "/players/{player}/enderchest/slots/{slot}/take": {
+      "post": {
+        "operationId": "postPlayersPlayerEnderchestSlotsSlotTake",
+        "summary": "Take some items from a ender chest slot",
+        "description": "Inventory slots: 0–8 hotbar, 9–35 main, 36 boots, 37 leggings, 38 chestplate, 39 helmet, 40 offhand. Ender chest slots: 0–26. The player must be online. The rest of the stack keeps its enchantments, name, and the like.\n\nPermission: `players:write`.",
+        "tags": [
+          "Inventories"
+        ],
+        "x-scope": "players:write",
+        "security": [
+          {
+            "bearer": [
+              "players:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "player",
+            "in": "path",
+            "required": true,
+            "description": "Player UUID or name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "description": "Slot number; see the inventory layout in the description",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TakeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TakeResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/players/{player}/inventory": {
       "get": {
         "operationId": "getPlayersPlayerInventory",
@@ -3872,6 +4112,126 @@
         "responses": {
           "204": {
             "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/players/{player}/inventory/slots/{slot}/take": {
+      "post": {
+        "operationId": "postPlayersPlayerInventorySlotsSlotTake",
+        "summary": "Take some items from a inventory slot",
+        "description": "Inventory slots: 0–8 hotbar, 9–35 main, 36 boots, 37 leggings, 38 chestplate, 39 helmet, 40 offhand. Ender chest slots: 0–26. The player must be online. The rest of the stack keeps its enchantments, name, and the like.\n\nPermission: `players:write`.",
+        "tags": [
+          "Inventories"
+        ],
+        "x-scope": "players:write",
+        "security": [
+          {
+            "bearer": [
+              "players:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "player",
+            "in": "path",
+            "required": true,
+            "description": "Player UUID or name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "description": "Slot number; see the inventory layout in the description",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TakeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TakeResult"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -6386,6 +6746,74 @@
           }
         }
       },
+      "get": {
+        "operationId": "getServerRestart",
+        "summary": "Whether a restart or stop is pending, and when",
+        "description": "Permission: `server:read`.",
+        "tags": [
+          "Server"
+        ],
+        "x-scope": "server:read",
+        "security": [
+          {
+            "bearer": [
+              "server:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestartStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "operationId": "deleteServerRestart",
         "summary": "Call off a pending restart or stop",
@@ -6588,6 +7016,74 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getServerStop",
+        "summary": "Whether a restart or stop is pending, and when",
+        "description": "Permission: `server:read`.",
+        "tags": [
+          "Server"
+        ],
+        "x-scope": "server:read",
+        "security": [
+          {
+            "bearer": [
+              "server:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestartStatus"
                 }
               }
             }
@@ -6874,6 +7370,164 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Whitelist"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spawn": {
+      "get": {
+        "operationId": "getSpawn",
+        "summary": "Where players join for the first time and respawn without a bed",
+        "description": "Permission: `server:read`.",
+        "tags": [
+          "Worlds"
+        ],
+        "x-scope": "server:read",
+        "security": [
+          {
+            "bearer": [
+              "server:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerSpawn"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patchSpawn",
+        "summary": "Move the spawn point, change its world, or its respawn radius",
+        "description": "`x`, `y`, and `z` come together. `world` alone moves the respawn to that world's own spawn; with coordinates, to that spot in it.\n\nPermission: `world:write`.",
+        "tags": [
+          "Worlds"
+        ],
+        "x-scope": "world:write",
+        "security": [
+          {
+            "bearer": [
+              "world:write"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerSpawnPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerSpawn"
                 }
               }
             }
@@ -8443,6 +9097,153 @@
         "responses": {
           "204": {
             "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/worlds/{world}/blocks/{x}/{y}/{z}/container/slots/{slot}/take": {
+      "post": {
+        "operationId": "postWorldsWorldBlocksXYZContainerSlotsSlotTake",
+        "summary": "Take some items from a container slot",
+        "description": "Slots count from 0; a double chest has 54, the left half first. The rest of the stack keeps its enchantments, name, and the like.\n\nPermission: `world:write`.",
+        "tags": [
+          "Containers"
+        ],
+        "x-scope": "world:write",
+        "security": [
+          {
+            "bearer": [
+              "world:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "world",
+            "in": "path",
+            "required": true,
+            "description": "World name (`world_nether`) or key (`minecraft:the_nether`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x",
+            "in": "path",
+            "required": true,
+            "description": "Block X",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "y",
+            "in": "path",
+            "required": true,
+            "description": "Block Y",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "z",
+            "in": "path",
+            "required": true,
+            "description": "Block Z",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "description": "Slot number; see the inventory layout in the description",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TakeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TakeResult"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -13498,6 +14299,15 @@
               "string",
               "null"
             ]
+          },
+          "writable": {
+            "type": "boolean"
+          },
+          "readOnlyReason": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -13562,6 +14372,12 @@
           },
           "writable": {
             "type": "boolean"
+          },
+          "readOnlyReason": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -16196,6 +17012,107 @@
         ],
         "additionalProperties": false
       },
+      "ServerSpawn": {
+        "type": "object",
+        "properties": {
+          "world": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "x": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "y": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "z": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "yaw": {
+            "type": "number"
+          },
+          "pitch": {
+            "type": "number"
+          },
+          "respawnRadius": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "spawnProtection": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "world",
+          "key",
+          "x",
+          "y",
+          "z",
+          "yaw",
+          "pitch",
+          "respawnRadius",
+          "spawnProtection"
+        ],
+        "additionalProperties": false
+      },
+      "ServerSpawnPatch": {
+        "type": "object",
+        "properties": {
+          "world": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "x": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "y": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "z": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "yaw": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "pitch": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "respawnRadius": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "SessionView": {
         "type": "object",
         "properties": {
@@ -16457,6 +17374,42 @@
           "disk",
           "java",
           "at"
+        ],
+        "additionalProperties": false
+      },
+      "TakeRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "additionalProperties": false
+      },
+      "TakeResult": {
+        "type": "object",
+        "properties": {
+          "taken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "item": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ItemView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "taken"
         ],
         "additionalProperties": false
       },

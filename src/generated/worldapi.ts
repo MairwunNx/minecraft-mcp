@@ -72,6 +72,28 @@ export interface paths {
         patch: operations["patchAccountsName"];
         trace?: never;
     };
+    "/accounts/{name}/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make a code that sets a new password for an account
+         * @description For someone who forgot their password and can't run /worldapi admin in game. They enter the code on the sign-in page, under “I have a code”, with a new password, within 30 minutes; their sessions end. A caller hands out only permissions it has itself.
+         *
+         *     Permission: `tokens:manage`.
+         */
+        post: operations["postAccountsNameReset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/aggregates": {
         parameters: {
             query?: never;
@@ -211,7 +233,7 @@ export interface paths {
         put?: never;
         /**
          * Replace exact text in a file
-         * @description Each edit's oldText must appear exactly once (copy it from /files/read without the line numbers), unless replaceAll. Edits apply in order, all or none. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, and files the server keeps in memory (ops.json, whitelist.json, banned-*.json, usercache.json), can't be written: their endpoints change them. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
+         * @description Each edit's oldText must appear exactly once (copy it from /files/read without the line numbers), unless replaceAll. Edits apply in order, all or none. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
          *
          *     Permission: `files:write`.
          */
@@ -255,7 +277,7 @@ export interface paths {
         put?: never;
         /**
          * Set values in a YAML, .properties, or JSON config by dotted path
-         * @description `{"chunks.auto-save-interval": 6000}` sets one key, creating the sections on the way; null removes a key. YAML keeps its comments, though spacing and quotes may change; .properties changes only the lines it sets. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, and files the server keeps in memory (ops.json, whitelist.json, banned-*.json, usercache.json), can't be written: their endpoints change them. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
+         * @description `{"chunks.auto-save-interval": 6000}` sets one key, creating the sections on the way; null removes a key. YAML keeps its comments, though spacing and quotes may change; .properties changes only the lines it sets. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
          *
          *     Permission: `files:write`.
          */
@@ -276,7 +298,7 @@ export interface paths {
         get?: never;
         /**
          * Create a file or replace it whole
-         * @description Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, and files the server keeps in memory (ops.json, whitelist.json, banned-*.json, usercache.json), can't be written: their endpoints change them. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
+         * @description Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
          *
          *     Permission: `files:write`.
          */
@@ -590,6 +612,28 @@ export interface paths {
         patch: operations["patchPlayersPlayerEnderchestSlotsSlot"];
         trace?: never;
     };
+    "/players/{player}/enderchest/slots/{slot}/take": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take some items from a ender chest slot
+         * @description Inventory slots: 0–8 hotbar, 9–35 main, 36 boots, 37 leggings, 38 chestplate, 39 helmet, 40 offhand. Ender chest slots: 0–26. The player must be online. The rest of the stack keeps its enchantments, name, and the like.
+         *
+         *     Permission: `players:write`.
+         */
+        post: operations["postPlayersPlayerEnderchestSlotsSlotTake"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/players/{player}/inventory": {
         parameters: {
             query?: never;
@@ -664,6 +708,28 @@ export interface paths {
          *     Permission: `players:write`.
          */
         patch: operations["patchPlayersPlayerInventorySlotsSlot"];
+        trace?: never;
+    };
+    "/players/{player}/inventory/slots/{slot}/take": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take some items from a inventory slot
+         * @description Inventory slots: 0–8 hotbar, 9–35 main, 36 boots, 37 leggings, 38 chestplate, 39 helmet, 40 offhand. Ender chest slots: 0–26. The player must be online. The rest of the stack keeps its enchantments, name, and the like.
+         *
+         *     Permission: `players:write`.
+         */
+        post: operations["postPlayersPlayerInventorySlotsSlotTake"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/players/{player}/kick": {
@@ -1111,7 +1177,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Whether a restart or stop is pending, and when
+         * @description Permission: `server:read`.
+         */
+        get: operations["getServerRestart"];
         put?: never;
         /**
          * Restart the server after a countdown in chat
@@ -1157,7 +1227,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Whether a restart or stop is pending, and when
+         * @description Permission: `server:read`.
+         */
+        get: operations["getServerStop"];
         put?: never;
         /**
          * Stop the server after a countdown in chat
@@ -1220,6 +1294,32 @@ export interface paths {
          * @description Permission: `players:moderate`.
          */
         patch: operations["patchServerWhitelist"];
+        trace?: never;
+    };
+    "/spawn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where players join for the first time and respawn without a bed
+         * @description Permission: `server:read`.
+         */
+        get: operations["getSpawn"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Move the spawn point, change its world, or its respawn radius
+         * @description `x`, `y`, and `z` come together. `world` alone moves the respawn to that world's own spawn; with coordinates, to that spot in it.
+         *
+         *     Permission: `world:write`.
+         */
+        patch: operations["patchSpawn"];
         trace?: never;
     };
     "/tokens": {
@@ -1452,6 +1552,28 @@ export interface paths {
          *     Permission: `world:write`.
          */
         patch: operations["patchWorldsWorldBlocksXYZContainerSlotsSlot"];
+        trace?: never;
+    };
+    "/worlds/{world}/blocks/{x}/{y}/{z}/container/slots/{slot}/take": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take some items from a container slot
+         * @description Slots count from 0; a double chest has 54, the left half first. The rest of the stack keeps its enchantments, name, and the like.
+         *
+         *     Permission: `world:write`.
+         */
+        post: operations["postWorldsWorldBlocksXYZContainerSlotsSlotTake"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/worlds/{world}/border": {
@@ -2372,6 +2494,8 @@ export interface components {
             size: number;
             modified: string;
             sha256?: string | null;
+            writable?: boolean;
+            readOnlyReason?: string | null;
         };
         FileEdit: {
             path: string;
@@ -2387,6 +2511,7 @@ export interface components {
             modified: string;
             readable: boolean;
             writable: boolean;
+            readOnlyReason?: string | null;
         };
         FileList: {
             path: string;
@@ -3042,6 +3167,35 @@ export interface components {
             /** Format: int32 */
             buffered: number;
         };
+        ServerSpawn: {
+            world: string;
+            key: string;
+            /** Format: int32 */
+            x: number;
+            /** Format: int32 */
+            y: number;
+            /** Format: int32 */
+            z: number;
+            yaw: number;
+            pitch: number;
+            /** Format: int32 */
+            respawnRadius: number;
+            /** Format: int32 */
+            spawnProtection: number;
+        };
+        ServerSpawnPatch: {
+            world?: string | null;
+            /** Format: int32 */
+            x?: number | null;
+            /** Format: int32 */
+            y?: number | null;
+            /** Format: int32 */
+            z?: number | null;
+            yaw?: number | null;
+            pitch?: number | null;
+            /** Format: int32 */
+            respawnRadius?: number | null;
+        };
         SessionView: {
             joinedAt: string;
             leftAt?: string | null;
@@ -3106,6 +3260,15 @@ export interface components {
             processResidentBytes?: number | null;
             java: components["schemas"]["JavaRuntime"];
             at: string;
+        };
+        TakeRequest: {
+            /** Format: int32 */
+            amount: number;
+        };
+        TakeResult: {
+            /** Format: int32 */
+            taken: number;
+            item?: components["schemas"]["ItemView"] | null;
         };
         TeleportRequest: {
             location?: components["schemas"]["LocationView"] | null;
@@ -3548,6 +3711,87 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountView"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    postAccountsNameReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description name */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["NoBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteCode"];
                 };
             };
             /** @description Invalid request */
@@ -4507,6 +4751,8 @@ export interface operations {
                 online?: boolean;
                 /** @description Order of the list */
                 sort?: "name" | "last_seen" | "playtime";
+                /** @description Only players whose name contains this, ignoring case */
+                search?: string;
             };
             header?: never;
             path?: never;
@@ -5736,6 +5982,89 @@ export interface operations {
             };
         };
     };
+    postPlayersPlayerEnderchestSlotsSlotTake: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Player UUID or name */
+                player: string;
+                /** @description Slot number; see the inventory layout in the description */
+                slot: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TakeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TakeResult"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     getPlayersPlayerInventory: {
         parameters: {
             query?: never;
@@ -6071,6 +6400,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ItemView"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    postPlayersPlayerInventorySlotsSlotTake: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Player UUID or name */
+                player: string;
+                /** @description Slot number; see the inventory layout in the description */
+                slot: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TakeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TakeResult"];
                 };
             };
             /** @description Invalid request */
@@ -7882,6 +8294,62 @@ export interface operations {
             };
         };
     };
+    getServerRestart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestartStatus"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     postServerRestart: {
         parameters: {
             query?: never;
@@ -8036,6 +8504,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getServerStop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestartStatus"];
                 };
             };
             /** @description Missing or unknown token */
@@ -8333,6 +8857,131 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Whitelist"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getSpawn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServerSpawn"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    patchSpawn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ServerSpawnPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServerSpawn"];
                 };
             };
             /** @description Invalid request */
@@ -9412,6 +10061,95 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ItemView"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    postWorldsWorldBlocksXYZContainerSlotsSlotTake: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description World name (`world_nether`) or key (`minecraft:the_nether`) */
+                world: string;
+                /** @description Block X */
+                x: number;
+                /** @description Block Y */
+                y: number;
+                /** @description Block Z */
+                z: number;
+                /** @description Slot number; see the inventory layout in the description */
+                slot: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TakeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TakeResult"];
                 };
             };
             /** @description Invalid request */
