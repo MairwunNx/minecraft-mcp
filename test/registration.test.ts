@@ -11,7 +11,7 @@ describe("tools follow the token's permissions", () => {
   it("a viewer sees only reads", async () => {
     const { client } = await connect(api.url, VIEWER);
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(28);
+    expect(tools.length).toBe(29);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
     expect(tools.map((tool) => tool.name)).not.toContain("set_world");
     expect(tools.map((tool) => tool.name)).toContain("get_chat");
@@ -56,7 +56,7 @@ describe("tools follow the token's permissions", () => {
     expect(tools).not.toContain("edit_file");
     const all = (await connect(api.url, OWNER)).tools;
     expect(all).toEqual(expect.arrayContaining(["execute_java", "edit_file", "write_file", "set_config_values"]));
-    expect(all.length).toBe(71);
+    expect(all.length).toBe(73);
     expect(new Set(all).size).toBe(all.length);
   });
 

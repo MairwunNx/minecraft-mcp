@@ -10,10 +10,10 @@ It runs next to your AI client—Claude Desktop, Claude Code, Cursor, VS Code, o
 
 ## What you get
 
-- 🧰 **71 tools** for the server, worlds, blocks, chests, entities, players, leaderboards, recipes, configs, logs, and Java scripts.
+- 🧰 **73 tools** for the server, worlds, blocks, chests, entities, players, leaderboards, recipes, configs, logs, and Java scripts.
 - 🎒 **Inventories in depth**: every item’s enchantments, durability, and potion effects, and what’s inside shulker boxes and bundles.
 - 📜 **Configs and logs**: the agent reads the console and any config, and with the right token changes a value and keeps its comments.
-- 🔑 **Only what your token allows**: a viewer token shows 28 tools that only look, and read-only mode hides every write.
+- 🔑 **Only what your token allows**: a viewer token shows 29 tools that only look, and read-only mode hides every write.
 - 🙋 **“Me” means you**: set your player name, and “where am I?” just works.
 - ⏳ **Live events**: “tell me when Steve joins”.
 - 🛡️ **Safe by design**: game text is fenced as data, tools say when they destroy something, and the token never leaks.

@@ -28,6 +28,17 @@ describe("requests reach WorldAPI in its shape", () => {
     });
   });
 
+  it("moves the spawn point with only the fields given", async () => {
+    const { client } = await connect(api.url, ADMIN);
+    await client.callTool({ name: "set_spawn", arguments: { x: 100, y: 70, z: -20, respawnRadius: 3 } });
+    expect(api.seen[0]).toEqual({
+      method: "PATCH",
+      url: "/api/v1/spawn",
+      authorization: `Bearer ${TOKEN}`,
+      body: { x: 100, y: 70, z: -20, respawnRadius: 3 },
+    });
+  });
+
   it("reads a plugin's resource with its slashes and options", async () => {
     const { client } = await connect(api.url, VIEWER);
     await client.callTool({
