@@ -20,9 +20,9 @@ const calls = process.argv[2]
   ? [[process.argv[2], JSON.parse(process.argv[3] ?? "{}")]]
   : [
       ["get_server_status", {}],
-      ["list_worlds", {}],
-      ["get_world", { world: "world" }],
-      ["get_leaderboard", { statistic: "playtime" }],
+      ["get_world", {}],
+      ["get_world", { world: "world", include: ["respawn"] }],
+      ["get_leaderboard", { statistics: ["playtime"] }],
       ["get_events", { limit: 3 }],
       ["get_entity_summary", { world: "world" }],
       ["locate", { kind: "structure", targets: ["village"], radius: 50 }],

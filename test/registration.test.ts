@@ -11,52 +11,58 @@ describe("tools follow the token's permissions", () => {
   it("a viewer sees only reads", async () => {
     const { client } = await connect(api.url, VIEWER);
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(29);
+    expect(tools.length).toBe(17);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
     expect(tools.map((tool) => tool.name)).not.toContain("set_world");
-    expect(tools.map((tool) => tool.name)).toContain("get_chat");
+    expect(tools.map((tool) => tool.name)).toContain("get_events");
+    expect(tools.map((tool) => tool.name)).not.toContain("search_commands");
     expect(tools.map((tool) => tool.name)).not.toContain("read_file");
   });
 
   it("write permissions add their own writes only", async () => {
     const world = (await connect(api.url, ["server:read", "world:write"])).tools;
-    expect(world).toEqual(expect.arrayContaining(["fill_blocks", "edit_container"]));
+    expect(world).toEqual(expect.arrayContaining(["set_blocks", "edit_items", "set_world"]));
     expect(world).not.toContain("teleport_player");
     const players = (await connect(api.url, ["players:read", "players:write"])).tools;
-    expect(players).toContain("teleport_player");
-    expect(players).not.toContain("fill_blocks");
-    expect(players).not.toContain("kick_player");
+    expect(players).toEqual(expect.arrayContaining(["teleport_player", "send_message", "edit_items"]));
+    expect(players).not.toContain("set_blocks");
+    expect(players).not.toContain("manage_access");
     const moderator = (await connect(api.url, ["players:moderate"])).tools;
-    expect(moderator).toEqual(["get_access", "manage_whitelist", "set_operator", "manage_bans", "kick_player"]);
+    expect(moderator).toEqual(["get_access", "manage_access"]);
   });
 
-  it("chat needs events:read and chat:read together", async () => {
-    expect((await connect(api.url, ["events:read"])).tools).not.toContain("get_chat");
+  it("commands are read with commands:read or server:console, run only with server:console", async () => {
+    expect((await connect(api.url, ["commands:read"])).tools).toEqual(["search_commands"]);
+    expect((await connect(api.url, ["server:console"])).tools).toEqual(["search_commands", "run_command"]);
     expect((await connect(api.url, ["chat:read"])).tools).toEqual([]);
-    expect((await connect(api.url, ["events:read", "chat:read"])).tools).toContain("get_chat");
   });
 
   it("file reads come with files:read or logs:read, writes only with files:write", async () => {
     const logs = (await connect(api.url, ["logs:read"])).tools;
     expect(logs).toEqual(["get_server_log", "list_files", "read_file"]);
     const files = (await connect(api.url, ["files:read"])).tools;
-    expect(files).toEqual(["list_configs", "list_files", "read_file"]);
+    expect(files).toEqual(["list_files", "read_file"]);
     const writer = (await connect(api.url, ["files:read", "files:write"])).tools;
-    expect(writer).toEqual(
-      expect.arrayContaining(["edit_file", "set_config_values", "write_file", "list_configs", "read_file"]),
-    );
+    expect(writer).toEqual(["list_files", "read_file", "edit_file"]);
   });
 
   it("admin has everything but files:write and code; owner has all", async () => {
     const { tools } = await connect(api.url, ADMIN);
     expect(tools).toEqual(
-      expect.arrayContaining(["run_command", "fill_blocks", "read_file", "get_system", "stop_server", "list_tokens"]),
+      expect.arrayContaining([
+        "run_command",
+        "search_commands",
+        "set_blocks",
+        "read_file",
+        "restart_server",
+        "list_tokens",
+      ]),
     );
     expect(tools).not.toContain("execute_java");
     expect(tools).not.toContain("edit_file");
     const all = (await connect(api.url, OWNER)).tools;
-    expect(all).toEqual(expect.arrayContaining(["execute_java", "edit_file", "write_file", "set_config_values"]));
-    expect(all.length).toBe(73);
+    expect(all).toEqual(expect.arrayContaining(["execute_java", "edit_file", "list_java_scripts"]));
+    expect(all.length).toBe(46);
     expect(new Set(all).size).toBe(all.length);
   });
 
@@ -68,14 +74,7 @@ describe("tools follow the token's permissions", () => {
     expect(names).toEqual(
       expect.arrayContaining(["get_access", "list_java_scripts", "read_file", "list_files", "get_audit_log"]),
     );
-    for (const write of [
-      "execute_java",
-      "edit_file",
-      "write_file",
-      "set_config_values",
-      "edit_container",
-      "stop_server",
-    ])
+    for (const write of ["execute_java", "edit_file", "edit_items", "run_command", "restart_server", "manage_access"])
       expect(names).not.toContain(write);
   });
 
@@ -89,16 +88,17 @@ describe("tools follow the token's permissions", () => {
       idempotentHint: true,
       openWorldHint: false,
     });
-    expect(byName.fill_blocks).toMatchObject({ readOnlyHint: false, destructiveHint: true });
-    expect(byName.set_gamerule).toMatchObject({ readOnlyHint: false, destructiveHint: false, idempotentHint: true });
+    expect(byName.set_blocks).toMatchObject({ readOnlyHint: false, destructiveHint: true });
+    expect(byName.set_world).toMatchObject({ readOnlyHint: false, destructiveHint: false });
+    expect(byName.search_commands).toMatchObject({ readOnlyHint: true });
     expect(byName.execute_java).toMatchObject({ destructiveHint: true });
-    expect(byName.manage_bans).toMatchObject({ readOnlyHint: false, destructiveHint: true });
+    expect(byName.manage_access).toMatchObject({ readOnlyHint: false, destructiveHint: true });
     expect(byName.get_access).toMatchObject({ readOnlyHint: true });
     expect(byName.restart_server).toMatchObject({ destructiveHint: true });
     expect(byName.get_server_log).toMatchObject({ readOnlyHint: true });
     expect(byName.read_file).toMatchObject({ readOnlyHint: true });
     expect(byName.edit_file).toMatchObject({ readOnlyHint: false, destructiveHint: true });
-    expect(byName.stop_server).toMatchObject({ destructiveHint: true });
+    expect(byName.run_command).toMatchObject({ destructiveHint: true });
   });
 
   it("resources and prompts are there", async () => {

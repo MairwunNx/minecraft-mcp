@@ -77,16 +77,20 @@ describe("file writes", () => {
     const { client } = await connect(api.url, OWNER);
     await client.callTool({
       name: "edit_file",
-      arguments: { path: "server.properties", oldText: "pvp=true", newText: "pvp=false", expectedSha256: SHA },
+      arguments: {
+        path: "server.properties",
+        edits: [{ oldText: "pvp=true", newText: "pvp=false" }],
+        expectedSha256: SHA,
+      },
     });
     await client.callTool({
-      name: "set_config_values",
+      name: "edit_file",
       arguments: {
         path: "config/paper-world-defaults.yml",
         values: { "chunks.auto-save-interval": 6000, "entities.spawning.old-key": null },
       },
     });
-    await client.callTool({ name: "write_file", arguments: { path: "plugins/Foo/config.yml", content: "a: 1\n" } });
+    await client.callTool({ name: "edit_file", arguments: { path: "plugins/Foo/config.yml", content: "a: 1\n" } });
     expect(api.seen).toEqual([
       expect.objectContaining({
         method: "POST",
@@ -116,7 +120,7 @@ describe("file writes", () => {
   it("refuse a malformed sha256 before calling WorldAPI", async () => {
     const { client } = await connect(api.url, OWNER);
     const result = await client.callTool({
-      name: "write_file",
+      name: "edit_file",
       arguments: { path: "a.yml", content: "", expectedSha256: "nope" },
     });
     expect(result.isError).toBe(true);
@@ -131,7 +135,7 @@ describe("file writes", () => {
     const { client } = await connect(api.url, OWNER);
     const result = await client.callTool({
       name: "edit_file",
-      arguments: { path: "server.properties", oldText: "a", newText: "b", expectedSha256: SHA },
+      arguments: { path: "server.properties", edits: [{ oldText: "a", newText: "b" }], expectedSha256: SHA },
     });
     expect(result.isError).toBe(true);
     expect(text(result)).toBe("file_changed: server.properties changed since you read it");
