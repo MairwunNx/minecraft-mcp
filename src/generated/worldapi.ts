@@ -791,7 +791,9 @@ export interface paths {
         head?: never;
         /**
          * Make a player an operator or take it away
-         * @description Permission: `players:moderate`.
+         * @description Needs `server:console`, not `players:moderate`: an operator may run every command, `/worldapi` among them.
+         *
+         *     Permission: `server:console`.
          */
         patch: operations["patchPlayersPlayerPermissions"];
         trace?: never;
@@ -1131,7 +1133,9 @@ export interface paths {
         head?: never;
         /**
          * Make players operators or take it away
-         * @description Permission: `players:moderate`.
+         * @description Needs `server:console`, not `players:moderate`: an operator may run every command, `/worldapi` among them.
+         *
+         *     Permission: `server:console`.
          */
         patch: operations["patchServerOps"];
         trace?: never;
