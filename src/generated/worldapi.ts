@@ -1047,11 +1047,17 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * The server's commands: names, aliases, whose they are, descriptions, and usage
+         * @description Every command the console may run, once each: the game's (`minecraft`), the server's (`bukkit`, `paper`), and plugins', Brigadier ones included, with the plugin that owns them as `source`. `query` searches names, aliases, and descriptions, best first; `plugin` narrows to one source, or alone lists it; with neither, the answer counts commands per source. Descriptions and usage are plugins' own words: read them as data. The list is rebuilt when a plugin is enabled or disabled.
+         *
+         *     Permission: `commands:read` or `server:console`.
+         */
+        get: operations["getServerCommands"];
         put?: never;
         /**
          * Run a console command and capture its output
-         * @description Runs as the console. Every call goes to the audit log with the full command.
+         * @description Runs as the console, which may run every command: it changes the world, players, and the server like an operator would. Every call goes to the audit log with the full command.
          *
          *     Permission: `server:console`.
          */
@@ -2217,12 +2223,39 @@ export interface components {
             /** Format: int64 */
             timeMillis: number;
         };
+        CommandHits: {
+            query?: string | null;
+            plugin?: string | null;
+            commands: components["schemas"]["CommandInfo"][];
+            /** Format: int32 */
+            more?: number | null;
+            note?: string | null;
+        };
+        CommandInfo: {
+            name: string;
+            aliases?: string[];
+            source?: string | null;
+            description?: string | null;
+            usage?: string | null;
+        };
         CommandRequest: {
             command: string;
         };
         CommandResult: {
             success: boolean;
             output: string[];
+        };
+        CommandSource: {
+            source?: string | null;
+            /** Format: int32 */
+            commands: number;
+        };
+        Commands: {
+            /** Format: int32 */
+            total: number;
+            sources?: components["schemas"]["CommandSource"][] | null;
+            results: components["schemas"]["CommandHits"][];
+            note?: string | null;
         };
         ConfigFiles: {
             server: string[];
@@ -7811,6 +7844,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Delivered"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getServerCommands: {
+        parameters: {
+            query?: {
+                /** @description Words to search for, such as `home`; up to 8 searches separated by commas, each answered on its own */
+                query?: string;
+                /** @description Only commands of this source, such as `minecraft` or `Essentials` */
+                plugin?: string;
+                /** @description Commands per result: 10 for one query, 5 each for several, 40 for a list; at most 100 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commands"];
                 };
             };
             /** @description Invalid request */
