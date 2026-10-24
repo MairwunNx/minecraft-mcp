@@ -43,28 +43,19 @@ export function scriptTools(ctx: Context): void {
 
   tool(ctx, {
     name: "list_java_scripts",
-    title: "Loaded scripts",
-    description: "Resident scripts with their listener and task counts and error count.",
-    scope: "code",
-    effect: "read",
-    input: {},
-    run: () => unwrap(api.GET("/scripts"), token),
-  });
-
-  tool(ctx, {
-    name: "get_java_script",
     untrusted: true,
-    title: "Script and its log",
+    title: "Loaded scripts",
     description:
-      "One resident script with its source, plus the latest lines it wrote with ctx.log and errors from its handlers and tasks. logs false leaves the log out.",
+      "Resident scripts with their listener and task counts and error count. With id, that script with its source, plus the latest lines it wrote with ctx.log and errors from its handlers and tasks; logs false leaves the log out.",
     scope: "code",
     effect: "read",
     input: {
-      id: z.string(),
+      id: z.string().optional().describe("One script in full"),
       logs: z.boolean().default(true),
       limit: z.number().int().min(1).max(10000).optional().describe("Log lines to return"),
     },
     run: async (args) => {
+      if (!args.id) return unwrap(api.GET("/scripts"), token);
       const path = { id: args.id };
       const [script, logs] = await Promise.all([
         unwrap(api.GET("/scripts/{id}", { params: { path } }), token),
