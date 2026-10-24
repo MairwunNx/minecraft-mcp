@@ -156,8 +156,9 @@ export function worldTools(ctx: Context): void {
         args.difficulty !== undefined ||
         args.pvp !== undefined ||
         args.spawn !== undefined;
-      if (own)
-        done.world = await unwrap(
+      // The world answers whole, game rules included: keep what this call could change, so a write stays small.
+      if (own) {
+        const view = await unwrap(
           api.PATCH("/worlds/{world}", {
             ...path(args.world),
             body: {
@@ -173,11 +174,20 @@ export function worldTools(ctx: Context): void {
           }),
           token,
         );
-      if (args.rules)
-        done.rules = await unwrap(
-          api.PATCH("/worlds/{world}/gamerules", { ...path(args.world), body: args.rules }),
+        const { time, weather, difficulty, pvp, spawn } = view as Record<string, unknown>;
+        done.world = { time, weather, difficulty, pvp, spawn };
+      }
+      if (args.rules) {
+        const rules = args.rules;
+        const answer = await unwrap(
+          api.PATCH("/worlds/{world}/gamerules", { ...path(args.world), body: rules }),
           token,
         );
+        // WorldAPI answers every rule; the ones this call set are enough.
+        done.rules = Array.isArray(answer)
+          ? answer.filter((rule: { name?: string }) => rule.name !== undefined && rule.name in rules)
+          : answer;
+      }
       if (args.border)
         done.border = await unwrap(
           api.PATCH("/worlds/{world}/border", { ...path(args.world), body: args.border }),
