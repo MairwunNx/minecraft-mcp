@@ -1,5 +1,39 @@
 # Changelog
 
+## 4.0.0
+
+Fewer, stronger tools: 46 instead of 73, and 17 instead of 29 for a `viewer` token. Related tools became one, and most take several targets at once, so the agent reads fewer schemas and makes fewer calls. It needs WorldAPI 4.1.0, which serves the command catalog; with an older one, the server warns at start.
+
+- 🔎 **The server's commands.** `search_commands` searches every command the server has, the game's, the server's, and each plugin's, Brigadier ones included: its aliases, the plugin that owns it, its description, and its usage, several words at once, or one plugin's list. It needs WorldAPI's new `commands:read` (the `moderator` group has it) or `server:console`.
+- ⌨️ **Several commands in one call.** `run_command` takes `commands` and runs them in order, each with its output. Its description now says plainly that the console changes the world like an operator would.
+- 🧱 **Batches.** `get_block` reads up to 16 positions, and leaves out `y` for the column's surface. `set_blocks` places up to 64 blocks or fills a box. `get_player` reads up to 10 players. `send_message`, `set_advancement`, and `get_leaderboard` take lists too.
+- 🎒 **One tool for items.** `edit_items` gives, sets, takes (new: some items from a slot), or clears items in a player's inventory, ender chest, or a container block.
+- 🌍 **One tool to change a world.** `set_world` sets the time, weather, difficulty, PvP, game rules, the border, the world's own spawn, and the server's respawn point in one call, and answers only with what it could change, not every game rule.
+- 🛡️ **One tool for access.** `manage_access` changes the whitelist, operators, bans, and pardons, and kicks players.
+- `list_tokens` adds the groups and every permission with `groups`. `restart_server` tells whether a restart is pending with `action: "status"`.
+
+### Breaking changes and migration
+
+Tools were renamed or folded into others. The wiki's [Tools](https://github.com/MairwunNx/minecraft-mcp/wiki/Tools#tools-from-before-40) page has the whole table; in short:
+
+- `get_system`: `get_server_status` with `include: ["host"]`; its `detail` is now `include: ["performance"]`.
+- `get_chat`: `get_events` with `types: ["player.chat"]`.
+- `list_worlds`, `get_spawn`: `get_world` without `world`, and with `include: ["respawn"]`; `ruleDetails` and `size` are `include: ["rules", "size"]`.
+- `set_spawn`, `set_gamerule`, `set_world_border`: `set_world` with `respawn`, `rules`, and `border`.
+- `get_biome`, `get_highest_block`: `get_block` with `positions`.
+- `get_chunk`: `list_chunks` with `chunk`. `get_entity`: `list_entities` with `uuid`. `list_online_players`: `list_players` with `online: true`.
+- `set_block`, `fill_blocks`: `set_blocks`.
+- `give_item`, `edit_inventory`, `edit_container`: `edit_items`.
+- `get_player_statistics`, `get_player_advancements`, `check_permission`: `get_player` with `statistics`, `advancements`, and `permission`.
+- `get_aggregates`: `get_leaderboard` without `statistics`, which now takes a list instead of `statistic`.
+- `broadcast`: `send_message` without `players`; `send_message` takes `players` instead of `player`.
+- `manage_whitelist`, `set_operator`, `manage_bans`, `kick_player`: `manage_access`.
+- `stop_server`: `restart_server` with `action: "stop"`; `cancel: true` is `action: "cancel"`.
+- `list_configs`: `list_files` with `configs: true`.
+- `set_config_values`, `write_file`: `edit_file` with `values` or `content`; its single `oldText` and `newText` are now `edits`.
+- `get_java_script`: `list_java_scripts` with `id`.
+- `run_command` takes `commands`, a list, instead of `command`. `set_advancement` takes `keys` instead of `key`.
+
 ## 3.1.1
 
 A security release.
