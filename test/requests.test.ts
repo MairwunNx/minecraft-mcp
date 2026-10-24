@@ -96,6 +96,16 @@ describe("requests reach WorldAPI in its shape", () => {
     expect((await client.callTool({ name: "manage_access", arguments: {} })).isError).toBe(true);
   });
 
+  it("asks for server:console before making operators", async () => {
+    const moderator = VIEWER.concat(["logs:read", "players:write", "players:moderate"]);
+    const { client } = await connect(api.url, moderator);
+    api.seen.length = 0;
+    const refused = await client.callTool({ name: "manage_access", arguments: { operators: { add: ["Steve"] } } });
+    expect(refused.isError).toBe(true);
+    expect(text(refused)).toMatch(/server:console/);
+    expect(api.seen).toHaveLength(0);
+  });
+
   it("sends world, rules, and border changes each to its endpoint", async () => {
     const { client } = await connect(api.url, ADMIN);
     await client.callTool({
