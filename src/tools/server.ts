@@ -9,6 +9,7 @@ export function serverTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_server_status",
+    untrusted: true,
     title: "Server status",
     description:
       "Version, Paper build, MOTD, players online and max, uptime, difficulty, view distance, worlds, data packs, tick rate, and current load: TPS over 1, 5, and 15 minutes (20 is perfect), milliseconds per tick, memory used and max in MB, loaded chunks, and entities. detail adds tick time percentiles (under 50 ms keeps 20 TPS), CPU, chunks, entities, and the most common entity types per world, and the JVM: heap and non-heap, memory pools, garbage collection per collector, threads, loaded classes, and buffers.",
@@ -26,6 +27,7 @@ export function serverTools(ctx: Context): void {
 
   tool(ctx, {
     name: "list_plugins",
+    untrusted: true,
     title: "Plugins",
     description:
       "Installed plugins with version, whether they are enabled, their data folder, and their config files (read them with read_file).",
@@ -238,6 +240,7 @@ export function serverTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_access",
+    untrusted: true,
     title: "Whitelist, operators, and bans",
     description:
       "Who may play and who runs the server: whether the whitelist is on and enforced and who is on it, the operators, and banned players and IP addresses with reasons and expiry. Needs players:moderate.",
@@ -334,6 +337,7 @@ export function serverTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_audit_log",
+    untrusted: true,
     title: "Audit log",
     description:
       "What clients changed through WorldAPI, newest first: who (a token, or `panel:<account>`), when, the method and path, the target, the status, and details such as a file edit's line counts. Needs tokens:manage.",

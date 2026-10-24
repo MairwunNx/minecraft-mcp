@@ -90,6 +90,7 @@ export function playerTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_player_advancements",
+    untrusted: true,
     title: "Advancements",
     description:
       "Every advancement on the server with its title, description, frame, and parent, done or not, and when it was finished. done false lists what's left: with the parents, it shows what to go for next.",

@@ -30,6 +30,7 @@ export function statsTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_recipes",
+    untrusted: true,
     title: "Recipes",
     description:
       "How to make an item (`item`) or what an item is good for (`uses`), or both: crafting grids with their shape, furnace, smoker, blast furnace, and campfire cooking with time and experience, stonecutting, and smithing. Plugin recipes count too. Each ingredient lists the items that fit.",
