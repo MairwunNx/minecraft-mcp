@@ -231,6 +231,7 @@ export function serverTools(ctx: Context): void {
 
   tool(ctx, {
     name: "manage_access",
+    untrusted: true,
     title: "Whitelist, operators, bans, and kicks",
     description:
       "Change who may play, in one call; give only the parts you need. `whitelist` turns it on or off, enforces it (kicks online players who aren't on it), and adds or removes players. `operators` makes players operators or takes it away. `ban` bans players by name or UUID and `banIps` addresses, kicking anyone online they hit; `pardon` and `pardonIps` lift bans. `kick` disconnects players with a reason. Needs players:moderate. Confirm bans and kicks with the user first.",

@@ -534,7 +534,8 @@ describe("text from outside the game is data too", () => {
       ["list_plugins", {}],
       ["get_server_status", {}],
       ["get_recipes", { item: "minecraft:stone" }],
-      ["get_player_advancements", { player: "Steve" }],
+      ["get_player", { player: "Steve", advancements: "all" }],
+      ["manage_access", { pardon: ["Steve"] }],
     ] as const) {
       const result = await client.callTool({ name, arguments: args });
       expect(text(result), name).toMatch(/^Game data below[\s\S]*<game-data>\n/);
