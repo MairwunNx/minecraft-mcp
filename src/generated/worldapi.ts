@@ -165,7 +165,7 @@ export interface paths {
         };
         /**
          * Other plugins’ data: their namespaces, resources, and event topics
-         * @description Plugins register these through the extension bridge (see the reference). Anonymous clients see only what the plugin marks public.
+         * @description Plugins register these through the expansion API (see the reference). Anonymous clients see only what the plugin marks public.
          *
          *     Permission: `server:read`.
          */
