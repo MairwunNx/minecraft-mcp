@@ -7,6 +7,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { createWorldApi } from "./client.js";
 import { configFromEnv } from "./config.js";
 import { EventFeed } from "./events.js";
+import { fromLoopback } from "./http.js";
 import { discoverScopes } from "./scopes.js";
 import { buildServer } from "./server.js";
 import { checkWorldApi, VERSION } from "./version.js";
@@ -88,6 +89,11 @@ async function main(): Promise<void> {
     }
     if (!authorized(request)) {
       response.writeHead(401, { "WWW-Authenticate": "Bearer" }).end();
+      return;
+    }
+    // Without a token, only this machine's clients get in, not a web page that rebound its domain here.
+    if (!secret && !fromLoopback(request.headers.host, request.headers.origin)) {
+      response.writeHead(403).end();
       return;
     }
     const id = request.headers["mcp-session-id"];
