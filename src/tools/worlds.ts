@@ -8,34 +8,41 @@ export function worldTools(ctx: Context): void {
   const path = (name: string) => ({ params: { path: { world: name } } });
 
   tool(ctx, {
-    name: "list_worlds",
-    title: "Worlds",
-    description: "Loaded worlds with their dimension key and player count.",
-    scope: "server:read",
-    effect: "read",
-    input: {},
-    run: () => unwrap(api.GET("/worlds"), token),
-  });
-
-  tool(ctx, {
     name: "get_world",
-    title: "World",
+    title: "Worlds",
     description:
-      "Time of day (dayTime 0–23999: 0 sunrise, 6000 noon, 13000 night, 18000 midnight), day number, moon phase, ticks until night, whether beds work, weather, difficulty, PvP, spawn, the world border, game rule values, and load. ruleDetails adds each game rule's type and default; size adds chunks ever generated, explored area in km², and size on disk.",
+      "One world: time of day (dayTime 0–23999: 0 sunrise, 6000 noon, 13000 night, 18000 midnight), day number, moon phase, ticks until night, whether beds work, weather, difficulty, PvP, the world's own spawn, the world border, game rule values, and load. Without world, every loaded world with its dimension key and player count. include adds `rules` (each game rule's type and default), `size` (chunks ever generated, explored area in km², size on disk), and `respawn` (the server's spawn point, where players join and respawn without a bed: world, x, y, z, yaw, pitch, respawnRadius, spawnProtection).",
     scope: "server:read",
     effect: "read",
     input: {
-      world,
-      ruleDetails: z.boolean().optional().describe("Add every game rule with its type and default"),
-      size: z.boolean().optional().describe("Add explored area and size on disk"),
+      world: z
+        .string()
+        .optional()
+        .describe("World name or key, such as `world` or `minecraft:the_nether`; leave out to list every world"),
+      include: z
+        .array(z.enum(["rules", "size", "respawn"]))
+        .optional()
+        .describe('Parts to add, such as ["rules"]'),
     },
     run: async (args) => {
-      const [view, gameRuleDetails, size] = await Promise.all([
+      const parts = new Set(args.include);
+      const respawn = parts.has("respawn") ? unwrap(api.GET("/spawn"), token) : undefined;
+      if (args.world === undefined) {
+        const worlds = await unwrap(api.GET("/worlds"), token);
+        return respawn ? { worlds, respawn: await respawn } : worlds;
+      }
+      const [view, gameRuleDetails, size, spawn] = await Promise.all([
         unwrap(api.GET("/worlds/{world}", path(args.world)), token),
-        args.ruleDetails ? unwrap(api.GET("/worlds/{world}/gamerules", path(args.world)), token) : undefined,
-        args.size ? unwrap(api.GET("/worlds/{world}/stats", path(args.world)), token) : undefined,
+        parts.has("rules") ? unwrap(api.GET("/worlds/{world}/gamerules", path(args.world)), token) : undefined,
+        parts.has("size") ? unwrap(api.GET("/worlds/{world}/stats", path(args.world)), token) : undefined,
+        respawn,
       ]);
-      return { ...view, ...(gameRuleDetails && { gameRuleDetails }), ...(size && { size }) };
+      return {
+        ...view,
+        ...(gameRuleDetails && { gameRuleDetails }),
+        ...(size && { size }),
+        ...(spawn && { respawn: spawn }),
+      };
     },
   });
 
@@ -100,7 +107,7 @@ export function worldTools(ctx: Context): void {
     name: "set_world",
     title: "Change a world",
     description:
-      "Change any of these at once; only what you give changes. The time of day (dayTime 0–23999: 0 sunrise, 1000 morning, 6000 noon, 13000 night, 18000 midnight), or move the clock forward with addTicks (24000 is a day). The weather (clear, rain, thunder), optionally for durationTicks (20 per second). The difficulty, PvP, and this world's own spawn point.",
+      'Change any of these at once; only what you give changes. The time of day (dayTime 0–23999: 0 sunrise, 1000 morning, 6000 noon, 13000 night, 18000 midnight), or move the clock forward with addTicks (24000 is a day). The weather (clear, rain, thunder), optionally for durationTicks (20 per second). The difficulty and PvP. `rules` sets game rules, such as { "keep_inventory": true, "players_sleeping_percentage": 50 } (get_world with include rules lists them). `border` resizes (optionally over transitionSeconds), moves, or changes the world border\'s damage and warnings. `spawn` is this world\'s own point, used by teleports to it; `respawn` moves the server\'s spawn point, where players join and respawn without a bed, into this world.',
     scope: "world:write",
     effect: "write",
     input: {
@@ -111,88 +118,75 @@ export function worldTools(ctx: Context): void {
       durationTicks: z.number().int().positive().optional().describe("How long the new weather lasts"),
       difficulty: z.enum(["peaceful", "easy", "normal", "hard"]).optional(),
       pvp: z.boolean().optional().describe("Whether players can hurt each other"),
+      rules: z.record(z.string(), z.union([z.boolean(), z.number().int()])).optional(),
+      border: z
+        .object({
+          size: z.number().positive().optional().describe("Width in blocks"),
+          transitionSeconds: z.number().int().min(0).optional(),
+          centerX: z.number().optional(),
+          centerZ: z.number().optional(),
+          damageAmount: z.number().min(0).optional(),
+          damageBuffer: z.number().min(0).optional(),
+          warningDistance: z.number().int().min(0).optional(),
+          warningTimeTicks: z.number().int().min(0).optional(),
+        })
+        .optional(),
       spawn: z
         .object({ x: z.number().int(), y: z.number().int(), z: z.number().int(), angle: z.number().optional() })
         .optional()
-        .describe("This world's own point, used by teleports to it; where players join and respawn is set_spawn"),
+        .describe("This world's own point"),
+      respawn: z
+        .object({
+          x: z.number().int().optional(),
+          y: z.number().int().optional(),
+          z: z.number().int().optional(),
+          yaw: z.number().min(-180).max(180).optional().describe("0 faces south"),
+          pitch: z.number().min(-90).max(90).optional(),
+          respawnRadius: z.number().int().min(0).optional().describe("Blocks around the point where players land"),
+        })
+        .optional()
+        .describe("The server's spawn point; give x, y, z together, or none to use this world's own point"),
     },
-    run: (args) =>
-      unwrap(
-        api.PATCH("/worlds/{world}", {
-          ...path(args.world),
-          body: {
-            dayTime: args.dayTime,
-            addTime: args.addTicks,
-            weather: args.weather,
-            weatherDurationTicks: args.weather && args.weather !== "clear" ? args.durationTicks : undefined,
-            clearWeatherDurationTicks: args.weather === "clear" ? args.durationTicks : undefined,
-            difficulty: args.difficulty,
-            pvp: args.pvp,
-            spawn: args.spawn && { ...args.spawn, angle: args.spawn.angle ?? 0 },
-          },
-        }),
-        token,
-      ),
-  });
-
-  tool(ctx, {
-    name: "get_spawn",
-    title: "Spawn point",
-    description:
-      "Where players join for the first time and respawn without a bed or an anchor: the world, x, y, z, yaw and pitch they face, respawnRadius (they land at a random spot this far around the point), and spawnProtection (blocks around it only operators may change).",
-    scope: "server:read",
-    effect: "read",
-    input: {},
-    run: () => unwrap(api.GET("/spawn"), token),
-  });
-
-  tool(ctx, {
-    name: "set_spawn",
-    title: "Move the spawn point",
-    description:
-      "Move where players join and respawn without a bed. Give x, y, z together, and any of yaw (-180–180, 0 faces south), pitch, respawnRadius, or world (another world's name or key moves the respawn there; alone, to that world's own point). Only what you give changes.",
-    scope: "world:write",
-    effect: "idempotent",
-    input: {
-      world: z.string().optional().describe("World name or key; the current respawn world when left out"),
-      x: z.number().int().optional(),
-      y: z.number().int().optional(),
-      z: z.number().int().optional(),
-      yaw: z.number().min(-180).max(180).optional(),
-      pitch: z.number().min(-90).max(90).optional(),
-      respawnRadius: z.number().int().min(0).optional().describe("Blocks around the point where players land"),
+    run: async (args) => {
+      const done: Record<string, unknown> = {};
+      const own =
+        args.dayTime !== undefined ||
+        args.addTicks !== undefined ||
+        args.weather !== undefined ||
+        args.difficulty !== undefined ||
+        args.pvp !== undefined ||
+        args.spawn !== undefined;
+      if (own)
+        done.world = await unwrap(
+          api.PATCH("/worlds/{world}", {
+            ...path(args.world),
+            body: {
+              dayTime: args.dayTime,
+              addTime: args.addTicks,
+              weather: args.weather,
+              weatherDurationTicks: args.weather && args.weather !== "clear" ? args.durationTicks : undefined,
+              clearWeatherDurationTicks: args.weather === "clear" ? args.durationTicks : undefined,
+              difficulty: args.difficulty,
+              pvp: args.pvp,
+              spawn: args.spawn && { ...args.spawn, angle: args.spawn.angle ?? 0 },
+            },
+          }),
+          token,
+        );
+      if (args.rules)
+        done.rules = await unwrap(
+          api.PATCH("/worlds/{world}/gamerules", { ...path(args.world), body: args.rules }),
+          token,
+        );
+      if (args.border)
+        done.border = await unwrap(
+          api.PATCH("/worlds/{world}/border", { ...path(args.world), body: args.border }),
+          token,
+        );
+      if (args.respawn)
+        done.respawn = await unwrap(api.PATCH("/spawn", { body: { world: args.world, ...args.respawn } }), token);
+      if (Object.keys(done).length === 0) throw new Error("Nothing to change");
+      return done;
     },
-    run: (body) => unwrap(api.PATCH("/spawn", { body }), token),
-  });
-
-  tool(ctx, {
-    name: "set_gamerule",
-    title: "Set game rules",
-    description:
-      'Set one or more game rules at once, such as { "keep_inventory": true, "players_sleeping_percentage": 50 }. get_world with ruleDetails lists the names and types.',
-    scope: "world:write",
-    effect: "idempotent",
-    input: { world, rules: z.record(z.string(), z.union([z.boolean(), z.number().int()])) },
-    run: (args) => unwrap(api.PATCH("/worlds/{world}/gamerules", { ...path(args.world), body: args.rules }), token),
-  });
-
-  tool(ctx, {
-    name: "set_world_border",
-    title: "Change the world border",
-    description: "Resize (optionally over time) or move the world border, or change its damage and warnings.",
-    scope: "world:write",
-    effect: "idempotent",
-    input: {
-      world,
-      size: z.number().positive().optional().describe("Width in blocks"),
-      transitionSeconds: z.number().int().min(0).optional(),
-      centerX: z.number().optional(),
-      centerZ: z.number().optional(),
-      damageAmount: z.number().min(0).optional(),
-      damageBuffer: z.number().min(0).optional(),
-      warningDistance: z.number().int().min(0).optional(),
-      warningTimeTicks: z.number().int().min(0).optional(),
-    },
-    run: ({ world: name, ...body }) => unwrap(api.PATCH("/worlds/{world}/border", { ...path(name), body }), token),
   });
 }
