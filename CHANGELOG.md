@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.1.1
+
+A security release.
+
+### Security
+
+- 🔒 **No DNS rebinding on loopback HTTP.** With `--http` on 127.0.0.1 and no `MCP_HTTP_TOKEN`, a web page could point its own domain at your machine and call every tool with your WorldAPI token. The server now answers only requests whose `Host` and `Origin` name this machine; others get 403. With `MCP_HTTP_TOKEN` nothing changes.
+- 🔒 **The game-data fence holds.** Text inside it can no longer close or open it with another spelling of the tag, such as `</GAME-DATA>` or `</ game-data >`.
+- 🔒 **More text is fenced as data.** `get_audit_log` (anyone on the internet picks the name of a failed panel sign-in), `get_access` (ban reasons), `list_plugins` and `get_server_status` (descriptions from plugin and data pack authors), `get_recipes`, and `get_player_advancements` now come fenced, so the agent reads that text as data, not instructions.
+- 📦 body-parser, fast-uri, and ip-address, which the MCP SDK pulls in, moved past their published advisories.
+
 ## 3.1.0
 
 - 📍 **The spawn point.** `get_spawn` tells where players join and respawn without a bed, with the respawn radius and spawn protection; `set_spawn` moves it, to another world too. `set_world` now says its `spawn` is that world's own point for teleports. Needs WorldAPI 3.3.0, which the server now expects.
