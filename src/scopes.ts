@@ -13,6 +13,7 @@ export const PERMISSIONS = [
   "players:write",
   "players:moderate",
   "server:console",
+  "commands:read",
   "server:control",
   "files:read",
   "files:write",

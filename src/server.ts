@@ -10,6 +10,7 @@ import { blockTools } from "./tools/blocks.js";
 import { entityTools } from "./tools/entities.js";
 import { extensionTools } from "./tools/extensions.js";
 import { fileTools } from "./tools/files.js";
+import { itemTools } from "./tools/items.js";
 import { playerTools } from "./tools/players.js";
 import { scriptTools } from "./tools/scripts.js";
 import { serverTools } from "./tools/server.js";
@@ -27,7 +28,7 @@ export interface Built {
 const MISSING: [Scope, string][] = [
   [
     "players:write",
-    "send chat messages, titles, or sounds (broadcast, send_message), teleport players, or change their inventories and effects",
+    "send chat messages, titles, or sounds (send_message), teleport players, or change their inventories and effects",
   ],
   ["world:write", "change time, weather, game rules, blocks, containers, or entities"],
   ["server:console", "run console commands"],
@@ -87,6 +88,7 @@ export function buildServer(
   blockTools(ctx);
   entityTools(ctx);
   playerTools(ctx);
+  itemTools(ctx);
   statsTools(ctx);
   fileTools(ctx);
   scriptTools(ctx);

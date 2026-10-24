@@ -7,7 +7,7 @@ export const VERSION: string = (
 ).version;
 
 /** The oldest WorldAPI whose endpoints match the generated client. */
-export const MIN_WORLDAPI = "3.3.0";
+export const MIN_WORLDAPI = "4.1.0";
 
 /** Compares two x.y.z versions; anything that isn't one (a dev build) counts as new enough. */
 export function olderThan(version: string, minimum: string): boolean {
