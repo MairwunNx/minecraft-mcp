@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.1
+
+- 🔒 **Operators need the console.** WorldAPI 4.1.1 makes `server:console`, not `players:moderate`, the permission for making or unmaking operators, since an operator may run every command, `/worldapi` among them. `manage_access` says so, and with a token that lacks `server:console` it refuses `operators` before calling WorldAPI. Its other parts keep working for moderators.
+
 ## 4.0.0
 
 Fewer, stronger tools: 46 instead of 73, and 17 instead of 29 for a `viewer` token. Related tools became one, and most take several targets at once, so the agent reads fewer schemas and makes fewer calls. It needs WorldAPI 4.1.0, which serves the command catalog; with an older one, the server warns at start.
