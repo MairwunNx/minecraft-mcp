@@ -8,24 +8,40 @@ export function statsTools(ctx: Context): void {
 
   tool(ctx, {
     name: "get_leaderboard",
-    title: "Leaderboards",
+    title: "Leaderboards and totals",
     description:
-      "Players ranked by a statistic; ties share a place. Presets: playtime (hours), diamonds, advancements, mobs, travel (km), deaths, blocks, fish, damage (hearts), netherite (ancient debris mined), experience (xp gained; a lower bound, since vanilla keeps no lifetime total), tamed (animals tamed; also a lower bound). Or any statistic as `category:key`, such as `custom:jump`, `mined:diamond_ore`, `killed:*`. Without a statistic, lists the presets and their units.",
+      "Players ranked by statistics, up to 5 boards at once; ties share a place. Presets: playtime (hours), diamonds, advancements, mobs, travel (km), deaths, blocks, fish, damage (hearts), netherite (ancient debris mined), experience (xp gained; a lower bound, since vanilla keeps no lifetime total), tamed (animals tamed; also a lower bound). Or any statistic as `category:key`, such as `custom:jump`, `mined:diamond_ore`, `killed:*`. Without statistics, the presets with their units, and everyone's statistics added up: hours played, blocks mined and the top block, mobs killed and the top mob, deaths, advancements, world day.",
     scope: "players:read",
     effect: "read",
     input: {
-      statistic: z.string().min(1).optional(),
-      limit: z.number().int().min(1).max(500).optional().describe("10 by default"),
+      statistics: z
+        .array(z.string().min(1))
+        .min(1)
+        .max(5)
+        .optional()
+        .describe('Such as ["playtime", "mined:diamond_ore"]'),
+      limit: z.number().int().min(1).max(500).optional().describe("Players per board; 10 by default"),
     },
-    run: (args) =>
-      args.statistic
-        ? unwrap(
+    run: async (args) => {
+      if (!args.statistics) {
+        const [presets, totals] = await Promise.all([
+          unwrap(api.GET("/leaderboards"), token),
+          unwrap(api.GET("/aggregates"), token),
+        ]);
+        return { presets, totals };
+      }
+      const boards = await Promise.all(
+        args.statistics.map((statistic) =>
+          unwrap(
             api.GET("/leaderboards/{statistic}", {
-              params: { path: { statistic: args.statistic }, query: { limit: args.limit ?? 10 } },
+              params: { path: { statistic }, query: { limit: args.limit ?? 10 } },
             }),
             token,
-          )
-        : unwrap(api.GET("/leaderboards"), token),
+          ).catch((error: Error & { code?: string }) => ({ statistic, error: error.code ?? error.message })),
+        ),
+      );
+      return boards.length === 1 ? boards[0] : boards;
+    },
   });
 
   tool(ctx, {
@@ -46,16 +62,5 @@ export function statsTools(ctx: Context): void {
       if (!args.item && !args.uses) throw new Error("Give item, uses, or both");
       return unwrap(api.GET("/recipes", { params: { query: { ...args, limit: args.limit ?? 20 } } }), token);
     },
-  });
-
-  tool(ctx, {
-    name: "get_aggregates",
-    title: "Server totals",
-    description:
-      "Everyone's statistics added up: hours played, blocks mined and the top block, mobs killed and the top mob, deaths, advancements, world day.",
-    scope: "players:read",
-    effect: "read",
-    input: {},
-    run: () => unwrap(api.GET("/aggregates"), token),
   });
 }

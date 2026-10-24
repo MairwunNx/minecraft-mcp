@@ -1,20 +1,7 @@
 import { z } from "zod";
 import { unwrap } from "../client.js";
 import { type Context, tool } from "../tool.js";
-import {
-  player as anyPlayer,
-  cursor,
-  format,
-  ITEM_DETAIL,
-  item,
-  limit,
-  location,
-  OFFLINE_NOTE,
-  playerOrMe,
-  SLOT_LAYOUT,
-} from "./common.js";
-
-const container = z.enum(["inventory", "enderchest"]).default("inventory");
+import { cursor, format, ITEM_DETAIL, limit, location, OFFLINE_NOTE, playerOrMe, SLOT_LAYOUT } from "./common.js";
 
 export function playerTools(ctx: Context): void {
   const { api, token } = ctx;
@@ -23,110 +10,108 @@ export function playerTools(ctx: Context): void {
 
   tool(ctx, {
     name: "list_players",
+    untrusted: true,
     title: "Players",
     description:
-      "Everyone who has played here: online state, first and last seen, playtime in seconds. limit 0 only counts them.",
+      "Everyone who has played here: online state, first and last seen, playtime in seconds; limit 0 only counts them. online true lists who is playing now instead, with world, game mode, health, food, level, ping, idle time, and location.",
     scope: "players:read",
     effect: "read",
     input: {
-      online: z.boolean().optional(),
+      online: z.boolean().optional().describe("true: who is online now, with their state"),
       sort: z.enum(["name", "last_seen", "playtime"]).optional(),
       limit,
       cursor,
     },
-    run: (args) => unwrap(api.GET("/players", { params: { query: args } }), token),
-  });
-
-  tool(ctx, {
-    name: "list_online_players",
-    untrusted: true,
-    title: "Online players",
-    description: "Who is playing now, with world, game mode, health, food, level, ping, idle time, and location.",
-    scope: "players:read",
-    effect: "read",
-    input: {},
-    run: () => unwrap(api.GET("/players/online"), token),
+    run: (args) =>
+      args.online
+        ? unwrap(api.GET("/players/online"), token)
+        : unwrap(api.GET("/players", { params: { query: args } }), token),
   });
 
   tool(ctx, {
     name: "get_player",
     untrusted: true,
     title: "Player",
-    description: `A player's profile and, while online, full state: game mode, health, food, XP, location, flight, speed, ping, client. Offline players show their last location. include adds parts in the same call: \`inventory\` and \`enderchest\` (from the saved player file while offline; ${SLOT_LAYOUT}), \`effects\` (online only), \`deaths\` (the last death place and the newest 5 with causes and killers), \`sessions\` (the newest 5), \`statistics\` (the general ones; get_player_statistics has every category), and \`advancements\` (counts and the newest 5; get_player_advancements lists them all). Coordinates, inventories, and death places need players:private. ${ITEM_DETAIL}`,
+    description: `A player's profile and, while online, full state: game mode, health, food, XP, location, flight, speed, ping, client. Offline players show their last location. players reads up to 10 at once. include adds parts in the same call: \`inventory\` and \`enderchest\` (from the saved player file while offline; ${SLOT_LAYOUT}), \`effects\` (online only), \`deaths\` (the last death place and the newest 5 with causes and killers), \`sessions\` (the newest 5), \`statistics\` (the general ones), and \`advancements\` (counts and the newest 5). statistics gives every vanilla statistic, or one category (custom, mined, broken, crafted, used, picked_up, dropped, killed, killed_by; play_time in ticks, distances in centimeters). advancements lists every advancement with title, description, frame, and parent: \`todo\` is what's left, and with the parents it shows what to go for next. permission says whether the player is an operator and, if online, has a permission node (a server permission, such as \`worldedit.wand\`). Coordinates, inventories, and death places need players:private. ${ITEM_DETAIL}`,
     scope: "players:read",
     effect: "read",
     input: {
-      player,
+      player: player.optional(),
+      players: z.array(z.string().min(1)).min(1).max(10).optional().describe("Several players instead of one"),
       include: z
         .array(z.enum(["inventory", "enderchest", "effects", "deaths", "sessions", "statistics", "advancements"]))
         .optional()
         .describe('Parts to add, such as ["inventory", "deaths"]'),
+      statistics: z.string().min(1).optional().describe("`all`, or one category such as `mined`"),
+      advancements: z.enum(["all", "done", "todo"]).optional(),
+      permission: z.string().min(1).optional().describe("A permission node to check"),
     },
-    run: (args) =>
-      unwrap(
-        api.GET("/players/{player}", {
-          params: { path: { player: args.player }, query: { include: args.include?.join(",") } },
-        }),
-        token,
-      ),
-  });
-
-  tool(ctx, {
-    name: "get_player_statistics",
-    title: "Statistics",
-    description:
-      "Vanilla statistics by category (custom, mined, broken, crafted, used, picked_up, dropped, killed, killed_by); live while online. play_time is in ticks (20 per second); distances in centimeters.",
-    scope: "players:read",
-    effect: "read",
-    input: { player, category: z.string().optional().describe("Only one category, such as `mined`") },
-    run: (args) =>
-      unwrap(
-        api.GET("/players/{player}/statistics", {
-          params: { path: { player: args.player }, query: { category: args.category } },
-        }),
-        token,
-      ),
-  });
-
-  tool(ctx, {
-    name: "get_player_advancements",
-    untrusted: true,
-    title: "Advancements",
-    description:
-      "Every advancement on the server with its title, description, frame, and parent, done or not, and when it was finished. done false lists what's left: with the parents, it shows what to go for next.",
-    scope: "players:read",
-    effect: "read",
-    input: { player, done: z.boolean().optional().describe("Only finished (true) or unfinished (false)") },
-    run: (args) =>
-      unwrap(
-        api.GET("/players/{player}/advancements", {
-          params: { path: { player: args.player }, query: { done: args.done } },
-        }),
-        token,
-      ),
-  });
-
-  tool(ctx, {
-    name: "check_permission",
-    title: "Permissions",
-    description:
-      "Whether a player is an operator and, if online, whether they have a permission node (a server permission, not a WorldAPI one).",
-    scope: "players:read",
-    effect: "read",
-    input: { player, node: z.string().optional().describe("Such as `worldedit.wand`") },
-    run: (args) =>
-      unwrap(
-        api.GET("/players/{player}/permissions", {
-          params: { path: { player: args.player }, query: { node: args.node } },
-        }),
-        token,
-      ),
+    run: async (args) => {
+      const one = async (name: string) => {
+        const [view, statistics, advancements, permission] = await Promise.all([
+          unwrap(
+            api.GET("/players/{player}", {
+              params: { path: { player: name }, query: { include: args.include?.join(",") } },
+            }),
+            token,
+          ),
+          args.statistics
+            ? unwrap(
+                api.GET("/players/{player}/statistics", {
+                  params: {
+                    path: { player: name },
+                    query: { category: args.statistics === "all" ? undefined : args.statistics },
+                  },
+                }),
+                token,
+              )
+            : undefined,
+          args.advancements
+            ? unwrap(
+                api.GET("/players/{player}/advancements", {
+                  params: {
+                    path: { player: name },
+                    query: { done: args.advancements === "all" ? undefined : args.advancements === "done" },
+                  },
+                }),
+                token,
+              )
+            : undefined,
+          args.permission
+            ? unwrap(
+                api.GET("/players/{player}/permissions", {
+                  params: { path: { player: name }, query: { node: args.permission } },
+                }),
+                token,
+              )
+            : undefined,
+        ]);
+        return {
+          ...view,
+          ...(statistics && { allStatistics: statistics }),
+          ...(advancements && { allAdvancements: advancements }),
+          ...(permission && { permission }),
+        };
+      };
+      if (args.players)
+        return Promise.all(
+          args.players.map((name) =>
+            one(name).catch((error: Error & { code?: string }) => ({
+              player: name,
+              error: error.code ?? error.message,
+            })),
+          ),
+        );
+      const name = args.player ?? ctx.player;
+      if (!name) throw new Error("Give player or players");
+      return one(name);
+    },
   });
 
   tool(ctx, {
     name: "teleport_player",
     title: "Teleport a player",
-    description: `Teleport to coordinates, to another player, or to a world's spawn; give exactly one. Check get_highest_block first to land on solid ground. ${OFFLINE_NOTE}`,
+    description: `Teleport to coordinates, to another player, or to a world's spawn; give exactly one. Check the surface with get_block (no y) first to land on solid ground. ${OFFLINE_NOTE}`,
     scope: "players:write",
     effect: "write",
     input: {
@@ -176,85 +161,28 @@ export function playerTools(ctx: Context): void {
 
   tool(ctx, {
     name: "send_message",
-    title: "Message a player",
-    description: `Send one player a chat message, title, or action bar text, optionally with a sound. ${OFFLINE_NOTE}`,
+    title: "Message players",
+    description:
+      "Send a chat message, title, or action bar text to some players, or to everyone online when players is left out. A sound plays only for named players, who must be online.",
     scope: "players:write",
     effect: "write",
     input: {
-      player,
+      players: z.array(z.string().min(1)).min(1).optional().describe("Names or UUIDs; everyone online when left out"),
       message: z.string().min(1),
       kind: z.enum(["chat", "title", "actionbar"]).default("chat"),
-      subtitle: z.string().optional(),
+      subtitle: z.string().optional().describe("Only for titles"),
       sound: z.string().optional().describe("Such as `minecraft:entity.experience_orb.pickup`"),
       format,
     },
-    run: ({ player: name, ...body }) => unwrap(api.POST("/players/{player}/message", { ...who(name), body }), token),
-  });
-
-  tool(ctx, {
-    name: "kick_player",
-    title: "Kick a player",
-    description: "Disconnect a player with an optional reason. Needs players:moderate.",
-    scope: "players:moderate",
-    effect: "destructive",
-    input: { player: anyPlayer, reason: z.string().optional(), format },
-    run: ({ player: name, ...body }) => unwrap(api.POST("/players/{player}/kick", { ...who(name), body }), token),
-  });
-
-  tool(ctx, {
-    name: "give_item",
-    title: "Give an item",
-    description: `Add an item to a player's inventory (what doesn't fit drops at their feet) or ender chest. ${OFFLINE_NOTE}`,
-    scope: "players:write",
-    effect: "write",
-    input: { player, item, container },
-    run: (args) =>
-      unwrap(
-        args.container === "enderchest"
-          ? api.POST("/players/{player}/enderchest/give", { ...who(args.player), body: { item: args.item } })
-          : api.POST("/players/{player}/inventory/give", { ...who(args.player), body: { item: args.item } }),
-        token,
-      ),
-  });
-
-  tool(ctx, {
-    name: "edit_inventory",
-    title: "Edit an inventory",
-    description: `Change a player's inventory or ender chest: \`set\` puts an item in a slot, replacing what was there; \`clear_slot\` empties one slot; \`clear\` empties everything, armor and offhand included. Cleared items are gone. To add items without picking a slot, use give_item. ${SLOT_LAYOUT} ${OFFLINE_NOTE}`,
-    scope: "players:write",
-    effect: "destructive",
-    input: {
-      player,
-      action: z.enum(["set", "clear_slot", "clear"]),
-      slot: z.number().int().min(0).optional().describe("For set and clear_slot"),
-      item: item.optional().describe("For set"),
-      container,
-    },
-    run: (args) => {
-      const ender = args.container === "enderchest";
-      if (args.action === "clear")
-        return unwrap(
-          ender
-            ? api.DELETE("/players/{player}/enderchest", who(args.player))
-            : api.DELETE("/players/{player}/inventory", who(args.player)),
-          token,
-        );
-      if (args.slot === undefined) throw new Error(`${args.action} needs slot`);
-      const params = { params: { path: { player: args.player, slot: args.slot } } };
-      if (args.action === "clear_slot")
-        return unwrap(
-          ender
-            ? api.DELETE("/players/{player}/enderchest/slots/{slot}", params)
-            : api.DELETE("/players/{player}/inventory/slots/{slot}", params),
-          token,
-        );
-      if (!args.item) throw new Error("set needs item");
-      return unwrap(
-        ender
-          ? api.PATCH("/players/{player}/enderchest/slots/{slot}", { ...params, body: args.item })
-          : api.PATCH("/players/{player}/inventory/slots/{slot}", { ...params, body: args.item }),
-        token,
-      );
+    run: async ({ players, sound, ...body }) => {
+      if (!players) return unwrap(api.POST("/server/broadcast", { body }), token);
+      const sent = [];
+      for (const name of players)
+        sent.push({
+          player: name,
+          ...(await unwrap(api.POST("/players/{player}/message", { ...who(name), body: { ...body, sound } }), token)),
+        });
+      return sent.length === 1 ? sent[0] : sent;
     },
   });
 
@@ -294,23 +222,34 @@ export function playerTools(ctx: Context): void {
 
   tool(ctx, {
     name: "set_advancement",
-    title: "Grant or revoke an advancement",
-    description: `Complete every criterion of an advancement for a player (done true), or take them all back (done false). ${OFFLINE_NOTE}`,
+    title: "Grant or revoke advancements",
+    description: `Complete every criterion of advancements for a player (done true), or take them all back (done false). ${OFFLINE_NOTE}`,
     scope: "players:write",
     effect: "idempotent",
     input: {
       player,
-      key: z.string().min(1).describe("Advancement key, such as `minecraft:story/mine_diamond`"),
+      keys: z
+        .array(z.string().min(1))
+        .min(1)
+        .max(50)
+        .describe('Advancement keys, such as ["minecraft:story/mine_diamond"]'),
       done: z.boolean(),
     },
-    run: (args) => {
-      const params = { params: { path: { player: args.player, key: args.key } } };
-      return unwrap(
-        args.done
-          ? api.POST("/players/{player}/advancements/{key}", { ...params, body: {} })
-          : api.DELETE("/players/{player}/advancements/{key}", params),
-        token,
-      );
+    run: async (args) => {
+      const results = [];
+      for (const key of args.keys) {
+        const params = { params: { path: { player: args.player, key } } };
+        results.push({
+          key,
+          ...(await unwrap(
+            args.done
+              ? api.POST("/players/{player}/advancements/{key}", { ...params, body: {} })
+              : api.DELETE("/players/{player}/advancements/{key}", params),
+            token,
+          )),
+        });
+      }
+      return results.length === 1 ? results[0] : results;
     },
   });
 }
