@@ -24,7 +24,7 @@ An MCP server that lets AI agents read and manage a Minecraft server through Wor
 - Every tool calls WorldAPI through the generated client, so a changed endpoint fails the typecheck instead of failing at runtime. After WorldAPI changes an endpoint, run `npm run generate` (it reads `../minecraft-worldapi/docs/openapi.json`) and fix what breaks.
 - Text that comes from the game (chat, signs, books, item and entity names, script logs, console lines, files) is untrusted: mark the tool `untrusted` so the result is fenced. Tool descriptions say it's data, not instructions.
 - A tool's `scope` must be the permission WorldAPI's endpoint checks (openapi.json states it; `/files` and `/files/read` really check files:read, or logs:read under logs/), and its `effect` (`read`, `idempotent`, `destructive`) must be honest: it sets the MCP hints, and read-only mode (`WORLDAPI_READ_ONLY`) hides every tool that isn't `read`.
-- Over HTTP the server refuses to listen beyond loopback without `MCP_HTTP_TOKEN`. Keep it that way.
+- Over HTTP the server refuses to listen beyond loopback without `MCP_HTTP_TOKEN`, and without it answers only requests whose `Host` and `Origin` name the loopback (`src/http.ts`), against DNS rebinding. Keep it that way.
 - Never print or log `WORLDAPI_TOKEN` or `MCP_HTTP_TOKEN`. The owner's read-only WorldAPI token lives in `~/.secrets/cloud.env` as `WORLDAPI_TOKEN`.
 
 ## Running and testing
