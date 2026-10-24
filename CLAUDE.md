@@ -14,7 +14,7 @@ An MCP server that lets AI agents read and manage a Minecraft server through Wor
 | `src/index.ts` | Flags and transport: stdio, or streamable HTTP |
 | `src/server.ts` | Builds the MCP server: tools, resources, prompts |
 | `src/tool.ts` | Registers a tool with the WorldAPI permission it needs and MCP annotations; `untrusted` tools wrap game text in a `<game-data>` fence |
-| `src/tools/` | One file per group: server, worlds, blocks, entities, players, stats, files, scripts, extensions |
+| `src/tools/` | One file per group: server, worlds, blocks, items, entities, players, stats, files, scripts, extensions |
 | `src/scopes.ts` | WorldAPI's permissions; asks the WebSocket hello which ones the token has, so only usable tools are listed |
 | `src/events.ts` | The live event feed behind the events and console resources |
 | `src/generated/worldapi.ts` | Types generated from `openapi/worldapi.json`; never edit by hand |
@@ -54,7 +54,7 @@ Where the versions live, for `/update-deps` and `/update-minecraft` (both in `.c
 ## Docs and releases
 
 - README.md and README.RU.md are the shop window: the pitch, “What you get”, three steps to start, links into the wiki, and Related projects. No config tables, tool lists, or build steps there. Change both together. The release drops the “Try it live” section from the README it publishes to npm (keep that heading and a `## ` section after it): the Moonlands invitation stays on GitHub.
-- The wiki is the manual, in English only. A change to tools, permissions, environment variables, or flags updates its Tools, Tokens-and-permissions, or Configuration page in the same session; the tool counts in README.md (71, and 28 for `viewer`) change with it.
+- The wiki is the manual, in English only. A change to tools, permissions, environment variables, or flags updates its Tools, Tokens-and-permissions, or Configuration page in the same session; the tool counts in README.md (46, and 17 for `viewer`) change with it. Prefer a field on an existing tool, and lists of targets (`positions`, `players`, `commands`), to a new tool: each tool costs every session its schema.
 - After a change that reaches what the project ships, add it to CHANGELOG.md in the same push: under the topmost “## X.Y.Z” section while that version isn't released (`gh release view vX.Y.Z` fails), or under a new section with the next version: patch for fixes, minor for features, major for breaking changes. A release then needs only the workflow, and the workflow runs only when the owner asks.
 - Add a “## X.Y.Z” section to CHANGELOG.md, then run the “Release” workflow: `gh workflow run release.yml -R MairwunNx/minecraft-mcp -f version=X.Y.Z -f npm=true -f registry=true`. The repository keeps `0.0.0-dev` in package.json, manifest.json, and server.json; the workflow stamps the version, packs `minecraft-mcp-X.Y.Z.mcpb` (`npm run pack:mcpb`), tags `vX.Y.Z`, and attaches the bundle to a GitHub release, plus a version-less copy `minecraft-mcp.mcpb` that `releases/latest/download/minecraft-mcp.mcpb` (the README's Claude Desktop link) always reaches.
 - npm: the package `@mairwunnx/minecraft-mcp` (plain `minecraft-mcp` belongs to someone else), published with provenance; the command it installs is still `minecraft-mcp`. It uses the `NPM_TOKEN` secret, a granular token that can bypass 2FA (npm refuses to publish otherwise); npm's trusted publishing for this workflow would replace it once set up on npmjs.com. npm made a `0.0.0-stage` placeholder version on the first publish; it's npm's own and harmless.
