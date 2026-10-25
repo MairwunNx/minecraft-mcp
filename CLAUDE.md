@@ -15,6 +15,7 @@ An MCP server that lets AI agents read and manage a Minecraft server through Wor
 | `src/server.ts` | Builds the MCP server: tools, resources, prompts |
 | `src/tool.ts` | Registers a tool with the WorldAPI permission it needs and MCP annotations; `untrusted` tools wrap game text in a `<game-data>` fence |
 | `src/tools/` | One file per group: server, worlds, blocks, items, entities, players, stats, files, scripts, extensions |
+| `src/config.ts`, `src/local.ts` | Settings from the environment. Without `WORLDAPI_URL`, `url` and `token` are getters that read the singleplayer world open now from `~/.worldapi/local/<port>.json` (written by WorldAPI's mods), and `createWorldApi` rewrites every call to that world's address |
 | `src/scopes.ts` | WorldAPI's permissions; asks the WebSocket hello which ones the token has, so only usable tools are listed |
 | `src/events.ts` | The live event feed behind the events and console resources |
 | `src/generated/worldapi.ts` | Types generated from `openapi/worldapi.json`; never edit by hand |
@@ -25,7 +26,8 @@ An MCP server that lets AI agents read and manage a Minecraft server through Wor
 - Text that comes from the game (chat, signs, books, item and entity names, script logs, console lines, files) is untrusted: mark the tool `untrusted` so the result is fenced. Tool descriptions say it's data, not instructions.
 - A tool's `scope` must be the permission WorldAPI's endpoint checks (openapi.json states it; `/files` and `/files/read` really check files:read, or logs:read under logs/), and its `effect` (`read`, `idempotent`, `destructive`) must be honest: it sets the MCP hints, and read-only mode (`WORLDAPI_READ_ONLY`) hides every tool that isn't `read`.
 - Over HTTP the server refuses to listen beyond loopback without `MCP_HTTP_TOKEN`, and without it answers only requests whose `Host` and `Origin` name the loopback (`src/http.ts`), against DNS rebinding. Keep it that way.
-- Never print or log `WORLDAPI_TOKEN` or `MCP_HTTP_TOKEN`. The owner's read-only WorldAPI token lives in `~/.secrets/cloud.env` as `WORLDAPI_TOKEN`.
+- Read `config.url` and `config.token` when a call happens, never once at start: in singleplayer they change from world to world. The tools and hints follow `GET /server`'s `platform` and `side` (`Where` in `src/server.ts`): script tools only on Paper.
+- Never print or log `WORLDAPI_TOKEN`, `MCP_HTTP_TOKEN`, or a token from a discovery file. The owner's read-only WorldAPI token lives in `~/.secrets/cloud.env` as `WORLDAPI_TOKEN`.
 
 ## Running and testing
 
