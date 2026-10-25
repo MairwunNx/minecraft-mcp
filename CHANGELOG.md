@@ -7,7 +7,7 @@ minecraft-mcp works with WorldAPI's new Fabric and NeoForge mods, on a dedicated
 - 🎮 **Singleplayer without setup.** Leave out `WORLDAPI_URL`, and minecraft-mcp finds the singleplayer world open on this computer with the WorldAPI mod, its address and token included. It looks again on every call, so it follows you from world to world, and while no world is open, tools answer `no_world` with a hint to open one. `WORLDAPI_LOCAL_DIR` points it at another folder than `~/.worldapi/local`.
 - 👀 **What you're looking at.** `get_player` takes `target` in `include`: the block and the entity in a player's line of sight, and where their eyes are.
 - 🧭 **It knows where it runs.** `get_server_status` shows WorldAPI's `platform`, `side`, `lan`, `cheats`, and `paused`. On the mods the agent learns that worlds are `overworld`, `the_nether`, and `the_end`, and in singleplayer that you are the world's owner and the player it talks about.
-- 📜 **No scripts where they don't run.** On Fabric and NeoForge the five Java script tools stay out of the list, since WorldAPI runs scripts on Paper only.
+- 📜 **No scripts where they don't run.** On Fabric and NeoForge the four Java script tools stay out of the list, since WorldAPI runs scripts on Paper only.
 - 📦 **The address is optional** in the Claude Desktop bundle and the MCP Registry entry, for singleplayer.
 
 ## 4.0.1
