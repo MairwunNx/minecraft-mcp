@@ -70,7 +70,7 @@ claude mcp add moonlands -e WORLDAPI_URL=https://minecraft.mairwunnx.com/worldap
 ## Связанные проекты
 
 - **[Moonlands](https://minecraft.mairwunnx.com)** — хардкорный сервер, на котором всё это работает.
-- **[WorldAPI](https://github.com/MairwunNx/minecraft-worldapi)** — REST и WebSocket API к миру, игрокам и статистике сервера Paper.
+- **[WorldAPI](https://github.com/MairwunNx/minecraft-worldapi)** — REST и WebSocket API к миру, игрокам и статистике сервера на Paper, Fabric или NeoForge.
 - **[Allay](https://github.com/allay-ai/minecraft)** — ИИ-помощник в игре: спрашивайте командой `/ask` прямо в чате.
 - **[Allay Server](https://github.com/allay-ai/server)** — бэкенд Allay.
 - **[Mo’Joins](https://github.com/MairwunNx/mojoins)** — сообщения о входе и выходе на языке каждого игрока.
