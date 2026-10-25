@@ -20,8 +20,8 @@
       "environmentVariables": [
         {
           "name": "WORLDAPI_URL",
-          "description": "WorldAPI base URL including /api/v1, such as http://localhost:8110/api/v1",
-          "isRequired": true,
+          "description": "WorldAPI base URL including /api/v1, such as http://localhost:8110/api/v1. Leave it out for the singleplayer world open on this machine with the WorldAPI mod.",
+          "isRequired": false,
           "format": "string"
         },
         {

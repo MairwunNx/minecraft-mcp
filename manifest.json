@@ -36,8 +36,8 @@
     "worldapi_url": {
       "type": "string",
       "title": "WorldAPI URL",
-      "description": "Your server’s WorldAPI address including /api/v1, such as http://localhost:8110/api/v1",
-      "required": true
+      "description": "Your server’s WorldAPI address including /api/v1, such as http://localhost:8110/api/v1. Leave it empty for the singleplayer world you play with the WorldAPI mod.",
+      "required": false
     },
     "worldapi_token": {
       "type": "string",
