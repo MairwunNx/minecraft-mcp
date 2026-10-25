@@ -4,7 +4,7 @@
 
 🤖 **minecraft-mcp** даёт ИИ-агенту видеть ваш Minecraft-сервер и управлять им. Спросите Claude «кто онлайн и где они?», «почему сервер лагает?» или «раздай всем хлеб и сделай утро» — и он ответит по живым данным из вашего мира.
 
-Он работает рядом с вашим ИИ-клиентом — Claude Desktop, Claude Code, Cursor, VS Code или любым другим, который понимает MCP, — и говорит с [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi) на любом сервере Paper. Что агенту можно, решает токен, который вы ему дадите.
+Он работает рядом с вашим ИИ-клиентом — Claude Desktop, Claude Code, Cursor, VS Code или любым другим, который понимает MCP, — и говорит с [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi) на сервере Paper, Fabric или NeoForge или в мире, где вы играете в одиночку. Что агенту можно, решает токен, который вы ему дадите.
 
 [English version](https://github.com/MairwunNx/minecraft-mcp/blob/master/README.md)
 
@@ -14,6 +14,7 @@
 - 🎒 **Инвентари в подробностях**: чары, прочность и эффекты каждого предмета, а ещё то, что лежит в шалкерах и мешках.
 - 📜 **Конфиги и логи**: агент читает консоль и любой конфиг, а с подходящим токеном меняет значение и сохраняет комментарии.
 - 🔑 **Только то, что позволяет токен**: с токеном `viewer` агент видит 17 инструментов, которые только смотрят, а режим «только чтение» прячет всё, что меняет сервер.
+- 🎮 **Одиночная игра без настройки**: с модом WorldAPI в игре minecraft-mcp сам находит открытый мир и переходит за вами из мира в мир. Спросите «на что я смотрю?» прямо во время игры.
 - 🙋 **«Я» — это вы**: укажите свой ник, и вопрос «где я?» просто сработает.
 - ⏳ **Живые события**: «скажи, когда Стив зайдёт».
 - 🛡️ **Безопасность с самого начала**: текст из игры помечен как данные, инструменты предупреждают, когда что-то разрушают, а токен никуда не утекает.
@@ -21,7 +22,7 @@
 
 ## Как начать
 
-1. Поставьте [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi) 3.0.0 или новее на сервер Paper и создайте токен командой `/worldapi token create agent`.
+1. Поставьте [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi) 4.2.0 или новее на сервер Paper, Fabric или NeoForge и создайте токен командой `/worldapi token create agent`. Играете один? Положите мод WorldAPI в игру, и адрес с токеном не понадобятся: `claude mcp add minecraft -- npx -y @mairwunnx/minecraft-mcp`. Остальное — на странице [Singleplayer](https://github.com/MairwunNx/minecraft-mcp/wiki/Singleplayer).
 2. Добавьте minecraft-mcp в клиент. В Claude Desktop откройте [minecraft-mcp.mcpb](https://github.com/MairwunNx/minecraft-mcp/releases/latest/download/minecraft-mcp.mcpb). В Claude Code:
 
    ```sh
@@ -51,6 +52,7 @@ claude mcp add moonlands -e WORLDAPI_URL=https://minecraft.mairwunnx.com/worldap
 **Игрокам и владельцам серверов**
 
 - [Installation](https://github.com/MairwunNx/minecraft-mcp/wiki/Installation), затем [Claude Desktop](https://github.com/MairwunNx/minecraft-mcp/wiki/Claude-Desktop), [Claude Code](https://github.com/MairwunNx/minecraft-mcp/wiki/Claude-Code), [Cursor](https://github.com/MairwunNx/minecraft-mcp/wiki/Cursor) или [Other clients](https://github.com/MairwunNx/minecraft-mcp/wiki/Other-clients)
+- [Singleplayer](https://github.com/MairwunNx/minecraft-mcp/wiki/Singleplayer)
 - [Configuration](https://github.com/MairwunNx/minecraft-mcp/wiki/Configuration)
 - [Tokens and permissions](https://github.com/MairwunNx/minecraft-mcp/wiki/Tokens-and-permissions)
 - [Tools](https://github.com/MairwunNx/minecraft-mcp/wiki/Tools)
