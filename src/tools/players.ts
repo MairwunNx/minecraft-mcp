@@ -32,14 +32,16 @@ export function playerTools(ctx: Context): void {
     name: "get_player",
     untrusted: true,
     title: "Player",
-    description: `A player's profile and, while online, full state: game mode, health, food, XP, location, flight, speed, ping, client. Offline players show their last location. players reads up to 10 at once. include adds parts in the same call: \`inventory\` and \`enderchest\` (from the saved player file while offline; ${SLOT_LAYOUT}), \`effects\` (online only), \`deaths\` (the last death place and the newest 5 with causes and killers), \`sessions\` (the newest 5), \`statistics\` (the general ones), and \`advancements\` (counts and the newest 5). statistics gives every vanilla statistic, or one category (custom, mined, broken, crafted, used, picked_up, dropped, killed, killed_by; play_time in ticks, distances in centimeters). advancements lists every advancement with title, description, frame, and parent: \`todo\` is what's left, and with the parents it shows what to go for next. permission says whether the player is an operator and, if online, has a permission node (a server permission, such as \`worldedit.wand\`). Coordinates, inventories, and death places need players:private. ${ITEM_DETAIL}`,
+    description: `A player's profile and, while online, full state: game mode, health, food, XP, location, flight, speed, ping, client. Offline players show their last location. players reads up to 10 at once. include adds parts in the same call: \`inventory\` and \`enderchest\` (from the saved player file while offline; ${SLOT_LAYOUT}), \`effects\` (online only), \`deaths\` (the last death place and the newest 5 with causes and killers), \`sessions\` (the newest 5), \`statistics\` (the general ones), \`advancements\` (counts and the newest 5), and \`target\` (online only: the block and the entity the player looks at within 64 blocks, and where their eyes are, for “what am I looking at”). statistics gives every vanilla statistic, or one category (custom, mined, broken, crafted, used, picked_up, dropped, killed, killed_by; play_time in ticks, distances in centimeters). advancements lists every advancement with title, description, frame, and parent: \`todo\` is what's left, and with the parents it shows what to go for next. permission says whether the player is an operator and, if online, has a permission node (a server permission, such as \`worldedit.wand\`). Coordinates, inventories, and death places need players:private. ${ITEM_DETAIL}`,
     scope: "players:read",
     effect: "read",
     input: {
       player: player.optional(),
       players: z.array(z.string().min(1)).min(1).max(10).optional().describe("Several players instead of one"),
       include: z
-        .array(z.enum(["inventory", "enderchest", "effects", "deaths", "sessions", "statistics", "advancements"]))
+        .array(
+          z.enum(["inventory", "enderchest", "effects", "deaths", "sessions", "statistics", "advancements", "target"]),
+        )
         .optional()
         .describe('Parts to add, such as ["inventory", "deaths"]'),
       statistics: z.string().min(1).optional().describe("`all`, or one category such as `mined`"),

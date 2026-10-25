@@ -12,7 +12,7 @@ export function serverTools(ctx: Context): void {
     untrusted: true,
     title: "Server status",
     description:
-      "Version, Paper build, MOTD, players online and max, uptime, difficulty, view distance, worlds, data packs, tick rate, and current load: TPS over 1, 5, and 15 minutes (20 is perfect), milliseconds per tick, memory used and max in MB, loaded chunks, and entities. include adds `performance` (tick time percentiles, where under 50 ms keeps 20 TPS; CPU; chunks, entities, and the most common entity types per world; the JVM's memory pools, garbage collection, and threads) and `host` (the machine: OS, CPUs and load, RAM, swap, disk, container limits; needs system:read).",
+      "Version, Paper build, MOTD, players online and max, uptime, difficulty, view distance, worlds, data packs, tick rate, and current load: TPS over 1, 5, and 15 minutes (20 is perfect), milliseconds per tick, memory used and max in MB, loaded chunks, and entities. Where it runs: `platform` (paper, fabric, or neoforge), `side` (dedicated, or integrated for a singleplayer world), `lan` (opened to LAN), `cheats` (commands allowed), and `paused` (a paused singleplayer game, so nothing ticks). include adds `performance` (tick time percentiles, where under 50 ms keeps 20 TPS; CPU; chunks, entities, and the most common entity types per world; the JVM's memory pools, garbage collection, and threads) and `host` (the machine: OS, CPUs and load, RAM, swap, disk, container limits; needs system:read).",
     scope: "server:read",
     effect: "read",
     input: {
@@ -95,10 +95,12 @@ export function serverTools(ctx: Context): void {
       timeoutSeconds: z.number().int().min(1).max(300).default(60),
     },
     run: (args) =>
-      waitForEvent(
-        { url: ctx.url, token },
-        { types: args.types, player: args.player, world: args.world, timeoutMs: args.timeoutSeconds * 1000 },
-      ),
+      waitForEvent(ctx, {
+        types: args.types,
+        player: args.player,
+        world: args.world,
+        timeoutMs: args.timeoutSeconds * 1000,
+      }),
   });
 
   tool(ctx, {
