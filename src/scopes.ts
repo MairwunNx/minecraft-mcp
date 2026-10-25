@@ -26,6 +26,9 @@ export type Scope = (typeof PERMISSIONS)[number];
 /** What a tool needs: one permission, every one of a list, or any one of a list. */
 export type Need = Scope | { all: Scope[] } | { any: Scope[] };
 
+/** What a singleplayer world's own token has: WorldAPI's admin group, everything but files:write and code. */
+export const LOCAL: Scope[] = PERMISSIONS.filter((scope) => scope !== "files:write" && scope !== "code");
+
 /** What anonymous clients may ever have; also the guess when the WebSocket doesn't answer. */
 export const ANONYMOUS: Scope[] = ["server:read", "players:read", "events:read"];
 

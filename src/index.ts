@@ -8,7 +8,8 @@ import { createWorldApi } from "./client.js";
 import { configFromEnv } from "./config.js";
 import { EventFeed } from "./events.js";
 import { fromLoopback } from "./http.js";
-import { discoverScopes } from "./scopes.js";
+import { findLocalWorld } from "./local.js";
+import { discoverScopes, LOCAL } from "./scopes.js";
 import { buildServer } from "./server.js";
 import { checkWorldApi, VERSION } from "./version.js";
 
@@ -23,8 +24,11 @@ Usage: minecraft-mcp [--http] [--host 127.0.0.1] [--port 3333]
   --version     Show the version
 
 Environment:
-  WORLDAPI_URL        WorldAPI base URL, such as http://localhost:8110/api/v1 (required)
+  WORLDAPI_URL        WorldAPI base URL, such as http://localhost:8110/api/v1; without
+                      it, the singleplayer world open on this machine with the
+                      WorldAPI mod, found again on every call
   WORLDAPI_TOKEN      WorldAPI token; its permissions decide which tools appear
+                      (a local world brings its own, which wins)
   WORLDAPI_READ_ONLY  1 hides every tool that changes the server
   WORLDAPI_PLAYER     Your player name: “me” means this player, and tools that
                       take a player use it when the agent leaves one out
@@ -48,18 +52,22 @@ async function main(): Promise<void> {
   if (values.version) return void process.stdout.write(`${VERSION}\n`);
 
   const config = configFromEnv();
-  const [scopes, worldApiVersion] = await Promise.all([
-    discoverScopes(config, log),
-    checkWorldApi(createWorldApi(config), log),
-  ]);
+  // Without WORLDAPI_URL the game may not run yet: then the tools are a local world's, whose token is the admin group.
+  const waiting = config.local !== undefined && findLocalWorld(config.local.folder) === undefined;
+  const [scopes, found] = waiting
+    ? [new Set(LOCAL), { platform: "fabric", side: "integrated" }]
+    : await Promise.all([discoverScopes(config, log), checkWorldApi(createWorldApi(config), log)]);
   const feed = new EventFeed(config);
   feed.start();
   log(
-    `WorldAPI ${worldApiVersion ?? "(version unknown)"} at ${config.url}; permissions: ${[...scopes].join(", ") || "none"}${config.readOnly ? "; read-only" : ""}`,
+    waiting
+      ? `No singleplayer world with WorldAPI is open yet; tools will reach the next one opened (${config.local?.folder})`
+      : `WorldAPI ${found.version ?? "(version unknown)"} on ${found.platform ?? "paper"} at ${config.url}; permissions: ${[...scopes].join(", ") || "none"}${config.readOnly ? "; read-only" : ""}`,
   );
+  const where = { platform: found.platform, side: found.side, local: config.local !== undefined };
 
   if (!values.http) {
-    const { server, tools } = buildServer(config, scopes, feed);
+    const { server, tools } = buildServer(config, scopes, feed, undefined, where);
     log(`${tools.length} tools on stdio`);
     await server.connect(new StdioServerTransport());
     return;
@@ -108,7 +116,7 @@ async function main(): Promise<void> {
       transport.onclose = () => {
         if (transport?.sessionId) sessions.delete(transport.sessionId);
       };
-      await buildServer(config, scopes, feed).server.connect(transport);
+      await buildServer(config, scopes, feed, undefined, where).server.connect(transport);
     }
     await transport.handleRequest(request, response);
   }).listen(port, values.host, () => log(`Streamable HTTP on http://${values.host}:${port}/mcp`));

@@ -1,6 +1,7 @@
 import createClient, { type Client } from "openapi-fetch";
 import { type Config, redact } from "./config.js";
 import type { paths } from "./generated/worldapi.js";
+import { findLocalWorld, NO_WORLD } from "./local.js";
 
 export type WorldApi = Client<paths>;
 
@@ -15,7 +16,34 @@ export class WorldApiError extends Error {
   }
 }
 
+/** No singleplayer world is open: a local config has nowhere to send a call. */
+export class NoWorldError extends Error {
+  constructor() {
+    super(NO_WORLD);
+  }
+}
+
+/** Where calls go before a local config knows the world; each call swaps it for the open world's address. */
+const LOCAL_BASE = "http://worldapi.local/api/v1";
+
 export function createWorldApi(config: Config, fetchImpl: typeof fetch = fetch): WorldApi {
+  if (config.local) {
+    const folder = config.local.folder;
+    // The world may close, and another open on another port, between two calls.
+    const local: typeof fetch = async (input, init) => {
+      const world = findLocalWorld(folder);
+      if (!world) throw new NoWorldError();
+      const request = input instanceof Request ? input : new Request(input, init);
+      const target = request.url.replace(LOCAL_BASE, world.url.replace(/\/+$/, ""));
+      const headers = new Headers(request.headers);
+      const token = config.token;
+      if (token) headers.set("Authorization", `Bearer ${token}`);
+      return fetchImpl(
+        new Request(target, { method: request.method, headers, body: request.body, duplex: "half" } as RequestInit),
+      );
+    };
+    return createClient<paths>({ baseUrl: LOCAL_BASE, fetch: local });
+  }
   return createClient<paths>({
     baseUrl: config.url,
     fetch: fetchImpl,
@@ -38,6 +66,7 @@ export async function unwrap<T>(call: Promise<Outcome<T>>, token?: string): Prom
   try {
     outcome = await call;
   } catch (error) {
+    if (error instanceof NoWorldError) throw new WorldApiError(0, "no_world", NO_WORLD);
     throw new WorldApiError(0, "unreachable", redact(`WorldAPI didn't answer: ${(error as Error).message}`, token));
   }
   const { data, error, response } = outcome;

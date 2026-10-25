@@ -618,7 +618,8 @@ describe("configuration", () => {
       player: "Steve",
     });
     expect(configFromEnv({ WORLDAPI_URL: "http://host" }).token).toBeUndefined();
-    expect(() => configFromEnv({})).toThrow(/WORLDAPI_URL/);
+    // Without WORLDAPI_URL it looks for a singleplayer world on this machine.
+    expect(configFromEnv({ WORLDAPI_LOCAL_DIR: "/nowhere" }).local).toEqual({ folder: "/nowhere" });
     expect(() => configFromEnv({ WORLDAPI_URL: "ftp://host" })).toThrow(/http/);
   });
 
