@@ -7,7 +7,7 @@ export const VERSION: string = (
 ).version;
 
 /** The oldest WorldAPI whose endpoints match the generated client. */
-export const MIN_WORLDAPI = "4.1.0";
+export const MIN_WORLDAPI = "4.2.0";
 
 /** Compares two x.y.z versions; anything that isn't one (a dev build) counts as new enough. */
 export function olderThan(version: string, minimum: string): boolean {
@@ -21,11 +21,20 @@ export function olderThan(version: string, minimum: string): boolean {
   return false;
 }
 
+/** What WorldAPI said about itself at the start. */
+export interface Found {
+  version?: string;
+  /** `paper`, `fabric`, or `neoforge`; WorldAPI before 4.2.0 runs on Paper only and doesn't say. */
+  platform?: string;
+  /** `dedicated` or `integrated`, the server under a singleplayer world. */
+  side?: string;
+}
+
 /**
- * Asks WorldAPI for its version and warns when it's older than this server expects. It never
+ * Asks WorldAPI for its version and where it runs, and warns when it's older than this server expects. It never
  * stops the start: most tools still work, and the warning says which side to update.
  */
-export async function checkWorldApi(api: WorldApi, log: (line: string) => void): Promise<string | undefined> {
+export async function checkWorldApi(api: WorldApi, log: (line: string) => void): Promise<Found> {
   try {
     const { data } = await api.GET("/server");
     const version = data?.worldApiVersion;
@@ -33,8 +42,8 @@ export async function checkWorldApi(api: WorldApi, log: (line: string) => void):
       log(
         `WorldAPI ${version} is older than ${MIN_WORLDAPI}, which this server expects; update the plugin, or some tools will fail`,
       );
-    return version;
+    return { version, platform: data?.platform ?? (data ? "paper" : undefined), side: data?.side };
   } catch {
-    return undefined;
+    return {};
   }
 }

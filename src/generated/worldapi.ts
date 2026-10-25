@@ -233,7 +233,7 @@ export interface paths {
         put?: never;
         /**
          * Replace exact text in a file
-         * @description Each edit's oldText must appear exactly once (copy it from /files/read without the line numbers), unless replaceAll. Edits apply in order, all or none. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
+         * @description Each edit's oldText must appear exactly once (copy it from /files/read without the line numbers), unless replaceAll. Edits apply in order, all or none. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to WorldAPI's backups folder (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
          *
          *     Permission: `files:write`.
          */
@@ -277,7 +277,7 @@ export interface paths {
         put?: never;
         /**
          * Set values in a YAML, .properties, or JSON config by dotted path
-         * @description `{"chunks.auto-save-interval": 6000}` sets one key, creating the sections on the way; null removes a key. YAML keeps its comments, though spacing and quotes may change; .properties changes only the lines it sets. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
+         * @description `{"chunks.auto-save-interval": 6000}` sets one key, creating the sections on the way; null removes a key. YAML keeps its comments, though spacing and quotes may change; .properties changes only the lines it sets. Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to WorldAPI's backups folder (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
          *
          *     Permission: `files:write`.
          */
@@ -298,7 +298,7 @@ export interface paths {
         get?: never;
         /**
          * Create a file or replace it whole
-         * @description Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to plugins/WorldAPI/backups (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
+         * @description Paths are relative to the server folder, with forward slashes. Files under logs/ need logs:read; everything else needs files:read. WorldAPI's own folder, hidden files, keys, databases, and jars are never shared. Needs files:write, which no group but owner has unless you add it. The previous version goes to WorldAPI's backups folder (limits.fileBackups per file). Logs, usercache.json, and version_history.json can't be written. ops.json, whitelist.json, and banned-*.json go through the server: it adds and removes entries to match the new content and saves the file in its own format. Send the sha256 from /files/read as expectedSha256, so a write fails with 409 if the file changed meanwhile.
          *
          *     Permission: `files:write`.
          */
@@ -423,7 +423,7 @@ export interface paths {
         };
         /**
          * A player's profile, state, and whereabouts, with more parts on request
-         * @description `include` adds parts in the same answer: inventory and enderchest (players:private; read from the playerdata file while the player is offline), effects (online only), deaths (the last place, and the newest 5 from the history with causes and killers), sessions (the newest 5), statistics (the minecraft:custom ones), and advancements (counts and the newest 5 done).
+         * @description `include` adds parts in the same answer: inventory and enderchest (players:private; read from the playerdata file while the player is offline), effects (online only), deaths (the last place, and the newest 5 from the history with causes and killers), sessions (the newest 5), statistics (the minecraft:custom ones), advancements (counts and the newest 5 done), and target (online only, with players:private: the block and the entity the player looks at within 64 blocks, and where their eyes are).
          *
          *     Permission: `players:read`. Coordinates, items, and the like also need `players:private`.
          */
@@ -3038,6 +3038,7 @@ export interface components {
                 [key: string]: number;
             } | null;
             advancements?: components["schemas"]["AdvancementSummary"] | null;
+            target?: components["schemas"]["TargetView"] | null;
         };
         PluginInfo: {
             name: string;
@@ -3198,6 +3199,11 @@ export interface components {
             /** Format: int32 */
             entities: number;
             datapacks?: components["schemas"]["DatapackView"][];
+            platform?: string;
+            side?: string;
+            lan?: boolean;
+            cheats?: boolean;
+            paused?: boolean;
         };
         ServerLog: {
             lines: components["schemas"]["LogLine"][];
@@ -3306,6 +3312,14 @@ export interface components {
             /** Format: int32 */
             taken: number;
             item?: components["schemas"]["ItemView"] | null;
+        };
+        TargetView: {
+            eye: components["schemas"]["LocationView"];
+            block?: components["schemas"]["BlockView"] | null;
+            face?: string | null;
+            blockDistance?: number | null;
+            entity?: components["schemas"]["EntitySummary"] | null;
+            entityDistance?: number | null;
         };
         TeleportRequest: {
             location?: components["schemas"]["LocationView"] | null;
@@ -4912,7 +4926,7 @@ export interface operations {
     getPlayersPlayer: {
         parameters: {
             query?: {
-                /** @description Comma-separated parts: inventory, enderchest, effects, deaths, sessions, statistics, advancements */
+                /** @description Comma-separated parts: inventory, enderchest, effects, deaths, sessions, statistics, advancements, target */
                 include?: string;
             };
             header?: never;
