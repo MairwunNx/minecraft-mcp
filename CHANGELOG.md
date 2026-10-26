@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.1.1
+
+- 📦 **Dependencies.** The MCP SDK moves to 1.32.2, with its fixes for transport types and for registering tools after the server connects.
+
 ## 4.1.0
 
 minecraft-mcp works with WorldAPI's new Fabric and NeoForge mods, on a dedicated server and in the world you play alone. It needs WorldAPI 4.2.0; with an older one, the server warns at start.
