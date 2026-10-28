@@ -11,7 +11,7 @@ describe("tools follow the token's permissions", () => {
   it("a viewer sees only reads", async () => {
     const { client } = await connect(api.url, VIEWER);
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(17);
+    expect(tools.length).toBe(19);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
     expect(tools.map((tool) => tool.name)).not.toContain("set_world");
     expect(tools.map((tool) => tool.name)).toContain("get_events");
@@ -28,22 +28,35 @@ describe("tools follow the token's permissions", () => {
     expect(players).not.toContain("set_blocks");
     expect(players).not.toContain("manage_access");
     const moderator = (await connect(api.url, ["players:moderate"])).tools;
-    expect(moderator).toEqual(["get_access", "manage_access"]);
+    expect(moderator).toEqual(["setup_help", "get_access", "manage_access"]);
   });
 
   it("commands are read with commands:read or server:console, run only with server:console", async () => {
-    expect((await connect(api.url, ["commands:read"])).tools).toEqual(["search_commands"]);
-    expect((await connect(api.url, ["server:console"])).tools).toEqual(["search_commands", "run_command"]);
-    expect((await connect(api.url, ["chat:read"])).tools).toEqual([]);
+    expect((await connect(api.url, ["commands:read"])).tools).toEqual(["setup_help", "search_commands"]);
+    expect((await connect(api.url, ["server:console"])).tools).toEqual([
+      "setup_help",
+      "search_commands",
+      "run_command",
+    ]);
+    expect((await connect(api.url, ["chat:read"])).tools).toEqual(["setup_help"]);
   });
 
   it("file reads come with files:read or logs:read, writes only with files:write", async () => {
     const logs = (await connect(api.url, ["logs:read"])).tools;
-    expect(logs).toEqual(["get_server_log", "list_files", "read_file"]);
+    expect(logs).toEqual(["setup_help", "get_server_log", "list_files", "read_file"]);
     const files = (await connect(api.url, ["files:read"])).tools;
-    expect(files).toEqual(["list_files", "read_file"]);
+    expect(files).toEqual(["setup_help", "list_files", "read_file"]);
     const writer = (await connect(api.url, ["files:read", "files:write"])).tools;
-    expect(writer).toEqual(["list_files", "read_file", "edit_file"]);
+    expect(writer).toEqual(["setup_help", "list_files", "read_file", "edit_file"]);
+  });
+
+  it("webhooks come with webhooks:manage, and setup_help with anything", async () => {
+    expect((await connect(api.url, ["webhooks:manage"])).tools).toEqual([
+      "setup_help",
+      "list_webhooks",
+      "manage_webhook",
+    ]);
+    expect((await connect(api.url, [])).tools).toEqual(["setup_help"]);
   });
 
   it("admin has everything but files:write and code; owner has all", async () => {
@@ -62,7 +75,7 @@ describe("tools follow the token's permissions", () => {
     expect(tools).not.toContain("edit_file");
     const all = (await connect(api.url, OWNER)).tools;
     expect(all).toEqual(expect.arrayContaining(["execute_java", "edit_file", "list_java_scripts"]));
-    expect(all.length).toBe(46);
+    expect(all.length).toBe(51);
     expect(new Set(all).size).toBe(all.length);
   });
 
