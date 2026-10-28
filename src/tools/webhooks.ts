@@ -36,7 +36,7 @@ How the user gets what create needs:
 - google_chat: the space → Apps & integrations → Webhooks.
 - telegram: make a bot with @BotFather and get its token; the user writes /start to the bot, or adds it to a group or channel; then telegram_chats with botToken lists chats, and one's id is chatId.
 - json: any HTTPS URL that takes the event as JSON; the answer holds a signing secret, shown once.
-These URLs and bot tokens are secrets: ask the user to paste them, never invent them, and don't repeat them back. topics are event ids, \`player.*\` for a prefix, or \`*\` for every notable event (joins, leaves, deaths, advancements, chat, raids, bosses, the server starting and stopping). By default a webhook sees no coordinates and no chat; permissions widens that, but only up to this token's own. Addresses on the server's machine or private network are refused unless the owner allows them in config.yml. Webhooks in config.yml change only there. Needs webhooks:manage.`,
+These URLs and bot tokens are secrets: ask the user to paste them, never invent them, and don't repeat them back. topics are event ids, \`player.*\` for a prefix, or \`*\` for every notable event (joins, leaves, deaths, advancements, chat, raids, bosses, the server starting and stopping). By default a webhook sees no coordinates and no chat; permissions widens that, but only up to this token's own. Addresses must be https://, and ones on the server's machine or private network are refused, unless the owner allows them in config.yml. test works once per webhook every 10 seconds. Webhooks in config.yml change only there. Needs webhooks:manage.`,
     scope: "webhooks:manage",
     effect: "destructive",
     input: {
