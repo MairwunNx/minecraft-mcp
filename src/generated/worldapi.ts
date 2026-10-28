@@ -134,6 +134,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Changes the API made to blocks and containers, newest first, to undo
+         * @description Setting and filling blocks and editing containers record what they replace, in memory until the server stops. The oldest changes drop out once they hold more than limits.undoBlocks blocks.
+         *
+         *     Permission: `world:write`.
+         */
+        get: operations["getChanges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/changes/{id}/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take back a change the API made
+         * @description Puts back every block the change touched as it was, a container's items and a sign's text included. A block that changed again since, by a player or a later change, stays as it is now unless `force` is on. Blocks that physics moved, such as sand that fell, and entities aren't part of a change.
+         *
+         *     Permission: `world:write`.
+         */
+        post: operations["postChangesIdUndo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/events": {
         parameters: {
             query?: never;
@@ -143,7 +187,7 @@ export interface paths {
         };
         /**
          * Event history: joins, deaths, advancements, skipped nights, boss kills, and more
-         * @description Newest first by default. Recorded types: `player.join`, `player.leave`, `player.kick`, `player.death`, `player.advancement`, `player.chat`, `world.night_skipped`, `entity.boss_killed`, `raid.start`, `raid.finish`, `server.status`.
+         * @description Newest first by default. Recorded types: `player.join`, `player.leave`, `player.kick`, `player.death`, `player.advancement`, `player.chat`, `world.night_skipped`, `entity.boss_killed`, `raid.start`, `raid.finish`, `server.status`. With `text`, a page reads at most 20,000 events: it may hold fewer items than `limit` and still have a `nextCursor` to search on.
          *
          *     Permission: `events:read`.
          */
@@ -882,6 +926,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/registries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The game's registries: items, blocks, entities, effects, and more, with how many keys each holds
+         * @description Permission: `server:read`.
+         */
+        get: operations["getRegistries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/registries/{registry}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Keys in one registry, such as every item or every biome
+         * @description Mods and data packs add their own keys. `search` takes words, so `oak log` finds `minecraft:oak_log` and `minecraft:stripped_oak_log`.
+         *
+         *     Permission: `server:read`.
+         */
+        get: operations["getRegistriesRegistry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/scripts": {
         parameters: {
             query?: never;
@@ -1349,7 +1435,7 @@ export interface paths {
         put?: never;
         /**
          * Issue a token
-         * @description The answer holds the token once. A caller hands out only permissions it has itself.
+         * @description The answer holds the token once. With `kind` `mcp`, it also holds how to add minecraft-mcp to Claude Code, Codex, Cursor, OpenCode, or any MCP client, for every project or one. A caller hands out only permissions it has itself.
          *
          *     Permission: `tokens:manage`.
          */
@@ -1377,6 +1463,124 @@ export interface paths {
          *     Permission: `tokens:manage`.
          */
         delete: operations["deleteTokensName"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every webhook: from config.yml and made in game, in the panel, or here
+         * @description URLs and bot tokens never show in full: they hold the service's secret.
+         *
+         *     Permission: `webhooks:manage`.
+         */
+        get: operations["getWebhooks"];
+        put?: never;
+        /**
+         * Make a webhook: events to Discord, Slack, Telegram, Teams, Google Chat, or any URL as JSON
+         * @description Chat formats get a message in the webhook's language; `json` gets the event as the WebSocket sends it, signed with a secret the answer shows once. It can't post to this machine or a private network unless config.yml allows it. A webhook gets only permissions its maker has, and changing or deleting one needs every permission it holds.
+         *
+         *     Permission: `webhooks:manage`.
+         */
+        post: operations["postWebhooks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What a webhook can be: formats, languages, topics, and the messages it may reword
+         * @description Permission: `webhooks:manage`.
+         */
+        get: operations["getWebhooksOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/telegram/chats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Find the chats a Telegram bot can write to
+         * @description Write /start to the bot, or add it to a group or channel, then ask: the chats that wrote to it lately come back, newest first, and one's `id` goes into a webhook's `chatId`. Telegram keeps a bot's updates for a day.
+         *
+         *     Permission: `webhooks:manage`.
+         */
+        post: operations["postWebhooksTelegramChats"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a webhook
+         * @description Webhooks in config.yml change only there. A webhook gets only permissions its maker has, and changing or deleting one needs every permission it holds.
+         *
+         *     Permission: `webhooks:manage`.
+         */
+        delete: operations["deleteWebhooksName"];
+        options?: never;
+        head?: never;
+        /**
+         * Change what a webhook gets, its language or words, or pause it
+         * @description Webhooks in config.yml change only there. A webhook gets only permissions its maker has, and changing or deleting one needs every permission it holds.
+         *
+         *     Permission: `webhooks:manage`.
+         */
+        patch: operations["patchWebhooksName"];
+        trace?: never;
+    };
+    "/webhooks/{name}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a webhook a test message
+         * @description Permission: `webhooks:manage`.
+         */
+        post: operations["postWebhooksNameTest"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1446,6 +1650,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/worlds/{world}/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every block in a box, as a palette of states and an index for each block
+         * @description The box includes both corners; its volume can't pass limits.maxReadBlocks, and y is clipped to the world's height. `spawns=true` also lists where monsters could spawn, as the game decides for a zombie: no block light (in the Nether, any light), a floor with a full top that isn't glass, leaves, ice, magma, or a light source, and room to stand.
+         *
+         *     Permission: `server:read`.
+         */
+        get: operations["getWorldsWorldBlocks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/worlds/{world}/blocks/fill": {
         parameters: {
             query?: never;
@@ -1457,7 +1683,7 @@ export interface paths {
         put?: never;
         /**
          * Fill a box with one block
-         * @description The box includes both corners. Its volume can't pass limits.maxFillBlocks.
+         * @description The box includes both corners. Its volume can't pass limits.maxFillBlocks. `change` names the change to undo with POST /changes/{id}/undo.
          *
          *     Permission: `world:write`.
          */
@@ -2077,6 +2303,22 @@ export interface components {
             temperature: number;
             humidity: number;
         };
+        BlockArea: {
+            world: string;
+            from: components["schemas"]["BlockPosition"];
+            to: components["schemas"]["BlockPosition"];
+            /** Format: int32 */
+            sizeX: number;
+            /** Format: int32 */
+            sizeY: number;
+            /** Format: int32 */
+            sizeZ: number;
+            palette: components["schemas"]["PaletteEntry"][];
+            blocks?: number[] | null;
+            spawnable?: components["schemas"]["SpawnSpot"][] | null;
+            /** Format: int32 */
+            spawnableTotal?: number | null;
+        };
         BlockPosition: {
             /** Format: int32 */
             x: number;
@@ -2166,6 +2408,25 @@ export interface components {
             usedBytes: number;
             /** Format: int64 */
             capacityBytes: number;
+        };
+        ChangeView: {
+            /** Format: int64 */
+            id: number;
+            at: string;
+            by: string;
+            world: string;
+            what: string;
+            from: components["schemas"]["BlockPosition"];
+            to: components["schemas"]["BlockPosition"];
+            /** Format: int32 */
+            blocks: number;
+            undone: boolean;
+        };
+        ChangeViewPage: {
+            items: components["schemas"]["ChangeView"][];
+            nextCursor?: string | null;
+            /** Format: int32 */
+            total?: number | null;
         };
         ChunkLoad: {
             /** Format: int32 */
@@ -2593,6 +2854,8 @@ export interface components {
             changed: number;
             /** Format: int32 */
             volume: number;
+            /** Format: int64 */
+            change?: number | null;
         };
         FireworkExplosionView: {
             shape: string;
@@ -2814,6 +3077,24 @@ export interface components {
             logger?: string | null;
             message: string;
         };
+        McpClientSetup: {
+            client: string;
+            title: string;
+            scope: string;
+            command?: string | null;
+            file?: string | null;
+            content?: string | null;
+            link?: string | null;
+            gitignore?: string | null;
+            trust?: boolean;
+            env?: {
+                [key: string]: string;
+            } | null;
+        };
+        McpSetup: {
+            url: string;
+            clients: components["schemas"]["McpClientSetup"][];
+        };
         Memory: {
             /** Format: int64 */
             usedBytes: number;
@@ -2893,6 +3174,11 @@ export interface components {
         OperatorsPatch: {
             add?: string[];
             remove?: string[];
+        };
+        PaletteEntry: {
+            state: string;
+            /** Format: int32 */
+            count: number;
         };
         ParticleRequest: {
             particle: string;
@@ -3089,6 +3375,20 @@ export interface components {
             /** Format: int32 */
             total?: number | null;
         };
+        RegistryEntry: {
+            key: string;
+        };
+        RegistryEntryPage: {
+            items: components["schemas"]["RegistryEntry"][];
+            nextCursor?: string | null;
+            /** Format: int32 */
+            total?: number | null;
+        };
+        RegistryInfo: {
+            registry: string;
+            /** Format: int32 */
+            size: number;
+        };
         RemovedEntities: {
             /** Format: int32 */
             matched: number;
@@ -3280,6 +3580,16 @@ export interface components {
             persistent?: boolean | null;
             glowing?: boolean | null;
         };
+        SpawnSpot: {
+            /** Format: int32 */
+            x: number;
+            /** Format: int32 */
+            y: number;
+            /** Format: int32 */
+            z: number;
+            /** Format: int32 */
+            skyLight: number;
+        };
         Spawned: {
             uuids: string[];
         };
@@ -3321,6 +3631,14 @@ export interface components {
             entity?: components["schemas"]["EntitySummary"] | null;
             entityDistance?: number | null;
         };
+        TelegramChatView: {
+            id: string;
+            title: string;
+            type: string;
+        };
+        TelegramChatsRequest: {
+            botToken: string;
+        };
         TeleportRequest: {
             location?: components["schemas"]["LocationView"] | null;
             player?: string | null;
@@ -3360,12 +3678,16 @@ export interface components {
             token: string;
             scopes: string[];
             expiresAt?: string | null;
+            kind?: string;
+            setup?: components["schemas"]["McpSetup"] | null;
         };
         TokenRequest: {
             name: string;
             scopes: string[];
             /** Format: int32 */
             expiresInDays?: number | null;
+            kind?: string;
+            apiUrl?: string | null;
         };
         TokenView: {
             name: string;
@@ -3376,6 +3698,7 @@ export interface components {
             createdBy?: string | null;
             expiresAt?: string | null;
             expired?: boolean;
+            kind?: string;
         };
         Tps: {
             oneMinute: number;
@@ -3398,6 +3721,15 @@ export interface components {
             material: string;
             pattern: string;
         };
+        UndoRequest: {
+            force?: boolean;
+        };
+        UndoResult: {
+            /** Format: int32 */
+            restored: number;
+            /** Format: int32 */
+            skipped: number;
+        };
         VillagerView: {
             profession: string;
             type: string;
@@ -3406,6 +3738,8 @@ export interface components {
             /** Format: int32 */
             experience: number;
             trades: components["schemas"]["TradeView"][];
+            home?: components["schemas"]["LocationView"] | null;
+            jobSite?: components["schemas"]["LocationView"] | null;
         };
         Weather: {
             state: string;
@@ -3417,6 +3751,76 @@ export interface components {
             thunderDurationTicks: number;
             /** Format: int32 */
             clearWeatherDurationTicks: number;
+        };
+        WebhookCreated: {
+            webhook: components["schemas"]["WebhookView"];
+            secret?: string | null;
+            test?: components["schemas"]["WebhookTestResult"] | null;
+        };
+        WebhookFormatInfo: {
+            id: string;
+            title: string;
+        };
+        WebhookOptions: {
+            enabled: boolean;
+            formats: components["schemas"]["WebhookFormatInfo"][];
+            languages: string[];
+            topics: components["schemas"]["WebhookTopicInfo"][];
+            messages: {
+                [key: string]: string;
+            };
+        };
+        WebhookPatch: {
+            topics?: string[] | null;
+            permissions?: string[] | null;
+            language?: string | null;
+            enabled?: boolean | null;
+            messages?: {
+                [key: string]: string;
+            } | null;
+        };
+        WebhookRequest: {
+            name: string;
+            format: string;
+            url?: string | null;
+            botToken?: string | null;
+            chatId?: string | null;
+            topics: string[];
+            permissions?: string[];
+            language?: string;
+            messages?: {
+                [key: string]: string;
+            };
+            test?: boolean;
+        };
+        WebhookTestResult: {
+            ok: boolean;
+            /** Format: int32 */
+            status?: number | null;
+            problem?: string | null;
+        };
+        WebhookTopicInfo: {
+            id: string;
+            needs: string;
+            notable: boolean;
+            coordinates: boolean;
+            description?: string | null;
+        };
+        WebhookView: {
+            name: string;
+            format: string;
+            target: string;
+            topics: string[];
+            permissions: string[];
+            language: string;
+            enabled: boolean;
+            messages?: {
+                [key: string]: string;
+            };
+            signed: boolean;
+            source: string;
+            createdAt?: string | null;
+            createdBy?: string | null;
         };
         Whitelist: {
             enabled: boolean;
@@ -4029,6 +4433,159 @@ export interface operations {
             };
         };
     };
+    getChanges: {
+        parameters: {
+            query?: {
+                /** @description How many items to return; the server caps it. 0 returns only `total` where a list has one */
+                limit?: number;
+                /** @description The `nextCursor` from the previous page */
+                cursor?: string;
+                /** @description Only changes in this world */
+                world?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangeViewPage"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    postChangesIdUndo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Script id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UndoRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UndoResult"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     getEvents: {
         parameters: {
             query?: {
@@ -4046,6 +4603,8 @@ export interface operations {
                 to?: string;
                 /** @description Newest first or oldest first */
                 order?: "newest" | "oldest";
+                /** @description Only events whose data holds this, ignoring case: words in chat, a death message, an advancement. Needs players:private, since it matches coordinates too */
+                text?: string;
             };
             header?: never;
             path?: never;
@@ -7232,6 +7791,146 @@ export interface operations {
             };
         };
     };
+    getRegistries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistryInfo"][];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getRegistriesRegistry: {
+        parameters: {
+            query?: {
+                /** @description How many items to return; the server caps it. 0 returns only `total` where a list has one */
+                limit?: number;
+                /** @description The `nextCursor` from the previous page */
+                cursor?: string;
+                /** @description Only keys that hold every word of this, ignoring case */
+                search?: string;
+            };
+            header?: never;
+            path: {
+                /** @description registry */
+                registry: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistryEntryPage"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     getScripts: {
         parameters: {
             query?: never;
@@ -9354,6 +10053,493 @@ export interface operations {
             };
         };
     };
+    getWebhooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookView"][];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    postWebhooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookCreated"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getWebhooksOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookOptions"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    postWebhooksTelegramChats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramChatsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramChatView"][];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteWebhooksName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description name */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Done */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    patchWebhooksName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description name */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["WebhookPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookView"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    postWebhooksNameTest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description name */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["NoBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookTestResult"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     getWorlds: {
         parameters: {
             query?: never;
@@ -9593,6 +10779,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BiomeView"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getWorldsWorldBlocks: {
+        parameters: {
+            query: {
+                /** @description One corner of the box, as `x,y,z` */
+                from: string;
+                /** @description The opposite corner, as `x,y,z`; the box includes both */
+                to: string;
+                /** @description Send each block's palette index; false sends only the palette with counts. On by default */
+                blocks?: boolean;
+                /** @description List where monsters could spawn: dark blocks with a floor they may stand on */
+                spawns?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description World name (`world_nether`) or key (`minecraft:the_nether`) */
+                world: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockArea"];
                 };
             };
             /** @description Invalid request */

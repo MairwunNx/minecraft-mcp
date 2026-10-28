@@ -27,6 +27,9 @@
       "name": "Containers"
     },
     {
+      "name": "Changes"
+    },
+    {
       "name": "Entities"
     },
     {
@@ -48,6 +51,9 @@
       "name": "Recipes"
     },
     {
+      "name": "Registries"
+    },
+    {
       "name": "Events"
     },
     {
@@ -55,6 +61,9 @@
     },
     {
       "name": "Access control"
+    },
+    {
+      "name": "Webhooks"
     },
     {
       "name": "Scripts"
@@ -720,11 +729,231 @@
         }
       }
     },
+    "/changes": {
+      "get": {
+        "operationId": "getChanges",
+        "summary": "Changes the API made to blocks and containers, newest first, to undo",
+        "description": "Setting and filling blocks and editing containers record what they replace, in memory until the server stops. The oldest changes drop out once they hold more than limits.undoBlocks blocks.\n\nPermission: `world:write`.",
+        "tags": [
+          "Changes"
+        ],
+        "x-scope": "world:write",
+        "security": [
+          {
+            "bearer": [
+              "world:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "How many items to return; the server caps it. 0 returns only `total` where a list has one",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "The `nextCursor` from the previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "world",
+            "in": "query",
+            "required": false,
+            "description": "Only changes in this world",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeViewPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/changes/{id}/undo": {
+      "post": {
+        "operationId": "postChangesIdUndo",
+        "summary": "Take back a change the API made",
+        "description": "Puts back every block the change touched as it was, a container's items and a sign's text included. A block that changed again since, by a player or a later change, stays as it is now unless `force` is on. Blocks that physics moved, such as sand that fell, and entities aren't part of a change.\n\nPermission: `world:write`.",
+        "tags": [
+          "Changes"
+        ],
+        "x-scope": "world:write",
+        "security": [
+          {
+            "bearer": [
+              "world:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Script id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UndoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UndoResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/events": {
       "get": {
         "operationId": "getEvents",
         "summary": "Event history: joins, deaths, advancements, skipped nights, boss kills, and more",
-        "description": "Newest first by default. Recorded types: `player.join`, `player.leave`, `player.kick`, `player.death`, `player.advancement`, `player.chat`, `world.night_skipped`, `entity.boss_killed`, `raid.start`, `raid.finish`, `server.status`.\n\nPermission: `events:read`.",
+        "description": "Newest first by default. Recorded types: `player.join`, `player.leave`, `player.kick`, `player.death`, `player.advancement`, `player.chat`, `world.night_skipped`, `entity.boss_killed`, `raid.start`, `raid.finish`, `server.status`. With `text`, a page reads at most 20,000 events: it may hold fewer items than `limit` and still have a `nextCursor` to search on.\n\nPermission: `events:read`.",
         "tags": [
           "Events"
         ],
@@ -802,6 +1031,15 @@
                 "newest",
                 "oldest"
               ]
+            }
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "description": "Only events whose data holds this, ignoring case: words in chat, a death message, an advancement. Needs players:private, since it matches coordinates too",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -5195,6 +5433,207 @@
         }
       }
     },
+    "/registries": {
+      "get": {
+        "operationId": "getRegistries",
+        "summary": "The game's registries: items, blocks, entities, effects, and more, with how many keys each holds",
+        "description": "Permission: `server:read`.",
+        "tags": [
+          "Registries"
+        ],
+        "x-scope": "server:read",
+        "security": [
+          {
+            "bearer": [
+              "server:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegistryInfo"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registries/{registry}": {
+      "get": {
+        "operationId": "getRegistriesRegistry",
+        "summary": "Keys in one registry, such as every item or every biome",
+        "description": "Mods and data packs add their own keys. `search` takes words, so `oak log` finds `minecraft:oak_log` and `minecraft:stripped_oak_log`.\n\nPermission: `server:read`.",
+        "tags": [
+          "Registries"
+        ],
+        "x-scope": "server:read",
+        "security": [
+          {
+            "bearer": [
+              "server:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "registry",
+            "in": "path",
+            "required": true,
+            "description": "registry",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "How many items to return; the server caps it. 0 returns only `total` where a list has one",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "The `nextCursor` from the previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Only keys that hold every word of this, ignoring case",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistryEntryPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/scripts": {
       "get": {
         "operationId": "getScripts",
@@ -7771,7 +8210,7 @@
       "post": {
         "operationId": "postTokens",
         "summary": "Issue a token",
-        "description": "The answer holds the token once. A caller hands out only permissions it has itself.\n\nPermission: `tokens:manage`.",
+        "description": "The answer holds the token once. With `kind` `mcp`, it also holds how to add minecraft-mcp to Claude Code, Codex, Cursor, OpenCode, or any MCP client, for every project or one. A caller hands out only permissions it has itself.\n\nPermission: `tokens:manage`.",
         "tags": [
           "Access control"
         ],
@@ -7887,6 +8326,644 @@
         "responses": {
           "204": {
             "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks": {
+      "get": {
+        "operationId": "getWebhooks",
+        "summary": "Every webhook: from config.yml and made in game, in the panel, or here",
+        "description": "URLs and bot tokens never show in full: they hold the service's secret.\n\nPermission: `webhooks:manage`.",
+        "tags": [
+          "Webhooks"
+        ],
+        "x-scope": "webhooks:manage",
+        "security": [
+          {
+            "bearer": [
+              "webhooks:manage"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WebhookView"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "postWebhooks",
+        "summary": "Make a webhook: events to Discord, Slack, Telegram, Teams, Google Chat, or any URL as JSON",
+        "description": "Chat formats get a message in the webhook's language; `json` gets the event as the WebSocket sends it, signed with a secret the answer shows once. It can't post to this machine or a private network unless config.yml allows it. A webhook gets only permissions its maker has, and changing or deleting one needs every permission it holds.\n\nPermission: `webhooks:manage`.",
+        "tags": [
+          "Webhooks"
+        ],
+        "x-scope": "webhooks:manage",
+        "security": [
+          {
+            "bearer": [
+              "webhooks:manage"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/options": {
+      "get": {
+        "operationId": "getWebhooksOptions",
+        "summary": "What a webhook can be: formats, languages, topics, and the messages it may reword",
+        "description": "Permission: `webhooks:manage`.",
+        "tags": [
+          "Webhooks"
+        ],
+        "x-scope": "webhooks:manage",
+        "security": [
+          {
+            "bearer": [
+              "webhooks:manage"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookOptions"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/telegram/chats": {
+      "post": {
+        "operationId": "postWebhooksTelegramChats",
+        "summary": "Find the chats a Telegram bot can write to",
+        "description": "Write /start to the bot, or add it to a group or channel, then ask: the chats that wrote to it lately come back, newest first, and one's `id` goes into a webhook's `chatId`. Telegram keeps a bot's updates for a day.\n\nPermission: `webhooks:manage`.",
+        "tags": [
+          "Webhooks"
+        ],
+        "x-scope": "webhooks:manage",
+        "security": [
+          {
+            "bearer": [
+              "webhooks:manage"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelegramChatsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TelegramChatView"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/{name}": {
+      "patch": {
+        "operationId": "patchWebhooksName",
+        "summary": "Change what a webhook gets, its language or words, or pause it",
+        "description": "Webhooks in config.yml change only there. A webhook gets only permissions its maker has, and changing or deleting one needs every permission it holds.\n\nPermission: `webhooks:manage`.",
+        "tags": [
+          "Webhooks"
+        ],
+        "x-scope": "webhooks:manage",
+        "security": [
+          {
+            "bearer": [
+              "webhooks:manage"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWebhooksName",
+        "summary": "Delete a webhook",
+        "description": "Webhooks in config.yml change only there. A webhook gets only permissions its maker has, and changing or deleting one needs every permission it holds.\n\nPermission: `webhooks:manage`.",
+        "tags": [
+          "Webhooks"
+        ],
+        "x-scope": "webhooks:manage",
+        "security": [
+          {
+            "bearer": [
+              "webhooks:manage"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/{name}/test": {
+      "post": {
+        "operationId": "postWebhooksNameTest",
+        "summary": "Send a webhook a test message",
+        "description": "Permission: `webhooks:manage`.",
+        "tags": [
+          "Webhooks"
+        ],
+        "x-scope": "webhooks:manage",
+        "security": [
+          {
+            "bearer": [
+              "webhooks:manage"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookTestResult"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -8362,11 +9439,148 @@
         }
       }
     },
+    "/worlds/{world}/blocks": {
+      "get": {
+        "operationId": "getWorldsWorldBlocks",
+        "summary": "Every block in a box, as a palette of states and an index for each block",
+        "description": "The box includes both corners; its volume can't pass limits.maxReadBlocks, and y is clipped to the world's height. `spawns=true` also lists where monsters could spawn, as the game decides for a zombie: no block light (in the Nether, any light), a floor with a full top that isn't glass, leaves, ice, magma, or a light source, and room to stand.\n\nPermission: `server:read`.",
+        "tags": [
+          "Blocks"
+        ],
+        "x-scope": "server:read",
+        "security": [
+          {
+            "bearer": [
+              "server:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "world",
+            "in": "path",
+            "required": true,
+            "description": "World name (`world_nether`) or key (`minecraft:the_nether`)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "description": "One corner of the box, as `x,y,z`",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "description": "The opposite corner, as `x,y,z`; the box includes both",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "blocks",
+            "in": "query",
+            "required": false,
+            "description": "Send each block's palette index; false sends only the palette with counts. On by default",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "spawns",
+            "in": "query",
+            "required": false,
+            "description": "List where monsters could spawn: dark blocks with a floor they may stand on",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockArea"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or unknown token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit hit; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server thread didn't answer in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/worlds/{world}/blocks/fill": {
       "post": {
         "operationId": "postWorldsWorldBlocksFill",
         "summary": "Fill a box with one block",
-        "description": "The box includes both corners. Its volume can't pass limits.maxFillBlocks.\n\nPermission: `world:write`.",
+        "description": "The box includes both corners. Its volume can't pass limits.maxFillBlocks. `change` names the change to undo with POST /changes/{id}/undo.\n\nPermission: `world:write`.",
         "tags": [
           "Blocks"
         ],
@@ -12730,6 +13944,74 @@
         ],
         "additionalProperties": false
       },
+      "BlockArea": {
+        "type": "object",
+        "properties": {
+          "world": {
+            "type": "string"
+          },
+          "from": {
+            "$ref": "#/components/schemas/BlockPosition"
+          },
+          "to": {
+            "$ref": "#/components/schemas/BlockPosition"
+          },
+          "sizeX": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sizeY": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sizeZ": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "palette": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaletteEntry"
+            }
+          },
+          "blocks": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "spawnable": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SpawnSpot"
+            }
+          },
+          "spawnableTotal": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        },
+        "required": [
+          "world",
+          "from",
+          "to",
+          "sizeX",
+          "sizeY",
+          "sizeZ",
+          "palette"
+        ],
+        "additionalProperties": false
+      },
       "BlockPosition": {
         "type": "object",
         "properties": {
@@ -13058,6 +14340,80 @@
           "count",
           "usedBytes",
           "capacityBytes"
+        ],
+        "additionalProperties": false
+      },
+      "ChangeView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "world": {
+            "type": "string"
+          },
+          "what": {
+            "type": "string"
+          },
+          "from": {
+            "$ref": "#/components/schemas/BlockPosition"
+          },
+          "to": {
+            "$ref": "#/components/schemas/BlockPosition"
+          },
+          "blocks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "undone": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "by",
+          "world",
+          "what",
+          "from",
+          "to",
+          "blocks",
+          "undone"
+        ],
+        "additionalProperties": false
+      },
+      "ChangeViewPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChangeView"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items"
         ],
         "additionalProperties": false
       },
@@ -14786,6 +16142,13 @@
           "volume": {
             "type": "integer",
             "format": "int32"
+          },
+          "change": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           }
         },
         "required": [
@@ -15689,6 +17052,87 @@
         ],
         "additionalProperties": false
       },
+      "McpClientSetup": {
+        "type": "object",
+        "properties": {
+          "client": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "command": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "file": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "link": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "gitignore": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "trust": {
+            "type": "boolean"
+          },
+          "env": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "client",
+          "title",
+          "scope"
+        ],
+        "additionalProperties": false
+      },
+      "McpSetup": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "clients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/McpClientSetup"
+            }
+          }
+        },
+        "required": [
+          "url",
+          "clients"
+        ],
+        "additionalProperties": false
+      },
       "Memory": {
         "type": "object",
         "properties": {
@@ -15981,6 +17425,23 @@
             }
           }
         },
+        "additionalProperties": false
+      },
+      "PaletteEntry": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "state",
+          "count"
+        ],
         "additionalProperties": false
       },
       "ParticleRequest": {
@@ -16846,6 +18307,63 @@
         ],
         "additionalProperties": false
       },
+      "RegistryEntry": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "additionalProperties": false
+      },
+      "RegistryEntryPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegistryEntry"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "RegistryInfo": {
+        "type": "object",
+        "properties": {
+          "registry": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "registry",
+          "size"
+        ],
+        "additionalProperties": false
+      },
       "RemovedEntities": {
         "type": "object",
         "properties": {
@@ -17535,6 +19053,34 @@
         ],
         "additionalProperties": false
       },
+      "SpawnSpot": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "y": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "z": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skyLight": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "z",
+          "skyLight"
+        ],
+        "additionalProperties": false
+      },
       "Spawned": {
         "type": "object",
         "properties": {
@@ -17729,6 +19275,38 @@
         ],
         "additionalProperties": false
       },
+      "TelegramChatView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "TelegramChatsRequest": {
+        "type": "object",
+        "properties": {
+          "botToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "botToken"
+        ],
+        "additionalProperties": false
+      },
       "TeleportRequest": {
         "type": "object",
         "properties": {
@@ -17905,6 +19483,19 @@
               "string",
               "null"
             ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "setup": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/McpSetup"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -17932,6 +19523,15 @@
               "null"
             ],
             "format": "int32"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "apiUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -17981,6 +19581,9 @@
           },
           "expired": {
             "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
           }
         },
         "required": [
@@ -18066,6 +19669,33 @@
         ],
         "additionalProperties": false
       },
+      "UndoRequest": {
+        "type": "object",
+        "properties": {
+          "force": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UndoResult": {
+        "type": "object",
+        "properties": {
+          "restored": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "restored",
+          "skipped"
+        ],
+        "additionalProperties": false
+      },
       "VillagerView": {
         "type": "object",
         "properties": {
@@ -18088,6 +19718,26 @@
             "items": {
               "$ref": "#/components/schemas/TradeView"
             }
+          },
+          "home": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LocationView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "jobSite": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LocationView"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -18131,6 +19781,317 @@
           "weatherDurationTicks",
           "thunderDurationTicks",
           "clearWeatherDurationTicks"
+        ],
+        "additionalProperties": false
+      },
+      "WebhookCreated": {
+        "type": "object",
+        "properties": {
+          "webhook": {
+            "$ref": "#/components/schemas/WebhookView"
+          },
+          "secret": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "test": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WebhookTestResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "webhook"
+        ],
+        "additionalProperties": false
+      },
+      "WebhookFormatInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "WebhookOptions": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "formats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookFormatInfo"
+            }
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookTopicInfo"
+            }
+          },
+          "messages": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "enabled",
+          "formats",
+          "languages",
+          "topics",
+          "messages"
+        ],
+        "additionalProperties": false
+      },
+      "WebhookPatch": {
+        "type": "object",
+        "properties": {
+          "topics": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "permissions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "messages": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "WebhookRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "botToken": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "chatId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "test": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "format",
+          "topics"
+        ],
+        "additionalProperties": false
+      },
+      "WebhookTestResult": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "problem": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "additionalProperties": false
+      },
+      "WebhookTopicInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "needs": {
+            "type": "string"
+          },
+          "notable": {
+            "type": "boolean"
+          },
+          "coordinates": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "needs",
+          "notable",
+          "coordinates"
+        ],
+        "additionalProperties": false
+      },
+      "WebhookView": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "messages": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "signed": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "format",
+          "target",
+          "topics",
+          "permissions",
+          "language",
+          "enabled",
+          "signed",
+          "source"
         ],
         "additionalProperties": false
       },
