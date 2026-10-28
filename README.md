@@ -10,13 +10,16 @@ It runs next to your AI client—Claude Desktop, Claude Code, Cursor, VS Code, o
 
 ## What you get
 
-- 🧰 **46 tools** for the server, worlds, blocks, chests, entities, players, commands, leaderboards, recipes, configs, logs, and Java scripts. Most take several targets at once, so the agent makes fewer calls.
+- 🧰 **51 tools** for the server, worlds, blocks, chests, entities, players, commands, leaderboards, recipes, configs, logs, and Java scripts. Most take several targets at once, so the agent makes fewer calls.
 - 🎒 **Inventories in depth**: every item’s enchantments, durability, and potion effects, and what’s inside shulker boxes and bundles.
 - 📜 **Configs and logs**: the agent reads the console and any config, and with the right token changes a value and keeps its comments.
-- 🔑 **Only what your token allows**: a viewer token shows 17 tools that only look, and read-only mode hides every write.
+- 🔑 **Only what your token allows**: a viewer token shows 19 tools that only look, and read-only mode hides every write.
 - 🎮 **Singleplayer, no setup**: with the WorldAPI mod in your game, minecraft-mcp finds the open world by itself and follows you from world to world. Ask “what am I looking at?” while you play.
 - 🙋 **“Me” means you**: set your player name, and “where am I?” just works.
 - ⏳ **Live events**: “tell me when Steve joins”.
+- 📣 **Discord and Telegram in one sentence**: “send deaths to my Discord” or “post joins to Telegram in Russian”, and the agent connects them through WorldAPI's webhooks. Slack, Teams, and Google Chat too.
+- ↩️ **Undo**: the agent reads a build before it changes it, and takes back what it placed if you don't like it.
+- 🧭 **Never stuck on setup**: when the address, the token, or WorldAPI itself is missing, the agent says what's wrong and how to fix it, in game or in the admin panel.
 - 🛡️ **Safe by design**: game text is fenced as data, tools say when they destroy something, and the token never leaks.
 - 🔌 **Every client**: Claude Desktop in one click, or any MCP client over stdio or HTTP.
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.2.0
+
+Connect the server to Discord or Telegram by asking, undo what the agent built, and a clear answer when the setup is wrong. It needs WorldAPI 4.3.0; with an older one, the server warns at start and the new tools fail.
+
+- 📣 **Webhooks.** `list_webhooks` and `manage_webhook` connect Discord, Slack, Telegram, Microsoft Teams, Google Chat, or a JSON URL: pick events, a language, and your own wording, then test, pause, or delete. For Telegram the agent finds the chat after you write /start to your bot. Needs `webhooks:manage`.
+- 🧭 **`setup_help`.** Always there, even without a token: it checks the connection and says what to fix: no singleplayer world open, WorldAPI out of reach or not installed (with download links for Paper, Fabric, and NeoForge), a wrong address, a missing, rejected, or too weak token, or read-only mode. Errors that mean a setup problem point the agent to it.
+- 🧱 **Read an area.** `get_block` takes `area`: every block in a box, the states with counts, and a map per height for small boxes, so the agent sees a build or a farm before changing it. `spawns` adds where monsters could spawn.
+- ↩️ **`undo_change`** lists the changes made through WorldAPI and takes one back: blocks and containers, as they were. `set_blocks` with a box answers its change id.
+- 📚 **`search_registry`** finds exact ids: items, blocks, entities, effects, enchantments, biomes, structures, sounds, and more, mods' included.
+- 🔎 **`get_events` searches by text**, chat included, in any language.
+- 51 tools instead of 46, and 19 instead of 17 for a `viewer` token.
+
 ## 4.1.1
 
 - 📦 **Dependencies.** The MCP SDK moves to 1.32.2, with its fixes for transport types and for registering tools after the server connects.
