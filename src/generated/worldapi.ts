@@ -1577,7 +1577,9 @@ export interface paths {
         put?: never;
         /**
          * Send a webhook a test message
-         * @description Permission: `webhooks:manage`.
+         * @description One test per webhook every 10 seconds. A webhook gets only permissions its maker has, and changing or deleting one needs every permission it holds.
+         *
+         *     Permission: `webhooks:manage`.
          */
         post: operations["postWebhooksNameTest"];
         delete?: never;
