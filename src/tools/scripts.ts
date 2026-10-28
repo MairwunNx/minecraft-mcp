@@ -19,7 +19,10 @@ export function scriptTools(ctx: Context): void {
     description: `${API} Send either a full public class implementing WorldApiScript, or just the body of run: \`ctx\` and \`server\` are in scope, and org.bukkit.*, org.bukkit.entity.*, org.bukkit.block.*, org.bukkit.inventory.*, java.util.*, and java.util.stream.* are imported. End with \`return <value>;\`: maps, lists, and primitives come back as JSON. Example: \`return server.getOnlinePlayers().stream().map(Player::getName).toList();\`. thread \`main\` (default) may touch the world but blocks the tick while it runs; \`async\` runs beside the server and must use ctx.sync(...) for world access. The script unloads as soon as it returns, with anything it registered.`,
     scope: "code",
     effect: "destructive",
-    input: { source: z.string().min(1), thread: z.enum(["main", "async"]).default("main") },
+    input: {
+      source: z.string().min(1).describe("Java class or run body"),
+      thread: z.enum(["main", "async"]).default("main").describe("Server thread or beside it"),
+    },
     run: (args) => unwrap(api.POST("/scripts/run", { body: args }), token),
   });
 
@@ -34,9 +37,9 @@ export function scriptTools(ctx: Context): void {
         .string()
         .regex(/^[a-z0-9_-]{1,40}$/)
         .describe("Lowercase letters, digits, dashes, underscores"),
-      source: z.string().min(1),
-      persistent: z.boolean().default(false),
-      replace: z.boolean().default(false),
+      source: z.string().min(1).describe("Java class"),
+      persistent: z.boolean().default(false).describe("Survives restarts"),
+      replace: z.boolean().default(false).describe("Swap the same id"),
     },
     run: (args) => unwrap(api.POST("/scripts", { body: args }), token),
   });
@@ -51,7 +54,7 @@ export function scriptTools(ctx: Context): void {
     effect: "read",
     input: {
       id: z.string().optional().describe("One script in full"),
-      logs: z.boolean().default(true),
+      logs: z.boolean().default(true).describe("With id: add its log"),
       limit: z.number().int().min(1).max(10000).optional().describe("Log lines to return"),
     },
     run: async (args) => {
@@ -74,7 +77,10 @@ export function scriptTools(ctx: Context): void {
       "Run the script's disable(), remove its listeners and tasks, and close its class loader. A persistent script's saved copy is deleted too, unless keepSaved is true; then it loads again on the next server start.",
     scope: "code",
     effect: "destructive",
-    input: { id: z.string(), keepSaved: z.boolean().optional() },
+    input: {
+      id: z.string().describe("Script id"),
+      keepSaved: z.boolean().optional().describe("Keep the saved copy"),
+    },
     run: (args) =>
       unwrap(
         api.DELETE("/scripts/{id}", { params: { path: { id: args.id }, query: { keepSaved: args.keepSaved } } }),

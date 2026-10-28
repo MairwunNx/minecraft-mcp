@@ -58,7 +58,7 @@ export function blockTools(ctx: Context): void {
     name: "get_block",
     untrusted: true,
     title: "Blocks",
-    description: `Blocks at up to 16 positions in one call: type, full state, light, biome, redstone power, and what it holds: sign text, spawner settings, and a container's slots (chests, barrels, shulker boxes, hoppers, furnaces, brewing stands, crafters, copper chests, chiseled bookshelves; a double chest shows both halves as one, left half first). Leave out y for the highest block of the column instead, the surface to land on before a teleport (heightmap picks which). Container contents need players:private. ${ITEM_DETAIL} Chunks that were never generated give \`chunk_not_generated\`. With area instead, every block in a box (up to 32,768 blocks by default): the states with counts, and for up to ${LAYER_LIMIT} blocks a map per height, so you see a build, a farm's crops (age), or a room before changing it. spawns adds where monsters could spawn there: dark spots with a floor they may stand on, and whether the sky reaches them.`,
+    description: `Blocks at up to 16 positions in one call: type, full state, light, biome, redstone power, and what it holds: sign text, spawner settings, and a container's slots (chests, barrels, shulker boxes, hoppers, furnaces, brewing stands, crafters, copper chests, chiseled bookshelves; a double chest shows both halves as one, left half first). Leave out y for the highest block of the column instead, the surface to land on before a teleport (heightmap picks which). Container contents need players:private. ${ITEM_DETAIL} To search for containers, use find_containers. Chunks that were never generated give \`chunk_not_generated\`. With area instead, every block in a box (up to 32,768 blocks by default): the states with counts, and for up to ${LAYER_LIMIT} blocks a map per height, so you see a build, a farm's crops (age), or a room before changing it. spawns adds where monsters could spawn there: dark spots with a floor they may stand on, and whether the sky reaches them.`,
     scope: "server:read",
     effect: "read",
     input: {
@@ -128,7 +128,7 @@ export function blockTools(ctx: Context): void {
     name: "list_chunks",
     title: "Chunks",
     description:
-      "Loaded chunks with entity and block entity counts. sort `entities` or `tileEntities` puts the busiest first, which is where lag usually sits. With chunk, that one chunk in detail: entities and block entities by type, how long players spent there, slime chunk, force-loaded. A chunk is 16×16 blocks; chunk X is block X divided by 16, rounded down.",
+      "Loaded chunks with entity and block entity counts. sort `entities` or `tileEntities` puts the busiest first, which is where lag usually sits; counts by entity type are get_entity_summary. With chunk, that one chunk in detail: entities and block entities by type, how long players spent there, slime chunk, force-loaded. A chunk is 16×16 blocks; chunk X is block X divided by 16, rounded down.",
     scope: "server:read",
     effect: "read",
     input: {
@@ -173,7 +173,8 @@ export function blockTools(ctx: Context): void {
         .array(z.object({ ...xyz, block: z.string().min(1) }))
         .min(1)
         .max(64)
-        .optional(),
+        .optional()
+        .describe("Single blocks at x, y, z"),
       box: z
         .object({
           from: blockPosition,
@@ -182,8 +183,9 @@ export function blockTools(ctx: Context): void {
           mode: z.enum(["replace", "keep", "replace_type"]).default("replace"),
           replace: z.string().optional().describe("For replace_type: the block type to change"),
         })
-        .optional(),
-      physics: z.boolean().default(false),
+        .optional()
+        .describe("Fill between two corners, inclusive"),
+      physics: z.boolean().default(false).describe("Sand falls, water flows"),
     },
     run: async (args) => {
       if (!args.blocks && !args.box) throw new Error("Give blocks or box");
@@ -223,10 +225,16 @@ export function blockTools(ctx: Context): void {
   tool(ctx, {
     name: "force_load_chunk",
     title: "Force-load a chunk",
-    description: "Keep a chunk loaded even with nobody near, or release it.",
+    description:
+      "Keep a chunk loaded with nobody near, so farms and redstone keep running, or release it. list_chunks shows which are loaded.",
     scope: "world:write",
     effect: "idempotent",
-    input: { world, chunkX: z.number().int(), chunkZ: z.number().int(), forceLoaded: z.boolean() },
+    input: {
+      world,
+      chunkX: z.number().int().describe("Block X ÷ 16, rounded down"),
+      chunkZ: z.number().int().describe("Block Z ÷ 16, rounded down"),
+      forceLoaded: z.boolean().describe("false releases it"),
+    },
     run: (args) =>
       unwrap(
         api.PATCH("/worlds/{world}/chunks/{chunkX}/{chunkZ}", {
@@ -247,7 +255,9 @@ export function blockTools(ctx: Context): void {
     effect: "read",
     input: {
       world,
-      ...xyz,
+      x: z.number().int().describe("Center X"),
+      y: z.number().int().describe("Center Y"),
+      z: z.number().int().describe("Center Z"),
       radius: z.number().int().min(1).optional().describe("Blocks around x, y, z; 16 by default"),
       items: z
         .array(z.string().min(1))

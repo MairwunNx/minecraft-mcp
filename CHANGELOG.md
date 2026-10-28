@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.2.1
+
+- 📝 **Clearer tools.** Every parameter says in a few words what it takes, with units, defaults, and coordinate kind, and tools that overlap say which one to pick, so the agent makes fewer wrong calls.
+
 ## 4.2.0
 
 Connect the server to Discord or Telegram by asking, undo what the agent built, and a clear answer when the setup is wrong. It needs WorldAPI 4.3.0; with an older one, the server warns at start and the new tools fail.

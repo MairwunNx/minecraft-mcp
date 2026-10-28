@@ -31,7 +31,7 @@ export function extensionTools(ctx: Context): void {
         .regex(/^[a-z0-9_-]{1,32}$/)
         .describe("The namespace, such as one `list_extensions` shows"),
       path: z.string().min(1).describe("The resource path with its parameters filled in"),
-      query: z.record(z.string(), z.string()).optional(),
+      query: z.record(z.string(), z.string()).optional().describe("The resource's own options"),
     },
     run: (args) => {
       // Each segment is encoded on its own, so the path's slashes stay slashes.

@@ -18,7 +18,7 @@ export function playerTools(ctx: Context): void {
     effect: "read",
     input: {
       online: z.boolean().optional().describe("true: who is online now, with their state"),
-      sort: z.enum(["name", "last_seen", "playtime"]).optional(),
+      sort: z.enum(["name", "last_seen", "playtime"]).optional().describe("`name` by default"),
       limit,
       cursor,
     },
@@ -45,7 +45,7 @@ export function playerTools(ctx: Context): void {
         .optional()
         .describe('Parts to add, such as ["inventory", "deaths"]'),
       statistics: z.string().min(1).optional().describe("`all`, or one category such as `mined`"),
-      advancements: z.enum(["all", "done", "todo"]).optional(),
+      advancements: z.enum(["all", "done", "todo"]).optional().describe("List them; todo is what's left"),
       permission: z.string().min(1).optional().describe("A permission node to check"),
     },
     run: async (args) => {
@@ -135,28 +135,28 @@ export function playerTools(ctx: Context): void {
   tool(ctx, {
     name: "set_player_property",
     title: "Change a player",
-    description: `Set game mode, health, food (0–20), saturation, XP level or progress, flight, walk or fly speed (-1 to 1; defaults 0.2 and 0.1), display or tab-list name, invulnerability, fire, or air. ${OFFLINE_NOTE}`,
+    description: `Set game mode, health, food (0–20), saturation, XP level or progress, flight, walk or fly speed (-1 to 1; defaults 0.2 and 0.1), display or tab-list name, invulnerability, fire, or air; for position, effects, or items use teleport_player, set_effects, or edit_items. ${OFFLINE_NOTE}`,
     scope: "players:write",
     effect: "write",
     input: {
       player,
-      gameMode: z.enum(["survival", "creative", "adventure", "spectator"]).optional(),
-      health: z.number().min(0).optional(),
-      food: z.number().int().min(0).max(20).optional(),
-      saturation: z.number().min(0).max(20).optional(),
-      exhaustion: z.number().min(0).optional(),
-      level: z.number().int().min(0).optional(),
+      gameMode: z.enum(["survival", "creative", "adventure", "spectator"]).optional().describe("Game mode"),
+      health: z.number().min(0).optional().describe("2 per heart, up to the max; 0 kills"),
+      food: z.number().int().min(0).max(20).optional().describe("Hunger bar"),
+      saturation: z.number().min(0).max(20).optional().describe("Spent before food"),
+      exhaustion: z.number().min(0).optional().describe("At 4, costs a point of saturation or food"),
+      level: z.number().int().min(0).optional().describe("XP level"),
       exp: z.number().min(0).max(1).optional().describe("Progress to the next level"),
-      allowFlight: z.boolean().optional(),
-      flying: z.boolean().optional(),
-      walkSpeed: z.number().min(-1).max(1).optional(),
-      flySpeed: z.number().min(-1).max(1).optional(),
-      displayName: z.string().optional(),
-      listName: z.string().optional(),
+      allowFlight: z.boolean().optional().describe("May fly"),
+      flying: z.boolean().optional().describe("Needs allowFlight"),
+      walkSpeed: z.number().min(-1).max(1).optional().describe("0.2 is normal"),
+      flySpeed: z.number().min(-1).max(1).optional().describe("0.1 is normal"),
+      displayName: z.string().optional().describe("Name in chat"),
+      listName: z.string().optional().describe("Name in the tab list"),
       format,
-      invulnerable: z.boolean().optional(),
-      fireTicks: z.number().int().optional(),
-      remainingAir: z.number().int().optional(),
+      invulnerable: z.boolean().optional().describe("Takes no damage"),
+      fireTicks: z.number().int().optional().describe("20 per second; 0 puts it out"),
+      remainingAir: z.number().int().optional().describe("Ticks, up to the max (300 by default)"),
     },
     run: ({ player: name, ...body }) => unwrap(api.PATCH("/players/{player}", { ...who(name), body }), token),
   });
@@ -170,8 +170,8 @@ export function playerTools(ctx: Context): void {
     effect: "write",
     input: {
       players: z.array(z.string().min(1)).min(1).optional().describe("Names or UUIDs; everyone online when left out"),
-      message: z.string().min(1),
-      kind: z.enum(["chat", "title", "actionbar"]).default("chat"),
+      message: z.string().min(1).describe("The text"),
+      kind: z.enum(["chat", "title", "actionbar"]).default("chat").describe("Where it shows"),
       subtitle: z.string().optional().describe("Only for titles"),
       sound: z.string().optional().describe("Such as `minecraft:entity.experience_orb.pickup`"),
       format,
@@ -205,7 +205,7 @@ export function playerTools(ctx: Context): void {
     effect: "write",
     input: {
       player,
-      add: z.array(effect).optional(),
+      add: z.array(effect).optional().describe("Effects to give"),
       remove: z.array(z.string().min(1)).optional().describe("Effect keys to take away"),
       clear: z.boolean().optional().describe("Take away every effect first"),
     },
@@ -235,7 +235,7 @@ export function playerTools(ctx: Context): void {
         .min(1)
         .max(50)
         .describe('Advancement keys, such as ["minecraft:story/mine_diamond"]'),
-      done: z.boolean(),
+      done: z.boolean().describe("false revokes"),
     },
     run: async (args) => {
       const results = [];

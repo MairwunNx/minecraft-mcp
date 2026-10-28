@@ -40,7 +40,7 @@ These URLs and bot tokens are secrets: ask the user to paste them, never invent 
     scope: "webhooks:manage",
     effect: "destructive",
     input: {
-      action: z.enum(["create", "update", "delete", "test", "telegram_chats"]),
+      action: z.enum(["create", "update", "delete", "test", "telegram_chats"]).describe("What to do"),
       name: z
         .string()
         .regex(/^[A-Za-z0-9_-]{1,32}$/)

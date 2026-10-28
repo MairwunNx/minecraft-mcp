@@ -44,7 +44,7 @@ export function fileTools(ctx: Context): void {
     name: "list_files",
     untrusted: true,
     title: "Folder",
-    description: `A folder of the server: names, folders first, sizes, modification times, and whether read_file and edit_file accept each. ${PATHS} \`logs\` lists the console logs: latest.log and older ones like 2026-10-19-1.log.gz. configs true answers instead where the server's own configs are (server.properties, bukkit.yml, spigot.yml, Paper's, and more) and each plugin's config files (needs files:read).`,
+    description: `A folder of the server: names, folders first, sizes, modification times, and whether read_file and edit_file (with files:write) accept each. ${PATHS} \`logs\` lists the console logs: latest.log and older ones like 2026-10-19-1.log.gz. configs true answers instead where the server's own configs are (server.properties, bukkit.yml, spigot.yml, Paper's, and more) and each plugin's config files (needs files:read).`,
     scope: { any: ["files:read", "logs:read"] },
     effect: "read",
     input: {
@@ -92,17 +92,18 @@ export function fileTools(ctx: Context): void {
     scope: "files:write",
     effect: "destructive",
     input: {
-      path: z.string().min(1),
+      path: z.string().min(1).describe("Relative to the server folder"),
       edits: z
         .array(
           z.object({
-            oldText: z.string().min(1),
-            newText: z.string(),
+            oldText: z.string().min(1).describe("Exact text, once"),
+            newText: z.string().describe("Replacement"),
             replaceAll: z.boolean().optional().describe("Replace every occurrence"),
           }),
         )
         .min(1)
-        .optional(),
+        .optional()
+        .describe("Text replacements, in order"),
       values: z
         .record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.unknown())]))
         .optional()

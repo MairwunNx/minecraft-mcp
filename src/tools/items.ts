@@ -16,7 +16,7 @@ export function itemTools(ctx: Context): void {
     scope: { any: ["players:write", "world:write"] },
     effect: "destructive",
     input: {
-      action: z.enum(["give", "set", "take", "clear_slot", "clear"]),
+      action: z.enum(["give", "set", "take", "clear_slot", "clear"]).describe("What to do"),
       player: z
         .string()
         .min(1)

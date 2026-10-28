@@ -3,6 +3,12 @@ import { unwrap } from "../client.js";
 import { type Context, tool } from "../tool.js";
 import { cursor, format, ITEM_DETAIL, limit, location, world } from "./common.js";
 
+const center = {
+  x: z.number().optional().describe("Center X"),
+  y: z.number().optional().describe("Center Y"),
+  z: z.number().optional().describe("Center Z"),
+};
+
 export function entityTools(ctx: Context): void {
   const { api, token } = ctx;
   const one = (args: { world: string; uuid: string }) => ({ params: { path: { world: args.world, uuid: args.uuid } } });
@@ -18,9 +24,7 @@ export function entityTools(ctx: Context): void {
     input: {
       world,
       types: z.array(z.string()).optional().describe('Count only these entity keys, such as ["minecraft:item"]'),
-      x: z.number().optional(),
-      y: z.number().optional(),
-      z: z.number().optional(),
+      ...center,
       radius: z.number().positive().optional().describe("Blocks around x, y, z; give all three with it"),
     },
     run: (args) =>
@@ -46,9 +50,7 @@ export function entityTools(ctx: Context): void {
       world,
       uuid: z.string().optional().describe("One entity in detail; the other filters don't apply"),
       types: z.array(z.string()).optional().describe('Entity keys, such as ["minecraft:zombie"]'),
-      x: z.number().optional(),
-      y: z.number().optional(),
-      z: z.number().optional(),
+      ...center,
       radius: z.number().positive().optional().describe("Blocks around x, y, z; give all three with it"),
       name: z
         .string()
@@ -95,14 +97,14 @@ export function entityTools(ctx: Context): void {
     effect: "write",
     input: {
       world,
-      type: z.string().min(1),
+      type: z.string().min(1).describe("Entity key"),
       location,
-      count: z.number().int().min(1).default(1),
-      customName: z.string().optional(),
+      count: z.number().int().min(1).default(1).describe("Capped at 50 by default"),
+      customName: z.string().optional().describe("Name tag"),
       format,
-      ai: z.boolean().optional(),
+      ai: z.boolean().optional().describe("Living entities only"),
       persistent: z.boolean().optional().describe("Don't despawn"),
-      glowing: z.boolean().optional(),
+      glowing: z.boolean().optional().describe("Glowing outline"),
     },
     run: ({ world: name, ...body }) =>
       unwrap(api.POST("/worlds/{world}/entities", { params: { path: { world: name } }, body }), token),
@@ -117,22 +119,25 @@ export function entityTools(ctx: Context): void {
     effect: "write",
     input: {
       world,
-      uuid: z.string(),
-      customName: z.string().optional(),
+      uuid: z.string().describe("Entity UUID"),
+      customName: z.string().optional().describe("Name tag"),
       format,
-      customNameVisible: z.boolean().optional(),
-      glowing: z.boolean().optional(),
-      silent: z.boolean().optional(),
-      invulnerable: z.boolean().optional(),
-      gravity: z.boolean().optional(),
-      persistent: z.boolean().optional(),
-      ai: z.boolean().optional(),
-      health: z.number().min(0).optional(),
-      fireTicks: z.number().int().optional(),
+      customNameVisible: z.boolean().optional().describe("Name always shown"),
+      glowing: z.boolean().optional().describe("Glowing outline"),
+      silent: z.boolean().optional().describe("No sounds"),
+      invulnerable: z.boolean().optional().describe("Takes no damage"),
+      gravity: z.boolean().optional().describe("false floats"),
+      persistent: z.boolean().optional().describe("Never despawns"),
+      ai: z.boolean().optional().describe("Living entities only"),
+      health: z.number().min(0).optional().describe("Living only; 2 per heart, up to its max"),
+      fireTicks: z.number().int().optional().describe("20 per second; 0 puts it out"),
       location: location.optional().describe("Teleport here"),
-      velocity: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional(),
-      addTags: z.array(z.string()).optional(),
-      removeTags: z.array(z.string()).optional(),
+      velocity: z
+        .object({ x: z.number(), y: z.number(), z: z.number() })
+        .optional()
+        .describe("Blocks per tick; y is up"),
+      addTags: z.array(z.string()).optional().describe("Scoreboard tags"),
+      removeTags: z.array(z.string()).optional().describe("Scoreboard tags"),
     },
     run: ({ world: name, uuid, ...body }) =>
       unwrap(
@@ -158,9 +163,7 @@ export function entityTools(ctx: Context): void {
         .array(z.string().min(1))
         .optional()
         .describe('Entity keys, such as ["minecraft:item", "minecraft:arrow"]'),
-      x: z.number().optional(),
-      y: z.number().optional(),
-      z: z.number().optional(),
+      ...center,
       radius: z.number().positive().optional().describe("Blocks around x, y, z"),
       max: z
         .number()
@@ -208,7 +211,7 @@ export function entityTools(ctx: Context): void {
     effect: "destructive",
     input: {
       world,
-      kind: z.enum(["lightning", "explosion", "sound", "particles"]),
+      kind: z.enum(["lightning", "explosion", "sound", "particles"]).describe("Picks the fields that apply"),
       location,
       effectOnly: z.boolean().optional().describe("lightning: only the flash and the sound"),
       power: z.number().min(0).optional().describe("explosion: 4 by default"),

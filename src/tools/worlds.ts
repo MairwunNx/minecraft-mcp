@@ -11,7 +11,7 @@ export function worldTools(ctx: Context): void {
     name: "get_world",
     title: "Worlds",
     description:
-      "One world: time of day (dayTime 0–23999: 0 sunrise, 6000 noon, 13000 night, 18000 midnight), day number, moon phase, ticks until night, whether beds work, weather, difficulty, PvP, the world's own spawn, the world border, game rule values, and load. Without world, every loaded world with its dimension key and player count. include adds `rules` (each game rule's type and default), `size` (chunks ever generated, explored area in km², size on disk), and `respawn` (the server's spawn point, where players join and respawn without a bed: world, x, y, z, yaw, pitch, respawnRadius, spawnProtection).",
+      "One world: time of day (dayTime 0–23999: 0 sunrise, 6000 noon, 13000 night, 18000 midnight), day number, moon phase, ticks until night, whether beds work, weather, difficulty, PvP, the world's own spawn, the world border, game rule values, and load; server-wide TPS and players are get_server_status. Without world, every loaded world with its dimension key and player count. include adds `rules` (each game rule's type and default), `size` (chunks ever generated, explored area in km², size on disk), and `respawn` (the server's spawn point, where players join and respawn without a bed: world, x, y, z, yaw, pitch, respawnRadius, spawnProtection).",
     scope: "server:read",
     effect: "read",
     input: {
@@ -54,15 +54,15 @@ export function worldTools(ctx: Context): void {
     scope: "server:read",
     effect: "read",
     input: {
-      kind: z.enum(["block", "biome", "structure"]),
+      kind: z.enum(["block", "biome", "structure"]).describe("What targets name"),
       targets: z
         .array(z.string().min(1))
         .min(1)
         .describe('Such as ["minecraft:diamond_ore", "#minecraft:logs"], ["minecraft:cherry_grove"], or ["village"]'),
       world: z.string().optional().describe("World name; the player's world, or `world`, when left out"),
-      x: z.number().int().optional(),
+      x: z.number().int().optional().describe("Block X of the center"),
       y: z.number().int().optional().describe("Needed for blocks when x and z are given"),
-      z: z.number().int().optional(),
+      z: z.number().int().optional().describe("Block Z of the center"),
       player: player.optional().describe("Search around this player instead of x, y, z"),
       radius: z.number().int().min(1).optional().describe("Blocks for blocks and biomes, chunks for structures"),
       unexplored: z.boolean().optional().describe("Structures only: only ones nobody has found yet"),
@@ -112,25 +112,29 @@ export function worldTools(ctx: Context): void {
     effect: "write",
     input: {
       world,
-      dayTime: z.number().int().min(0).max(23999).optional(),
+      dayTime: z.number().int().min(0).max(23999).optional().describe("Ticks; 6000 noon, 18000 midnight"),
       addTicks: z.number().int().optional().describe("Moves the clock forward; 24000 ticks are one day"),
-      weather: z.enum(["clear", "rain", "thunder"]).optional(),
+      weather: z.enum(["clear", "rain", "thunder"]).optional().describe("New weather"),
       durationTicks: z.number().int().positive().optional().describe("How long the new weather lasts"),
-      difficulty: z.enum(["peaceful", "easy", "normal", "hard"]).optional(),
+      difficulty: z.enum(["peaceful", "easy", "normal", "hard"]).optional().describe("New difficulty"),
       pvp: z.boolean().optional().describe("Whether players can hurt each other"),
-      rules: z.record(z.string(), z.union([z.boolean(), z.number().int()])).optional(),
+      rules: z
+        .record(z.string(), z.union([z.boolean(), z.number().int()]))
+        .optional()
+        .describe("Game rule name to value"),
       border: z
         .object({
           size: z.number().positive().optional().describe("Width in blocks"),
-          transitionSeconds: z.number().int().min(0).optional(),
+          transitionSeconds: z.number().int().min(0).optional().describe("Resize gradually; 0 at once"),
           centerX: z.number().optional(),
           centerZ: z.number().optional(),
-          damageAmount: z.number().min(0).optional(),
-          damageBuffer: z.number().min(0).optional(),
-          warningDistance: z.number().int().min(0).optional(),
+          damageAmount: z.number().min(0).optional().describe("Per block past the buffer"),
+          damageBuffer: z.number().min(0).optional().describe("Blocks past the border before damage"),
+          warningDistance: z.number().int().min(0).optional().describe("In blocks"),
           warningTimeTicks: z.number().int().min(0).optional(),
         })
-        .optional(),
+        .optional()
+        .describe("Only the fields given change"),
       spawn: z
         .object({ x: z.number().int(), y: z.number().int(), z: z.number().int(), angle: z.number().optional() })
         .optional()
