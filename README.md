@@ -4,7 +4,7 @@
 
 🤖 **minecraft-mcp** lets an AI agent see and run your Minecraft server. Ask Claude “who’s online and where are they?”, “why is the server lagging?”, or “give everyone bread and set the time to morning”, and it answers with real data from your world.
 
-It runs next to your AI client—Claude Desktop, Claude Code, Cursor, VS Code, or anything else that speaks MCP—and talks to [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi) on a Paper, Fabric, or NeoForge server, or in the world you play alone. The token you give it decides what the agent may do.
+It runs next to your AI client: Claude Desktop, Claude Code, Cursor, VS Code, or anything else that speaks MCP. From there it talks to [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi) on a Paper, Fabric, or NeoForge server, or in the world you play alone. The token you give it decides what the agent may do.
 
 [Русская версия](https://github.com/MairwunNx/minecraft-mcp/blob/master/README.RU.md)
 
@@ -17,9 +17,9 @@ It runs next to your AI client—Claude Desktop, Claude Code, Cursor, VS Code, o
 - 🎮 **Singleplayer, no setup**: with the WorldAPI mod in your game, minecraft-mcp finds the open world by itself and follows you from world to world. Ask “what am I looking at?” while you play.
 - 🙋 **“Me” means you**: set your player name, and “where am I?” just works.
 - ⏳ **Live events**: “tell me when Steve joins”.
-- 📣 **Discord and Telegram in one sentence**: “send deaths to my Discord” or “post joins to Telegram in Russian”, and the agent connects them through WorldAPI's webhooks. Slack, Teams, and Google Chat too.
-- ↩️ **Undo**: the agent reads a build before it changes it, and takes back what it placed if you don't like it.
-- 🧭 **Never stuck on setup**: when the address, the token, or WorldAPI itself is missing, the agent says what's wrong and how to fix it, in game or in the admin panel.
+- 📣 **Discord and Telegram in one sentence**: “send deaths to my Discord” or “post joins to Telegram in Russian”, and the agent connects them through WorldAPI’s webhooks. Slack, Teams, and Google Chat too.
+- ↩️ **Undo**: the agent reads a build before it changes it, and takes back what it placed if you don’t like it.
+- 🧭 **Never stuck on setup**: when the address, the token, or WorldAPI itself is missing, the agent says what’s wrong and how to fix it, in game or in the admin panel.
 - 🛡️ **Safe by design**: game text is fenced as data, tools say when they destroy something, and the token never leaks.
 - 🔌 **Every client**: Claude Desktop in one click, or any MCP client over stdio or HTTP.
 
@@ -74,8 +74,8 @@ Everything else lives in the [wiki](https://github.com/MairwunNx/minecraft-mcp/w
 - **[WorldAPI](https://github.com/MairwunNx/minecraft-worldapi)** – REST and WebSocket API to the world, players, and stats of a Paper, Fabric, or NeoForge server.
 - **[Allay](https://github.com/allay-ai/minecraft)** – an AI helper in the game: ask with `/ask`, right in the chat.
 - **[Allay Server](https://github.com/allay-ai/server)** – the backend behind Allay.
-- **[Mo’Joins](https://github.com/MairwunNx/mojoins)** – join and quit messages in each player's language.
-- **[Mo’Afks](https://github.com/MairwunNx/moafks)** – a safe AFK mode that doesn't block the night.
+- **[Mo’Joins](https://github.com/MairwunNx/mojoins)** – join and quit messages in each player’s language.
+- **[Mo’Afks](https://github.com/MairwunNx/moafks)** – a safe AFK mode that doesn’t block the night.
 - **[Mo’Bosses](https://github.com/MairwunNx/mobosses)** – monsters that spawn as bosses with classes, abilities, and loot.
 - **[minecraft-exporter](https://github.com/MairwunNx/minecraft-exporter)** – Prometheus metrics from WorldAPI.
 - **[minecraft-grafana](https://github.com/MairwunNx/minecraft-grafana)** – the Grafana dashboard for WorldAPI.
