@@ -1,7 +1,7 @@
 # Builds minecraft-mcp from source for the catalogs that run MCP servers in a container: Glama and Docker's MCP Catalog.
 # People install it with npx instead (README.md). The image speaks stdio: `docker run -i --rm -e WORLDAPI_URL=… -e
 # WORLDAPI_TOKEN=… <image>`. A container can't see a singleplayer world's files, so it always needs WORLDAPI_URL.
-FROM node:24.22.1-alpine AS build
+FROM node:26.13.0-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
@@ -10,7 +10,7 @@ COPY src src
 COPY openapi openapi
 RUN npm run build && npm prune --omit=dev
 
-FROM node:24.22.1-alpine
+FROM node:26.13.0-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/package.json ./
