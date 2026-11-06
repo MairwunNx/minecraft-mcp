@@ -82,4 +82,10 @@ claude mcp add moonlands -e WORLDAPI_URL=https://minecraft.mairwunnx.com/worldap
 - **[minecraft-exporter](https://github.com/MairwunNx/minecraft-exporter)** — метрики Prometheus из WorldAPI.
 - **[minecraft-grafana](https://github.com/MairwunNx/minecraft-grafana)** — дашборд Grafana для WorldAPI.
 
+## Раскрытие контента
+
+- 🤖 **Код от ИИ.** Большую часть кода написали ИИ-агенты.
+- 🔌 **Для ИИ-клиентов.** Он работает внутри вашего ИИ-клиента и обращается только к тому WorldAPI, который вы указали. Сам он моделей не запускает.
+- Телеметрии, платных функций и рекламы нет.
+
 > 🫡 Сделал Павел Ерохин (Pavel Erokhin), он же mairwunnx.

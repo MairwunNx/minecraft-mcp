@@ -80,4 +80,10 @@ Everything else lives in the [wiki](https://github.com/MairwunNx/minecraft-mcp/w
 - **[minecraft-exporter](https://github.com/MairwunNx/minecraft-exporter)** – Prometheus metrics from WorldAPI.
 - **[minecraft-grafana](https://github.com/MairwunNx/minecraft-grafana)** – the Grafana dashboard for WorldAPI.
 
+## Content disclosures
+
+- 🤖 **AI-generated code.** AI agents wrote much of the code.
+- 🔌 **For AI clients.** It runs inside your AI client and talks only to the WorldAPI you point it at. It runs no model itself.
+- No telemetry, paid features, or ads.
+
 > 🫡 Made by Pavel Erokhin (Павел Ерохин), aka mairwunnx.
