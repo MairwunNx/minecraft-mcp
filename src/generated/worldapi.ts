@@ -231,7 +231,7 @@ export interface paths {
         };
         /**
          * One resource of a plugin, read from the plugin as it is now
-         * @description Query parameters pass through to the plugin; each resource documents its own.
+         * @description Query parameters pass through to the plugin; `GET /extensions` lists what each resource reads.
          *
          *     Permission: `server:read`.
          */
@@ -2766,16 +2766,31 @@ export interface components {
             resources: components["schemas"]["ExtensionResourceInfo"][];
             topics: components["schemas"]["ExtensionTopicInfo"][];
         };
+        ExtensionParamInfo: {
+            name: string;
+            in: string;
+            kind: string;
+            description: string;
+            /** Format: int64 */
+            min?: number | null;
+            /** Format: int64 */
+            max?: number | null;
+            fallback?: string | null;
+            choices?: string[] | null;
+        };
         ExtensionResourceInfo: {
             path: string;
             description: string;
             public: boolean;
+            params?: components["schemas"]["ExtensionParamInfo"][];
+            returns?: unknown;
         };
         ExtensionTopicInfo: {
             topic: string;
             description: string;
             public: boolean;
             recorded: boolean;
+            data?: unknown;
         };
         FileContent: {
             path: string;
