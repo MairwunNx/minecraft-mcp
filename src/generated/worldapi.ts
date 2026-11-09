@@ -237,8 +237,20 @@ export interface paths {
          */
         get: operations["getExtensionsNamespacePath"];
         put?: never;
-        post?: never;
-        delete?: never;
+        /**
+         * Does something through a plugin, as the plugin's action says
+         * @description Each action names the permission it needs and the body it reads in `GET /extensions`. Never anonymous; every call lands in the audit log.
+         *
+         *     Permission: `server:read` or `server:read` or `players:read` or `players:private` or `events:read` or `chat:read` or `logs:read` or `system:read` or `world:write` or `players:write` or `players:moderate` or `server:console` or `commands:read` or `server:control` or `files:read` or `files:write` or `tokens:manage` or `webhooks:manage` or `code`.
+         */
+        post: operations["postExtensionsNamespacePath"];
+        /**
+         * Takes something away or ends it through a plugin, as the plugin's action says
+         * @description Each action names the permission it needs and the query it reads in `GET /extensions`. Never anonymous; every call lands in the audit log.
+         *
+         *     Permission: `server:read` or `server:read` or `players:read` or `players:private` or `events:read` or `chat:read` or `logs:read` or `system:read` or `world:write` or `players:write` or `players:moderate` or `server:console` or `commands:read` or `server:control` or `files:read` or `files:write` or `tokens:manage` or `webhooks:manage` or `code`.
+         */
+        delete: operations["deleteExtensionsNamespacePath"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2758,6 +2770,14 @@ export interface components {
             fire?: boolean;
             breakBlocks?: boolean;
         };
+        ExtensionActionInfo: {
+            method: string;
+            path: string;
+            description: string;
+            permission: string;
+            params?: components["schemas"]["ExtensionParamInfo"][];
+            returns?: unknown;
+        };
         ExtensionInfo: {
             namespace: string;
             plugin: string;
@@ -2765,6 +2785,7 @@ export interface components {
             description: string;
             resources: components["schemas"]["ExtensionResourceInfo"][];
             topics: components["schemas"]["ExtensionTopicInfo"][];
+            actions?: components["schemas"]["ExtensionActionInfo"][];
         };
         ExtensionParamInfo: {
             name: string;
@@ -2777,6 +2798,7 @@ export interface components {
             max?: number | null;
             fallback?: string | null;
             choices?: string[] | null;
+            required?: boolean;
         };
         ExtensionResourceInfo: {
             path: string;
@@ -4742,6 +4764,168 @@ export interface operations {
         };
     };
     getExtensionsNamespacePath: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description namespace */
+                namespace: string;
+                /** @description path */
+                path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    postExtensionsNamespacePath: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description namespace */
+                namespace: string;
+                /** @description path */
+                path: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Missing or unknown token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The token lacks the permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Rate limit hit; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The server thread didn't answer in time */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteExtensionsNamespacePath: {
         parameters: {
             query?: never;
             header?: never;

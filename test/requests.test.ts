@@ -52,6 +52,29 @@ describe("requests reach WorldAPI in its shape", () => {
     expect(api.seen[0]?.url).toBe("/api/v1/extensions/mobosses/players/Steve%20Jobs/bestiary?limit=5");
   });
 
+  it("calls a plugin's action with its body or query", async () => {
+    const { client } = await connect(api.url, ADMIN);
+    await client.callTool({
+      name: "call_extension",
+      arguments: {
+        namespace: "mobosses",
+        path: "bosses/spawn",
+        method: "post",
+        body: { type: "zombie", at: { world: "world", x: 1, y: 64, z: 2 } },
+      },
+    });
+    await client.callTool({
+      name: "call_extension",
+      arguments: { namespace: "moafks", path: "players/Steve Jobs/afk", method: "delete" },
+    });
+    expect(api.seen[0]).toMatchObject({
+      method: "POST",
+      url: "/api/v1/extensions/mobosses/bosses/spawn",
+      body: { type: "zombie", at: { world: "world", x: 1, y: 64, z: 2 } },
+    });
+    expect(api.seen[1]).toMatchObject({ method: "DELETE", url: "/api/v1/extensions/moafks/players/Steve%20Jobs/afk" });
+  });
+
   it("builds query strings and paths", async () => {
     const { client } = await connect(api.url, ADMIN);
     await client.callTool({

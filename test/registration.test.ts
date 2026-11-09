@@ -28,7 +28,7 @@ describe("tools follow the token's permissions", () => {
     expect(players).not.toContain("set_blocks");
     expect(players).not.toContain("manage_access");
     const moderator = (await connect(api.url, ["players:moderate"])).tools;
-    expect(moderator).toEqual(["setup_help", "get_access", "manage_access"]);
+    expect(moderator).toEqual(["setup_help", "get_access", "manage_access", "call_extension"]);
   });
 
   it("commands are read with commands:read or server:console, run only with server:console", async () => {
@@ -37,6 +37,7 @@ describe("tools follow the token's permissions", () => {
       "setup_help",
       "search_commands",
       "run_command",
+      "call_extension",
     ]);
     expect((await connect(api.url, ["chat:read"])).tools).toEqual(["setup_help"]);
   });
@@ -75,7 +76,7 @@ describe("tools follow the token's permissions", () => {
     expect(tools).not.toContain("edit_file");
     const all = (await connect(api.url, OWNER)).tools;
     expect(all).toEqual(expect.arrayContaining(["execute_java", "edit_file", "list_java_scripts"]));
-    expect(all.length).toBe(51);
+    expect(all.length).toBe(52);
     expect(new Set(all).size).toBe(all.length);
   });
 
