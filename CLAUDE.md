@@ -5,7 +5,7 @@ An MCP server that lets AI agents read and manage a Minecraft server through Wor
 ## Talking to the owner
 
 - Reply in Russian, address the owner as «вы». Quotes «ёлочки», nested „лапки“, an em dash with spaces « — ».
-- Code, comments, commit messages, tool descriptions, and README.md are in English: curly quotes, an em dash without spaces or an en dash with spaces, never a hyphen as a dash.
+- Code, comments, commit messages, tool descriptions, and README.md are in English: curly quotes, an en dash with spaces, never an em dash glued to the words or a hyphen as a dash, and no semicolon between clauses: a full stop instead.
 
 ## How it fits together
 
