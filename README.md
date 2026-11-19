@@ -10,10 +10,10 @@ It runs next to your AI client: Claude Desktop, Claude Code, Cursor, VS Code, or
 
 ## What you get
 
-- 🧰 **51 tools** for the server, worlds, blocks, chests, entities, players, commands, leaderboards, recipes, configs, logs, and Java scripts. Most take several targets at once, so the agent makes fewer calls.
+- 🧰 **50 tools** for the server, worlds, blocks, chests, entities, players, commands, leaderboards, recipes, configs, logs, Java scripts, and other plugins’ data and actions. Most take several targets at once, so the agent makes fewer calls.
 - 🎒 **Inventories in depth**: every item’s enchantments, durability, and potion effects, and what’s inside shulker boxes and bundles.
 - 📜 **Configs and logs**: the agent reads the console and any config, and with the right token changes a value and keeps its comments.
-- 🔑 **Only what your token allows**: a viewer token shows 19 tools that only look, and read-only mode hides every write.
+- 🔑 **Only what your token allows**: a viewer token shows 19 tools that only look, and read-only mode hides every write. Change the token’s permissions, and the tools follow without a restart.
 - 🎮 **Singleplayer, no setup**: with the WorldAPI mod in your game, minecraft-mcp finds the open world by itself and follows you from world to world. Ask “what am I looking at?” while you play.
 - 🙋 **“Me” means you**: set your player name, and “where am I?” just works.
 - ⏳ **Live events**: “tell me when Steve joins”.
@@ -25,7 +25,7 @@ It runs next to your AI client: Claude Desktop, Claude Code, Cursor, VS Code, or
 
 ## Get started
 
-1. Install [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi) 4.2.0 or newer on your Paper, Fabric, or NeoForge server, and make a token with `/worldapi token create agent`. Playing alone? Put the WorldAPI mod in your game and skip the address and the token: `claude mcp add minecraft -- npx -y @mairwunnx/minecraft-mcp`. The [Singleplayer](https://github.com/MairwunNx/minecraft-mcp/wiki/Singleplayer) page has the rest.
+1. Install [WorldAPI](https://github.com/MairwunNx/minecraft-worldapi) 4.6.0 or newer on your Paper, Fabric, or NeoForge server, and make a token with `/worldapi token create agent`. Playing alone? Put the WorldAPI mod in your game and skip the address and the token: `claude mcp add minecraft -- npx -y @mairwunnx/minecraft-mcp`. The [Singleplayer](https://github.com/MairwunNx/minecraft-mcp/wiki/Singleplayer) page has the rest.
 2. Add minecraft-mcp to your client. In Claude Desktop, open [minecraft-mcp.mcpb](https://github.com/MairwunNx/minecraft-mcp/releases/latest/download/minecraft-mcp.mcpb). In Claude Code:
 
    ```sh

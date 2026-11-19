@@ -1,5 +1,39 @@
 # Changelog
 
+## 5.0.0
+
+The agent calls plugins’ own actions and reads what their data takes, with 50 tools instead of 51 and schemas about a quarter smaller, so every session starts lighter. A round of fixes closes the ways a token or a game text could go where it shouldn’t. Three tools folded into others, so a prompt that names one needs its new form (below). It needs WorldAPI 4.6.0. With an older one, the server warns at start and `call_extension` fails.
+
+- 🔌 **Plugins’ actions.** `call_extension` does what a plugin offers through WorldAPI, like spawning a boss or ending a player’s AFK, and `list_extensions` names each action with the permission and the body it needs. It appears with any of `world:write`, `players:write`, `players:moderate`, `server:control`, or `server:console`, and WorldAPI checks the action’s own.
+- 📋 **What plugins’ data takes.** `list_extensions` shows each resource’s parameters and the shape of its answer (WorldAPI 4.5.0), so `read_extension` gets it right the first time.
+- 🪶 **Lighter schemas.** Tool schemas are about 25 % smaller. The webhook how-to left `manage_webhook`’s description: `list_webhooks` with `options` hands it out as `guide`, and the resource `worldapi://guide/webhooks` holds it too.
+- 🧩 **Fewer tools.** `set_world` force-loads `chunks`, a list. `list_tokens` reads the audit log with `audit`. `get_server_status` shows a pending restart with `include: ["restart"]`, so read-only mode sees it too.
+- 🔄 **A changed token needs no restart.** minecraft-mcp reads the token’s permissions again every 5 minutes, after WorldAPI answers `invalid_token` or `missing_scope`, and when another singleplayer world opens. Tools appear and disappear through `tools/list_changed`, and the log says “Permissions changed”.
+- 🚚 **Several players at once.** `teleport_player` takes `players`, a list, and answers each on its own.
+- 🧾 **No hidden work.** Tools that take several steps, such as `run_command`, `set_effects`, `set_world`, and `manage_access`, answer what ran, what failed and why, and what didn’t run, so the agent never repeats a step that worked.
+- ⏳ **`wait_for_event`** waits 50 seconds by default, under the minute after which clients built on the MCP SDK give up, and stops as soon as you cancel the call.
+
+### Fixes
+
+- 🔒 **No server token in singleplayer.** Without `WORLDAPI_URL`, minecraft-mcp uses only the open world’s own token, and sends it only to that world’s address. Before, a `WORLDAPI_TOKEN` left in your shell went to whatever listened on 127.0.0.1:8110 while no world was open.
+- 🔒 **Discovery files are checked.** A file in `~/.worldapi/local` counts only with every field in place and an address on this machine, so it can’t send calls and a token elsewhere.
+- 🔒 **More game data is fenced.** The resources for events, the console, players online, and server status come fenced as data, and so do the errors of tools that read game text, since WorldAPI’s message can repeat a name it didn’t find. The fence also catches look-alike tags: fullwidth brackets, other dashes, and invisible characters.
+- 🔒 **Paths stay paths.** Plugin paths, and every value that goes into a WorldAPI path, such as a player, a world, or a script id, refuse `.` and `..`, which could reach another endpoint.
+- 🔒 **HTTP is stricter.** `MCP_HTTP_TOKEN` must come as `Authorization: Bearer …` and is compared in constant time. Only `/mcp` answers.
+- ⚠️ **Honest hints.** `set_player_property`, `update_entity`, and `call_extension` now say they can destroy something, so clients ask you first.
+- A WebSocket frame that isn’t JSON, such as a proxy’s error page, no longer stops the server.
+- Every WorldAPI call gives up after 30 seconds with the code `timeout`, instead of hanging on a frozen server.
+- Over HTTP, a session the server doesn’t know answers 404, so clients start a new one after a restart. Sessions idle for 30 minutes close.
+- Resources read the token at every read, like tools, so they follow you from one singleplayer world to the next. The event feed forgets the previous world’s events after the switch.
+
+### Breaking changes and migration
+
+The wiki’s [Tools](https://github.com/MairwunNx/minecraft-mcp/wiki/Tools#tools-from-before-50) page has the table. In short:
+
+- `get_audit_log`: `list_tokens` with `audit`, which takes its `actor`, `limit`, and `cursor`.
+- `force_load_chunk`: `set_world` with `chunks`, a list of `{ x, z, forceLoaded }`, where `x` and `z` were `chunkX` and `chunkZ`.
+- `restart_server` with `action: "status"`: `get_server_status` with `include: ["restart"]`.
+
 ## 4.2.1
 
 - 📝 **Clearer tools.** Every parameter says in a few words what it takes, with units, defaults, and coordinate kind, and tools that overlap say which one to pick, so the agent makes fewer wrong calls.

@@ -11,27 +11,30 @@ An MCP server that lets AI agents read and manage a Minecraft server through Wor
 
 | Path | What it does |
 |---|---|
-| `src/index.ts` | Flags and transport: stdio, or streamable HTTP |
+| `src/index.ts` | Flags and start-up, then stdio, or HTTP through `serveHttp` |
+| `src/http.ts` | `serveHttp`: streamable HTTP at `/mcp`, a session per client, the bearer compared in constant time, Host and Origin checks without one, idle sessions closed after 30 minutes |
 | `src/server.ts` | Builds the MCP server: tools, resources, prompts |
-| `src/tool.ts` | Registers a tool with the WorldAPI permission it needs and MCP annotations; `untrusted` tools wrap game text in a `<game-data>` fence |
-| `src/tools/` | One file per group: server, worlds, blocks, items, entities, players, stats, files, scripts, extensions |
+| `src/tool.ts` | Registers a tool with the WorldAPI permission it needs and MCP annotations. `untrusted` tools wrap game text, errors included, in a `<game-data>` fence |
+| `src/tools/` | One file per group: server, worlds, blocks, items, entities, players, stats, files, scripts, extensions, webhooks. `common.ts`: `segment` for path values (refuses `.` and `..`), and `each`, `parts`, `inOrder` for tools with several steps |
+| `src/guides.ts` | Long how-tos a tool option or a resource hands out, kept out of the schemas |
 | `src/config.ts`, `src/local.ts` | Settings from the environment. Without `WORLDAPI_URL`, `url` and `token` are getters that read the singleplayer world open now from `~/.worldapi/local/<port>.json` (written by WorldAPI's mods), and `createWorldApi` rewrites every call to that world's address |
-| `src/scopes.ts` | WorldAPI's permissions; asks the WebSocket hello which ones the token has, so only usable tools are listed |
+| `src/scopes.ts` | WorldAPI's permissions: the WebSocket hello says which ones the token has, so only usable tools are listed. `Permissions` asks again every 5 minutes, after `invalid_token`, `token_required`, or `missing_scope`, and when the singleplayer world changes, and tools follow through `tools/list_changed` |
 | `src/events.ts` | The live event feed behind the events and console resources |
+| `src/resources.ts` | Resources: status, players online, events, and console are fenced as game data |
 | `src/generated/worldapi.ts` | Types generated from `openapi/worldapi.json`; never edit by hand |
 
 ## Rules that keep it working
 
 - Every tool calls WorldAPI through the generated client, so a changed endpoint fails the typecheck instead of failing at runtime. After WorldAPI changes an endpoint, run `npm run generate` (it reads `../minecraft-worldapi/docs/openapi.json`) and fix what breaks.
 - Text that comes from the game (chat, signs, books, item and entity names, script logs, console lines, files) is untrusted: mark the tool `untrusted` so the result is fenced. Tool descriptions say it's data, not instructions.
-- A tool's `scope` must be the permission WorldAPI's endpoint checks (openapi.json states it; `/files` and `/files/read` really check files:read, or logs:read under logs/), and its `effect` (`read`, `idempotent`, `destructive`) must be honest: it sets the MCP hints, and read-only mode (`WORLDAPI_READ_ONLY`) hides every tool that isn't `read`.
+- A tool's `scope` must be the permission WorldAPI's endpoint checks (openapi.json states it, and `/files` and `/files/read` really check files:read, or logs:read under logs/). Its `effect` must be honest, `read`, `write` (changes, but neither destructive nor idempotent), `idempotent`, or `destructive`: it sets the MCP hints, and read-only mode (`WORLDAPI_READ_ONLY`) hides every tool that isn't `read`.
 - Over HTTP the server refuses to listen beyond loopback without `MCP_HTTP_TOKEN`, and without it answers only requests whose `Host` and `Origin` name the loopback (`src/http.ts`), against DNS rebinding. Keep it that way.
 - Read `config.url` and `config.token` when a call happens, never once at start: in singleplayer they change from world to world. The tools and hints follow `GET /server`'s `platform` and `side` (`Where` in `src/server.ts`): script tools only on Paper.
 - Never print or log `WORLDAPI_TOKEN`, `MCP_HTTP_TOKEN`, or a token from a discovery file. The owner's read-only WorldAPI token lives in `~/.secrets/cloud.env` as `WORLDAPI_TOKEN`.
 
 ## Running and testing
 
-- `npm run lint`, `npm run typecheck`, and `npm test` must pass; CI runs the same. Tests use a mocked WorldAPI and never touch the network.
+- `npm run lint`, `npm run typecheck`, and `npm test` must pass. CI runs the same. Tests use a mocked WorldAPI and never touch the network. `vitest.config.ts` keeps them to `test/**/*.test.ts`, away from local files under `.claude`.
 - `scripts/live-check.mjs` runs the built server against a real WorldAPI. Moonlands' WorldAPI is at `https://minecraft.mairwunnx.com/worldapi/api/v1`: anonymous clients read what its config allows, and `WORLDAPI_TOKEN` gets the rest of its permissions. Write tools against Moonlands change the live world: they need the owner's go-ahead first.
 
 ## Checking a change
@@ -56,7 +59,7 @@ Where the versions live, for `/update-deps` and `/update-minecraft` (both in `.c
 ## Docs and releases
 
 - README.md and README.RU.md are the shop window: the pitch, “What you get”, three steps to start, links into the wiki, and Related projects. No config tables, tool lists, or build steps there. Change both together. The release drops the “Try it live” section from the README it publishes to npm (keep that heading and a `## ` section after it): the Moonlands invitation stays on GitHub.
-- The wiki is the manual, in English only. A change to tools, permissions, environment variables, or flags updates its Tools, Tokens-and-permissions, or Configuration page in the same session; the tool counts in README.md (46, and 17 for `viewer`) change with it. Prefer a field on an existing tool, and lists of targets (`positions`, `players`, `commands`), to a new tool: each tool costs every session its schema.
+- The wiki is the manual, in English only. A change to tools, permissions, environment variables, or flags updates its Tools, Tokens-and-permissions, or Configuration page in the same session. The tool counts in README.md (50 with every permission on Paper, and 19 for `viewer`) change with it. Prefer a field on an existing tool, and lists of targets (`positions`, `players`, `commands`), to a new tool: each tool costs every session its schema.
 - After a change that reaches what the project ships, add it to CHANGELOG.md in the same push: under the topmost “## X.Y.Z” section while that version isn't released (`gh release view vX.Y.Z` fails), or under a new section with the next version: patch for fixes, minor for features, major for breaking changes. A release then needs only the workflow, and the workflow runs only when the owner asks.
 - Add a “## X.Y.Z” section to CHANGELOG.md, then run the “Release” workflow: `gh workflow run release.yml -R MairwunNx/minecraft-mcp -f version=X.Y.Z -f npm=true -f registry=true`. The repository keeps `0.0.0-dev` in package.json, manifest.json, and server.json; the workflow stamps the version, packs `minecraft-mcp-X.Y.Z.mcpb` (`npm run pack:mcpb`), tags `vX.Y.Z`, and attaches the bundle to a GitHub release, plus a version-less copy `minecraft-mcp.mcpb` that `releases/latest/download/minecraft-mcp.mcpb` (the README's Claude Desktop link) always reaches.
 - npm: the package `@mairwunnx/minecraft-mcp` (plain `minecraft-mcp` belongs to someone else), published with provenance; the command it installs is still `minecraft-mcp`. It uses the `NPM_TOKEN` secret, a granular token that can bypass 2FA (npm refuses to publish otherwise); npm's trusted publishing for this workflow would replace it once set up on npmjs.com. npm made a `0.0.0-stage` placeholder version on the first publish; it's npm's own and harmless.
