@@ -1,5 +1,7 @@
 # minecraft-mcp
 
+![minecraft-mcp: пусть ИИ-агент управляет вашим сервером](https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/hero.webp)
+
 [![npm](https://img.shields.io/npm/v/@mairwunnx/minecraft-mcp?logo=npm&label=npm&color=CB3837)](https://www.npmjs.com/package/@mairwunnx/minecraft-mcp) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-com.mairwunnx%2Fminecraft--mcp-6E56CF)](https://registry.modelcontextprotocol.io/?q=com.mairwunnx/minecraft-mcp) [![Glama](https://glama.ai/mcp/servers/MairwunNx/minecraft-mcp/badges/score.svg)](https://glama.ai/mcp/servers/MairwunNx/minecraft-mcp) [![Release](https://img.shields.io/github/v/release/MairwunNx/minecraft-mcp?label=release)](https://github.com/MairwunNx/minecraft-mcp/releases/latest)
 
 🤖 **minecraft-mcp** даёт ИИ-агенту видеть ваш Minecraft-сервер и управлять им. Спросите Claude «кто онлайн и где они?», «почему сервер лагает?» или «раздай всем хлеб и сделай утро» — и он ответит по живым данным из вашего мира.
@@ -22,6 +24,20 @@
 - 🧭 **Настройка не встанет**: если не хватает адреса, токена или самого WorldAPI, агент скажет, в чём дело и как это исправить в игре или в админке.
 - 🛡️ **Безопасность с самого начала**: текст из игры помечен как данные, инструменты предупреждают, когда что-то разрушают, а токен никуда не утекает.
 - 🔌 **Любой клиент**: Claude Desktop в один клик или любой MCP-клиент через stdio или HTTP.
+
+## Как это выглядит
+
+<p align="center"><img src="https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/screenshots/ru/online.gif" width="760" alt="Claude Code поверх окна Minecraft: на вопрос, кто онлайн и не лагает ли сервер, он дважды вызывает minecraft-mcp и отвечает с TPS и временем тика">
+  <br><sub>Кто онлайн и не лагает ли сервер — по цифрам самого сервера</sub></p>
+
+<p align="center"><img src="https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/screenshots/ru/lena.gif" width="760" alt="Вопрос, где Lena и чем она занята: её координаты и причина AFK из Mo’Afks">
+  <br><sub>Где игрок и чем он занят, вместе с причиной AFK</sub></p>
+
+<p align="center"><img src="https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/screenshots/ru/bread.gif" width="760" alt="Просьба раздать всем хлеб и поставить утро: одна команда и одно изменение мира">
+  <br><sub>Команды и изменения мира одной фразой</sub></p>
+
+<p align="center"><img src="https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/screenshots/ru/boss.gif" width="760" alt="Просьба призвать рядом с Lena эпического зомби-босса: агент находит её и вызывает Mo’Bosses через WorldAPI">
+  <br><sub>И действия других плагинов: босс Mo’Bosses рядом с игроком</sub></p>
 
 ## Как начать
 
@@ -86,6 +102,7 @@ claude mcp add moonlands -e WORLDAPI_URL=https://minecraft.mairwunnx.com/worldap
 
 - 🤖 **Код от ИИ.** Большую часть кода написали ИИ-агенты.
 - 🔌 **Для ИИ-клиентов.** Он работает внутри вашего ИИ-клиента и обращается только к тому WorldAPI, который вы указали. Сам он моделей не запускает.
+- 🎬 **Постановочные ролики.** В роликах настоящий Claude Code вызывает minecraft-mcp на тестовом сервере, а ответы модели заданы сценарием.
 - Телеметрии, платных функций и рекламы нет.
 
 > 🫡 Сделал Павел Ерохин (Pavel Erokhin), он же mairwunnx.

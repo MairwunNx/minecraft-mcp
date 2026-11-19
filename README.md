@@ -1,5 +1,7 @@
 # minecraft-mcp
 
+![minecraft-mcp: let an AI agent run your server](https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/hero.webp)
+
 [![npm](https://img.shields.io/npm/v/@mairwunnx/minecraft-mcp?logo=npm&label=npm&color=CB3837)](https://www.npmjs.com/package/@mairwunnx/minecraft-mcp) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-com.mairwunnx%2Fminecraft--mcp-6E56CF)](https://registry.modelcontextprotocol.io/?q=com.mairwunnx/minecraft-mcp) [![Glama](https://glama.ai/mcp/servers/MairwunNx/minecraft-mcp/badges/score.svg)](https://glama.ai/mcp/servers/MairwunNx/minecraft-mcp) [![Release](https://img.shields.io/github/v/release/MairwunNx/minecraft-mcp?label=release)](https://github.com/MairwunNx/minecraft-mcp/releases/latest)
 
 🤖 **minecraft-mcp** lets an AI agent see and run your Minecraft server. Ask Claude “who’s online and where are they?”, “why is the server lagging?”, or “give everyone bread and set the time to morning”, and it answers with real data from your world.
@@ -22,6 +24,20 @@ It runs next to your AI client: Claude Desktop, Claude Code, Cursor, VS Code, or
 - 🧭 **Never stuck on setup**: when the address, the token, or WorldAPI itself is missing, the agent says what’s wrong and how to fix it, in game or in the admin panel.
 - 🛡️ **Safe by design**: game text is fenced as data, tools say when they destroy something, and the token never leaks.
 - 🔌 **Every client**: Claude Desktop in one click, or any MCP client over stdio or HTTP.
+
+## See it work
+
+<p align="center"><img src="https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/screenshots/en/online.gif" width="760" alt="Claude Code over a Minecraft window, asked who’s online and whether the server lags: it calls minecraft-mcp twice and answers with TPS and tick time">
+  <br><sub>Who’s online and whether the server lags, from the server’s own numbers</sub></p>
+
+<p align="center"><img src="https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/screenshots/en/lena.gif" width="760" alt="Asked where Lena is and what she’s doing: her coordinates and her AFK reason from Mo’Afks">
+  <br><sub>Where a player is and what they’re doing, the AFK reason included</sub></p>
+
+<p align="center"><img src="https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/screenshots/en/bread.gif" width="760" alt="Asked to give everyone bread and set the time to morning: one command and one change to the world">
+  <br><sub>Commands and changes to the world in one sentence</sub></p>
+
+<p align="center"><img src="https://raw.githubusercontent.com/MairwunNx/minecraft-mcp/master/media/screenshots/en/boss.gif" width="760" alt="Asked to spawn an Epic zombie boss next to Lena: it finds her, then calls Mo’Bosses through WorldAPI">
+  <br><sub>Other plugins’ actions too: a Mo’Bosses boss next to a player</sub></p>
 
 ## Get started
 
@@ -84,6 +100,7 @@ Everything else lives in the [wiki](https://github.com/MairwunNx/minecraft-mcp/w
 
 - 🤖 **AI-generated code.** AI agents wrote much of the code.
 - 🔌 **For AI clients.** It runs inside your AI client and talks only to the WorldAPI you point it at. It runs no model itself.
+- 🎬 **Staged clips.** The clips show the real Claude Code calling minecraft-mcp against a test server, with the model’s replies scripted.
 - No telemetry, paid features, or ads.
 
 > 🫡 Made by Pavel Erokhin (Павел Ерохин), aka mairwunnx.
