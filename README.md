@@ -100,7 +100,6 @@ Everything else lives in the [wiki](https://github.com/MairwunNx/minecraft-mcp/w
 
 - 🤖 **AI-generated code.** AI agents wrote much of the code.
 - 🔌 **For AI clients.** It runs inside your AI client and talks only to the WorldAPI you point it at. It runs no model itself.
-- 🎬 **Staged clips.** The clips show the real Claude Code calling minecraft-mcp against a test server, with the model’s replies scripted.
 - No telemetry, paid features, or ads.
 
 > 🫡 Made by Pavel Erokhin (Павел Ерохин), aka mairwunnx.
