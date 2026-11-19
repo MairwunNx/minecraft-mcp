@@ -582,14 +582,17 @@ describe("errors", () => {
     const { client } = await connect(api.url, ADMIN);
     const result = await client.callTool({ name: "get_player", arguments: { player: "Steve", include: ["effects"] } });
     expect(result.isError).toBe(true);
-    expect(text(result)).toBe("player_offline: Steve isn't online");
+    // get_player is untrusted: WorldAPI's message can repeat game text, so it comes fenced.
+    expect(text(result)).toMatch(/<game-data>\nplayer_offline: Steve isn't online\n<\/game-data>$/);
   });
 
   it("explain an unreachable server", async () => {
     const { client } = await connect("http://127.0.0.1:1/api/v1", VIEWER);
     const result = await client.callTool({ name: "get_server_status", arguments: {} });
     expect(result.isError).toBe(true);
-    expect(text(result)).toMatch(/^unreachable: /);
+    expect(text(result)).toContain("<game-data>\nunreachable: ");
+    // The hint is ours, so it sits after the fence.
+    expect(text(result)).toMatch(/<\/game-data>\nCall setup_help/);
   });
 });
 

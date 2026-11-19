@@ -4,8 +4,8 @@ import type { Config } from "./config.js";
 import type { EventFeed } from "./events.js";
 import { registerPrompts } from "./prompts.js";
 import { registerResources } from "./resources.js";
-import { MISSING, type Scope } from "./scopes.js";
-import type { Context } from "./tool.js";
+import { MISSING, Permissions, type Scope } from "./scopes.js";
+import { type Context, flip, type Switch } from "./tool.js";
 import { blockTools } from "./tools/blocks.js";
 import { entityTools } from "./tools/entities.js";
 import { extensionTools } from "./tools/extensions.js";
@@ -21,7 +21,8 @@ import { VERSION } from "./version.js";
 
 export interface Built {
   server: McpServer;
-  tools: string[];
+  /** The tools listed now: it follows the token's permissions. */
+  readonly tools: string[];
 }
 
 /** Where WorldAPI runs, as GET /server says it: tools and hints follow it. */
@@ -34,7 +35,7 @@ export interface Where {
   local?: boolean;
 }
 
-/** What every client reads first; it names the user's player when WORLDAPI_PLAYER is set. */
+/** What every client reads first. It names the user's player when WORLDAPI_PLAYER is set. */
 
 export function instructions(config: Config, scopes: ReadonlySet<Scope> = new Set(), where: Where = {}): string {
   const mods = where.local || (where.platform !== undefined && where.platform !== "paper");
@@ -66,23 +67,32 @@ export function instructions(config: Config, scopes: ReadonlySet<Scope> = new Se
   return lines.join(" ");
 }
 
-/** One MCP server with the tools the token's permissions allow. */
+/**
+ * One MCP server listing the tools the token's permissions allow. Given a Permissions store, it follows the store's
+ * changes until its transport closes. Given a set, it follows that set as it is, which tests change by hand.
+ */
 export function buildServer(
   config: Config,
-  scopes: ReadonlySet<Scope>,
+  scopes: Set<Scope> | Permissions,
   feed?: EventFeed,
   fetchImpl?: typeof fetch,
   where: Where = {},
 ): Built {
+  const permissions = scopes instanceof Permissions ? scopes : new Permissions(scopes);
+  // The instructions are what a client reads once, at the start of its session: they stay as the permissions were
+  // then. The tool list, which clients read again on list_changed, is what follows a change.
   const server = new McpServer(
     { name: "minecraft-mcp", version: VERSION },
-    { instructions: instructions(config, scopes, where) },
+    { instructions: instructions(config, permissions.scopes, where) },
   );
+  const tools: Switch[] = [];
   const ctx: Context = {
     server,
     config,
     api: createWorldApi(config, fetchImpl),
-    scopes,
+    get scopes() {
+      return permissions.scopes;
+    },
     readOnly: config.readOnly,
     // A local world's address and token can change between calls: read them from the config each time.
     get token() {
@@ -92,7 +102,11 @@ export function buildServer(
       return config.url;
     },
     player: config.player,
-    registered: [],
+    get registered() {
+      return tools.filter((entry) => entry.handle.enabled).map((entry) => entry.name);
+    },
+    switches: tools,
+    permissions,
   };
   serverTools(ctx);
   worldTools(ctx);
@@ -102,11 +116,26 @@ export function buildServer(
   itemTools(ctx);
   statsTools(ctx);
   fileTools(ctx);
-  // Java scripts run on Paper only; the mods answer 501.
+  // Java scripts run on Paper only: the mods answer 501.
   if (!where.local && (where.platform ?? "paper") === "paper") scriptTools(ctx);
   extensionTools(ctx);
   webhookTools(ctx);
-  registerResources(server, ctx.api, config.token, scopes, feed);
+  // The token is read at each read, like the tools do: a local world opened later brings its own.
+  const resources = registerResources(server, ctx.api, () => config.token, feed);
+  flip(resources, permissions.scopes);
   registerPrompts(server);
-  return { server, tools: ctx.registered };
+  // One notification per list, however many tools a change switched. The SDK sends nothing before a client connects.
+  const follow = (now: ReadonlySet<Scope>) => {
+    if (flip(tools, now)) server.sendToolListChanged();
+    if (flip(resources, now)) server.sendResourceListChanged();
+  };
+  const unsubscribe = permissions.subscribe(follow);
+  // Over HTTP each session has its own server: a closed one stops listening, or it would never be freed.
+  server.server.onclose = unsubscribe;
+  return {
+    server,
+    get tools() {
+      return ctx.registered;
+    },
+  };
 }

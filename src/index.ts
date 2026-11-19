@@ -1,15 +1,12 @@
 #!/usr/bin/env node
-import { randomUUID, timingSafeEqual } from "node:crypto";
-import { createServer, type IncomingMessage } from "node:http";
 import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createWorldApi } from "./client.js";
 import { configFromEnv } from "./config.js";
 import { EventFeed } from "./events.js";
-import { fromLoopback } from "./http.js";
+import { serveHttp } from "./http.js";
 import { findLocalWorld } from "./local.js";
-import { discoverScopes, LOCAL } from "./scopes.js";
+import { discoverScopes, LOCAL, Permissions } from "./scopes.js";
 import { buildServer } from "./server.js";
 import { checkWorldApi, VERSION } from "./version.js";
 
@@ -28,7 +25,7 @@ Environment:
                       it, the singleplayer world open on this machine with the
                       WorldAPI mod, found again on every call
   WORLDAPI_TOKEN      WorldAPI token; its permissions decide which tools appear
-                      (a local world brings its own, which wins)
+                      (a local world brings its own and ignores this one)
   WORLDAPI_READ_ONLY  1 hides every tool that changes the server
   WORLDAPI_PLAYER     Your player name: “me” means this player, and tools that
                       take a player use it when the agent leaves one out
@@ -61,68 +58,35 @@ async function main(): Promise<void> {
   feed.start();
   log(
     waiting
-      ? `No singleplayer world with WorldAPI is open yet; tools will reach the next one opened (${config.local?.folder})`
-      : `WorldAPI ${found.version ?? "(version unknown)"} on ${found.platform ?? "paper"} at ${config.url}; permissions: ${[...scopes].join(", ") || "none"}${config.readOnly ? "; read-only" : ""}`,
+      ? `No singleplayer world with WorldAPI is open yet. Tools will reach the next one opened (${config.local?.folder})`
+      : `WorldAPI ${found.version ?? "(version unknown)"} on ${found.platform ?? "paper"} at ${config.url}; permissions: ${[...scopes].join(", ") || "none"}${config.readOnly ? ". Read-only" : ""}`,
   );
   const where = { platform: found.platform, side: found.side, local: config.local !== undefined };
+  // One store for every session: a token changed in WorldAPI's panel, or another singleplayer world, needs no restart.
+  const permissions = new Permissions(scopes, config, log);
+  permissions.start();
 
   if (!values.http) {
-    const { server, tools } = buildServer(config, scopes, feed, undefined, where);
+    const { server, tools } = buildServer(config, permissions, feed, undefined, where);
     log(`${tools.length} tools on stdio`);
     await server.connect(new StdioServerTransport());
     return;
   }
 
-  const port = Number(values.port);
-  const secret = process.env.MCP_HTTP_TOKEN?.trim();
-  const loopback = ["127.0.0.1", "::1", "localhost"].includes(values.host ?? "");
-  if (!secret && !loopback) {
-    // Anyone who reached the port would get the WorldAPI token's powers, so refuse instead of warning.
-    log(`Set MCP_HTTP_TOKEN to listen on ${values.host}; without it only 127.0.0.1, ::1, or localhost are allowed`);
-    // Exit outright: the scope probe may still hold a socket open.
-    process.exit(1);
-  }
-  const sessions = new Map<string, StreamableHTTPServerTransport>();
-  const authorized = (request: IncomingMessage) => {
-    if (!secret) return true;
-    const given = Buffer.from(request.headers.authorization?.replace(/^Bearer\s+/i, "") ?? "");
-    const expected = Buffer.from(secret);
-    return given.length === expected.length && timingSafeEqual(given, expected);
-  };
-
-  createServer(async (request, response) => {
-    if (!request.url?.startsWith("/mcp")) {
-      response.writeHead(404).end();
-      return;
-    }
-    if (!authorized(request)) {
-      response.writeHead(401, { "WWW-Authenticate": "Bearer" }).end();
-      return;
-    }
-    // Without a token, only this machine's clients get in, not a web page that rebound its domain here.
-    if (!secret && !fromLoopback(request.headers.host, request.headers.origin)) {
-      response.writeHead(403).end();
-      return;
-    }
-    const id = request.headers["mcp-session-id"];
-    let transport = typeof id === "string" ? sessions.get(id) : undefined;
-    if (!transport) {
-      transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: (sessionId) => {
-          if (transport) sessions.set(sessionId, transport);
-        },
-      });
-      transport.onclose = () => {
-        if (transport?.sessionId) sessions.delete(transport.sessionId);
-      };
-      await buildServer(config, scopes, feed, undefined, where).server.connect(transport);
-    }
-    await transport.handleRequest(request, response);
-  }).listen(port, values.host, () => log(`Streamable HTTP on http://${values.host}:${port}/mcp`));
+  // Refuses to listen beyond the loopback without MCP_HTTP_TOKEN: anyone who reached the port would get the token's powers.
+  const host = values.host ?? "127.0.0.1";
+  await serveHttp({
+    build: () => buildServer(config, permissions, feed, undefined, where).server,
+    host,
+    port: Number(values.port),
+    secret: process.env.MCP_HTTP_TOKEN?.trim() || undefined,
+    log,
+  });
+  log(`Streamable HTTP on http://${host}:${values.port}/mcp`);
 }
 
 main().catch((error: Error) => {
   log(error.message);
+  // Exit outright: the scope probe or the event feed may still hold a socket open.
   process.exit(1);
 });
