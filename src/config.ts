@@ -23,14 +23,14 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): Config {
   if (!url) {
     // A singleplayer world with the WorldAPI mod says where it is in a file of its own.
     const folder = localFolder(env);
-    const fixed = env.WORLDAPI_TOKEN?.trim() || undefined;
     return {
       get url() {
         return findLocalWorld(folder)?.url.replace(/\/+$/, "") ?? NO_WORLD_URL;
       },
-      // The world's own token first: a WORLDAPI_TOKEN left in a shell profile belongs to some server, not to this game.
+      // Only the world's own token: a WORLDAPI_TOKEN left in a shell profile belongs to some server, not to this
+      // game, and with no world open whatever listens on the default port isn't WorldAPI's to trust.
       get token() {
-        return findLocalWorld(folder)?.token ?? fixed;
+        return findLocalWorld(folder)?.token;
       },
       readOnly: ["1", "true", "yes"].includes((env.WORLDAPI_READ_ONLY ?? "").toLowerCase()),
       player: env.WORLDAPI_PLAYER?.trim() || undefined,

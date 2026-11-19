@@ -46,6 +46,26 @@ describe("a local singleplayer world", () => {
     expect(findLocalWorld(folder)?.url).toBe("http://127.0.0.1:8111/api/v1");
   });
 
+  it("skips files missing a field or naming an address off this machine, whatever their order", () => {
+    announce(folder, 8100, "http://127.0.0.1:8100/api/v1", { startedAt: undefined });
+    announce(folder, 8101, "http://127.0.0.1:8101/api/v1", { startedAt: "2026-10-25T13:00:00Z", pid: 1.5 });
+    announce(folder, 8102, "http://127.0.0.1:8102/api/v1", { startedAt: "2026-10-25T14:00:00Z", pid: "1" });
+    announce(folder, 8103, "https://evil.example/api/v1", { startedAt: "2026-10-25T15:00:00Z" });
+    announce(folder, 8104, "file:///etc/passwd", { startedAt: "2026-10-25T15:00:00Z" });
+    announce(folder, 8105, "http://127.0.0.1:8105/api/v1", { startedAt: "2026-10-25T15:00:00Z", token: 5 });
+    announce(folder, 8106, "http://localhost:8106/api/v1", { startedAt: "2026-10-25T10:00:00Z" });
+    announce(folder, 8107, "http://[::1]:8107/api/v1", { startedAt: "2026-10-25T09:00:00Z" });
+    writeFileSync(join(folder, "8108.json"), "null");
+    expect(findLocalWorld(folder)?.url).toBe("http://localhost:8106/api/v1");
+  });
+
+  it("uses only the world's own token, never WORLDAPI_TOKEN", () => {
+    const config = configFromEnv({ WORLDAPI_LOCAL_DIR: folder, WORLDAPI_TOKEN: "server-token" });
+    expect(config.token).toBeUndefined();
+    announce(folder, 8110, "http://127.0.0.1:8110/api/v1");
+    expect(config.token).toBe("token-8110");
+  });
+
   async function connectLocal() {
     const config = configFromEnv({ WORLDAPI_LOCAL_DIR: folder });
     const built = buildServer(config, new Set(LOCAL), undefined, undefined, { local: true });

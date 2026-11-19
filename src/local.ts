@@ -30,6 +30,32 @@ function alive(pid: number): boolean {
   }
 }
 
+/** Hosts a discovery file may name: a file is anyone's to write, so it must not send calls and the token off this machine. */
+const LOOPBACK = new Set(["127.0.0.1", "[::1]", "localhost"]);
+
+function loopbackUrl(text: string): boolean {
+  try {
+    const url = new URL(text);
+    return (url.protocol === "http:" || url.protocol === "https:") && LOOPBACK.has(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+/** Whether a parsed file holds every field this server reads, with the right types. */
+function valid(value: unknown): value is LocalWorld {
+  if (typeof value !== "object" || value === null) return false;
+  const world = value as Record<string, unknown>;
+  return (
+    typeof world.url === "string" &&
+    loopbackUrl(world.url) &&
+    typeof world.token === "string" &&
+    typeof world.startedAt === "string" &&
+    Number.isInteger(world.pid) &&
+    (world.pid as number) > 0
+  );
+}
+
 /** The world opened last of those still open, or undefined when the game isn't running one. */
 export function findLocalWorld(folder: string = localFolder()): LocalWorld | undefined {
   let names: string[];
@@ -41,8 +67,8 @@ export function findLocalWorld(folder: string = localFolder()): LocalWorld | und
   const worlds: LocalWorld[] = [];
   for (const name of names) {
     try {
-      const world = JSON.parse(readFileSync(join(folder, name), "utf8")) as LocalWorld;
-      if (typeof world.url === "string" && typeof world.token === "string" && alive(world.pid)) worlds.push(world);
+      const world: unknown = JSON.parse(readFileSync(join(folder, name), "utf8"));
+      if (valid(world) && alive(world.pid)) worlds.push(world);
     } catch {
       // A file being written right now, or someone else's: skip it.
     }
