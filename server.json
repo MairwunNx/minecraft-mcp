@@ -26,9 +26,21 @@
         },
         {
           "name": "WORLDAPI_TOKEN",
-          "description": "A WorldAPI token; its permissions decide which tools the agent gets. Leave empty for what anonymous clients may read.",
+          "description": "A WorldAPI token. Its permissions decide which tools the agent gets. Leave it empty for what anonymous clients may read. A singleplayer world brings its own token and never gets this one.",
           "isRequired": false,
           "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "WORLDAPI_PLAYER",
+          "description": "Your player name. “I”, “me”, and “my” mean this player, and tools that take a player use it when the agent leaves one out.",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "WORLDAPI_LOCAL_DIR",
+          "description": "Where singleplayer worlds announce themselves, ~/.worldapi/local by default.",
+          "isRequired": false,
           "format": "string"
         },
         {

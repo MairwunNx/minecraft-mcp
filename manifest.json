@@ -4,7 +4,7 @@
   "display_name": "Minecraft",
   "version": "0.0.0-dev",
   "description": "Ask about your Minecraft server and let Claude run it: players, worlds, stats, configs, logs, and live events.",
-  "long_description": "Connects Claude to a Paper server that runs the WorldAPI plugin. Ask who’s online, why the server lags, who played the most this week, or have it set the time, give items, read the logs, and kick a griefer. Needs WorldAPI 3.0.0 or newer. The permissions of the WorldAPI token you enter decide what Claude may do: a viewer token only looks.",
+  "long_description": "Connects Claude to a Minecraft server on Paper, Fabric, or NeoForge that runs WorldAPI, or to the singleplayer world you play with the WorldAPI mod. Ask who’s online, why the server lags, who played the most this week, or have it set the time, give items, read the logs, and kick a griefer. Needs WorldAPI 4.6.0 or newer. The permissions of the WorldAPI token you enter decide what Claude may do: a viewer token only looks.",
   "author": {
     "name": "Pavel Erokhin (MairwunNx)",
     "url": "https://github.com/MairwunNx"
