@@ -60,7 +60,7 @@ describe("tools follow the token's permissions", () => {
     expect((await connect(api.url, [])).tools).toEqual(["setup_help"]);
   });
 
-  it("admin has everything but files:write and code; owner has all", async () => {
+  it("admin has everything but files:write and code, owner has all", async () => {
     const { tools } = await connect(api.url, ADMIN);
     expect(tools).toEqual(
       expect.arrayContaining([
@@ -76,7 +76,9 @@ describe("tools follow the token's permissions", () => {
     expect(tools).not.toContain("edit_file");
     const all = (await connect(api.url, OWNER)).tools;
     expect(all).toEqual(expect.arrayContaining(["execute_java", "edit_file", "list_java_scripts"]));
-    expect(all.length).toBe(52);
+    expect(all.length).toBe(50);
+    expect(all).not.toContain("get_audit_log");
+    expect(all).not.toContain("force_load_chunk");
     expect(new Set(all).size).toBe(all.length);
   });
 
@@ -86,7 +88,14 @@ describe("tools follow the token's permissions", () => {
     const names = tools.map((tool) => tool.name);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
     expect(names).toEqual(
-      expect.arrayContaining(["get_access", "list_java_scripts", "read_file", "list_files", "get_audit_log"]),
+      expect.arrayContaining([
+        "get_access",
+        "list_java_scripts",
+        "read_file",
+        "list_files",
+        "list_tokens",
+        "get_server_status",
+      ]),
     );
     for (const write of ["execute_java", "edit_file", "edit_items", "run_command", "restart_server", "manage_access"])
       expect(names).not.toContain(write);
@@ -113,6 +122,18 @@ describe("tools follow the token's permissions", () => {
     expect(byName.read_file).toMatchObject({ readOnlyHint: true });
     expect(byName.edit_file).toMatchObject({ readOnlyHint: false, destructiveHint: true });
     expect(byName.run_command).toMatchObject({ destructiveHint: true });
+    // Health 0 kills, and a plugin's delete takes something away.
+    for (const name of ["set_player_property", "update_entity", "call_extension"])
+      expect(byName[name], name).toMatchObject({ readOnlyHint: false, destructiveHint: true });
+  });
+
+  it("schemas carry no 2⁵³ bounds and keep under their budget", async () => {
+    const { client } = await connect(api.url, OWNER);
+    const { tools } = await client.listTools();
+    const json = tools.map((tool) => JSON.stringify(tool));
+    expect(json.join("")).not.toContain("9007199254740991");
+    // 82 KB before the schemas were trimmed: a new tool or a long description shows up here.
+    expect(json.reduce((sum, text) => sum + text.length, 0)).toBeLessThan(64_000);
   });
 
   it("resources and prompts are there", async () => {

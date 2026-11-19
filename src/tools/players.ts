@@ -1,10 +1,24 @@
 import { z } from "zod";
 import { unwrap } from "../client.js";
 import { type Context, tool } from "../tool.js";
-import { cursor, format, ITEM_DETAIL, limit, location, OFFLINE_NOTE, playerOrMe, SLOT_LAYOUT } from "./common.js";
+import {
+  count,
+  cursor,
+  each,
+  format,
+  ITEM_DETAIL,
+  inOrder,
+  limit,
+  location,
+  OFFLINE_NOTE,
+  playerOrMe,
+  players,
+  SLOT_LAYOUT,
+  segment,
+} from "./common.js";
 
 export function playerTools(ctx: Context): void {
-  const { api, token } = ctx;
+  const { api } = ctx;
   const who = (name: string) => ({ params: { path: { player: name } } });
   const player = playerOrMe(ctx.player);
 
@@ -13,40 +27,39 @@ export function playerTools(ctx: Context): void {
     untrusted: true,
     title: "Players",
     description:
-      "Everyone who has played here: online state, first and last seen, playtime in seconds; limit 0 only counts them. online true lists who is playing now instead, with world, game mode, health, food, level, ping, idle time, and location.",
+      "Everyone who has played here: online, first and last seen, playtime in seconds. online true lists who plays now instead, with world, game mode, health, food, level, ping, idle time, and location.",
     scope: "players:read",
     effect: "read",
     input: {
-      online: z.boolean().optional().describe("true: who is online now, with their state"),
-      sort: z.enum(["name", "last_seen", "playtime"]).optional().describe("`name` by default"),
+      online: z.boolean().optional(),
+      sort: z.enum(["name", "last_seen", "playtime"]).optional(),
       limit,
       cursor,
     },
     run: (args) =>
       args.online
-        ? unwrap(api.GET("/players/online"), token)
-        : unwrap(api.GET("/players", { params: { query: args } }), token),
+        ? unwrap(api.GET("/players/online"), ctx.token)
+        : unwrap(api.GET("/players", { params: { query: args } }), ctx.token),
   });
 
   tool(ctx, {
     name: "get_player",
     untrusted: true,
     title: "Player",
-    description: `A player's profile and, while online, full state: game mode, health, food, XP, location, flight, speed, ping, client. Offline players show their last location. players reads up to 10 at once. include adds parts in the same call: \`inventory\` and \`enderchest\` (from the saved player file while offline; ${SLOT_LAYOUT}), \`effects\` (online only), \`deaths\` (the last death place and the newest 5 with causes and killers), \`sessions\` (the newest 5), \`statistics\` (the general ones), \`advancements\` (counts and the newest 5), and \`target\` (online only: the block and the entity the player looks at within 64 blocks, and where their eyes are, for “what am I looking at”). statistics gives every vanilla statistic, or one category (custom, mined, broken, crafted, used, picked_up, dropped, killed, killed_by; play_time in ticks, distances in centimeters). advancements lists every advancement with title, description, frame, and parent: \`todo\` is what's left, and with the parents it shows what to go for next. permission says whether the player is an operator and, if online, has a permission node (a server permission, such as \`worldedit.wand\`). Coordinates, inventories, and death places need players:private. ${ITEM_DETAIL}`,
+    description: `A player's profile and, while online, state: game mode, health, food, XP, location, flight, ping, client. include adds \`inventory\` and \`enderchest\` (${SLOT_LAYOUT}), \`effects\`, \`deaths\` (newest 5 with causes), \`sessions\`, \`statistics\`, \`advancements\` (counts, newest 5), and \`target\` (the block and entity they look at). statistics lists every statistic, or a category: custom, mined, broken, crafted, used, picked_up, dropped, killed, killed_by. advancements lists each with its parent: \`todo\` shows what to go for next. permission checks a node such as \`worldedit.wand\`. Coordinates, inventories, and deaths need players:private. ${ITEM_DETAIL}`,
     scope: "players:read",
     effect: "read",
     input: {
       player: player.optional(),
-      players: z.array(z.string().min(1)).min(1).max(10).optional().describe("Several players instead of one"),
+      players: players.max(10).optional().describe("Up to 10 instead of player"),
       include: z
         .array(
           z.enum(["inventory", "enderchest", "effects", "deaths", "sessions", "statistics", "advancements", "target"]),
         )
-        .optional()
-        .describe('Parts to add, such as ["inventory", "deaths"]'),
-      statistics: z.string().min(1).optional().describe("`all`, or one category such as `mined`"),
-      advancements: z.enum(["all", "done", "todo"]).optional().describe("List them; todo is what's left"),
-      permission: z.string().min(1).optional().describe("A permission node to check"),
+        .optional(),
+      statistics: z.string().min(1).optional().describe("`all`, or a category"),
+      advancements: z.enum(["all", "done", "todo"]).optional(),
+      permission: z.string().min(1).optional(),
     },
     run: async (args) => {
       const one = async (name: string) => {
@@ -55,7 +68,7 @@ export function playerTools(ctx: Context): void {
             api.GET("/players/{player}", {
               params: { path: { player: name }, query: { include: args.include?.join(",") } },
             }),
-            token,
+            ctx.token,
           ),
           args.statistics
             ? unwrap(
@@ -65,7 +78,7 @@ export function playerTools(ctx: Context): void {
                     query: { category: args.statistics === "all" ? undefined : args.statistics },
                   },
                 }),
-                token,
+                ctx.token,
               )
             : undefined,
           args.advancements
@@ -76,7 +89,7 @@ export function playerTools(ctx: Context): void {
                     query: { done: args.advancements === "all" ? undefined : args.advancements === "done" },
                   },
                 }),
-                token,
+                ctx.token,
               )
             : undefined,
           args.permission
@@ -84,7 +97,7 @@ export function playerTools(ctx: Context): void {
                 api.GET("/players/{player}/permissions", {
                   params: { path: { player: name }, query: { node: args.permission } },
                 }),
-                token,
+                ctx.token,
               )
             : undefined,
         ]);
@@ -113,84 +126,86 @@ export function playerTools(ctx: Context): void {
   tool(ctx, {
     name: "teleport_player",
     title: "Teleport a player",
-    description: `Teleport to coordinates, to another player, or to a world's spawn; give exactly one. Check the surface with get_block (no y) first to land on solid ground. ${OFFLINE_NOTE}`,
+    description: `Teleport one or more players to coordinates, another player, or a world's spawn: give exactly one. Check the surface with get_block (no y) to land on solid ground. Each player is answered on its own. ${OFFLINE_NOTE}`,
     scope: "players:write",
     effect: "write",
+    untrusted: true,
     input: {
-      player,
+      player: player.optional(),
+      players: players.max(50).optional().describe("Several instead of player"),
       location: location.optional(),
-      toPlayer: z.string().optional().describe("Another player's name or UUID"),
+      toPlayer: z.string().optional().describe("Name or UUID"),
       worldSpawn: z.string().optional().describe("A world name"),
     },
-    run: (args) =>
-      unwrap(
-        api.POST("/players/{player}/teleport", {
-          ...who(args.player),
-          body: { location: args.location, player: args.toPlayer, worldSpawn: args.worldSpawn },
-        }),
-        token,
-      ),
+    run: async (args) => {
+      const body = { location: args.location, player: args.toPlayer, worldSpawn: args.worldSpawn };
+      const send = (name: string) => unwrap(api.POST("/players/{player}/teleport", { ...who(name), body }), ctx.token);
+      if (args.players) return each(args.players, (name) => ({ player: name }), send);
+      const name = args.player ?? ctx.player;
+      if (!name) throw new Error("Give player or players");
+      return send(name);
+    },
   });
 
   tool(ctx, {
     name: "set_player_property",
     title: "Change a player",
-    description: `Set game mode, health, food (0–20), saturation, XP level or progress, flight, walk or fly speed (-1 to 1; defaults 0.2 and 0.1), display or tab-list name, invulnerability, fire, or air; for position, effects, or items use teleport_player, set_effects, or edit_items. ${OFFLINE_NOTE}`,
+    description: `Set game mode, health (0 kills), food, saturation, XP, flight, walk or fly speed, display or tab-list name, invulnerability, fire, or air. ${OFFLINE_NOTE}`,
     scope: "players:write",
-    effect: "write",
+    effect: "destructive",
+    untrusted: true,
     input: {
       player,
-      gameMode: z.enum(["survival", "creative", "adventure", "spectator"]).optional().describe("Game mode"),
-      health: z.number().min(0).optional().describe("2 per heart, up to the max; 0 kills"),
-      food: z.number().int().min(0).max(20).optional().describe("Hunger bar"),
-      saturation: z.number().min(0).max(20).optional().describe("Spent before food"),
-      exhaustion: z.number().min(0).optional().describe("At 4, costs a point of saturation or food"),
-      level: z.number().int().min(0).optional().describe("XP level"),
+      gameMode: z.enum(["survival", "creative", "adventure", "spectator"]).optional(),
+      health: z.number().min(0).optional().describe("2 per heart"),
+      food: z.number().int().min(0).max(20).optional(),
+      saturation: z.number().min(0).max(20).optional(),
+      exhaustion: z.number().min(0).optional().describe("4 costs a point of saturation or food"),
+      level: count().optional(),
       exp: z.number().min(0).max(1).optional().describe("Progress to the next level"),
-      allowFlight: z.boolean().optional().describe("May fly"),
-      flying: z.boolean().optional().describe("Needs allowFlight"),
+      allowFlight: z.boolean().optional(),
+      flying: z.boolean().optional(),
       walkSpeed: z.number().min(-1).max(1).optional().describe("0.2 is normal"),
       flySpeed: z.number().min(-1).max(1).optional().describe("0.1 is normal"),
-      displayName: z.string().optional().describe("Name in chat"),
-      listName: z.string().optional().describe("Name in the tab list"),
+      displayName: z.string().optional(),
+      listName: z.string().optional().describe("Tab list"),
       format,
-      invulnerable: z.boolean().optional().describe("Takes no damage"),
-      fireTicks: z.number().int().optional().describe("20 per second; 0 puts it out"),
-      remainingAir: z.number().int().optional().describe("Ticks, up to the max (300 by default)"),
+      invulnerable: z.boolean().optional(),
+      fireTicks: count().optional().describe("20 a second"),
+      remainingAir: count().optional().describe("Ticks, 300 is full"),
     },
-    run: ({ player: name, ...body }) => unwrap(api.PATCH("/players/{player}", { ...who(name), body }), token),
+    run: ({ player: name, ...body }) => unwrap(api.PATCH("/players/{player}", { ...who(name), body }), ctx.token),
   });
 
   tool(ctx, {
     name: "send_message",
     title: "Message players",
     description:
-      "Send a chat message, title, or action bar text to some players, or to everyone online when players is left out. A sound plays only for named players, who must be online.",
+      "Send a chat message, title, or action bar text to players, or to everyone online when players is left out. A sound plays only for named players. Each named player is answered on its own.",
     scope: "players:write",
     effect: "write",
     input: {
-      players: z.array(z.string().min(1)).min(1).optional().describe("Names or UUIDs; everyone online when left out"),
-      message: z.string().min(1).describe("The text"),
-      kind: z.enum(["chat", "title", "actionbar"]).default("chat").describe("Where it shows"),
-      subtitle: z.string().optional().describe("Only for titles"),
+      players: players.optional(),
+      message: z.string().min(1),
+      kind: z.enum(["chat", "title", "actionbar"]).default("chat"),
+      subtitle: z.string().optional(),
       sound: z.string().optional().describe("Such as `minecraft:entity.experience_orb.pickup`"),
       format,
     },
     run: async ({ players, sound, ...body }) => {
-      if (!players) return unwrap(api.POST("/server/broadcast", { body }), token);
-      const sent = [];
-      for (const name of players)
-        sent.push({
-          player: name,
-          ...(await unwrap(api.POST("/players/{player}/message", { ...who(name), body: { ...body, sound } }), token)),
-        });
+      if (!players) return unwrap(api.POST("/server/broadcast", { body }), ctx.token);
+      const sent = await each(
+        players,
+        (name) => ({ player: name }),
+        (name) => unwrap(api.POST("/players/{player}/message", { ...who(name), body: { ...body, sound } }), ctx.token),
+      );
       return sent.length === 1 ? sent[0] : sent;
     },
   });
 
   const effect = z.object({
-    type: z.string().min(1).describe("Such as `minecraft:speed`"),
-    durationSeconds: z.number().int().positive().optional().describe("Leave out for an infinite effect"),
+    type: segment.describe("Such as `minecraft:speed`"),
+    durationSeconds: z.number().int().positive().max(1_000_000).optional().describe("Infinite when left out"),
     amplifier: z.number().int().min(0).max(255).default(0).describe("0 is level I"),
     ambient: z.boolean().default(false),
     particles: z.boolean().default(true),
@@ -200,57 +215,68 @@ export function playerTools(ctx: Context): void {
   tool(ctx, {
     name: "set_effects",
     title: "Change potion effects",
-    description: `Give, take away, or clear a player's potion effects, in that order: clear first, then remove, then add. Answers with the effects the player has afterwards. ${OFFLINE_NOTE}`,
+    description: `Change a player's potion effects: clear first, then remove, then add, and answer with the effects afterwards. A failed step stops the rest, and the answer says what was done, what failed, and what wasn't. ${OFFLINE_NOTE}`,
     scope: "players:write",
     effect: "write",
     input: {
       player,
-      add: z.array(effect).optional().describe("Effects to give"),
-      remove: z.array(z.string().min(1)).optional().describe("Effect keys to take away"),
-      clear: z.boolean().optional().describe("Take away every effect first"),
+      add: z.array(effect).optional(),
+      remove: z.array(segment).optional().describe("Effect keys"),
+      clear: z.boolean().optional().describe("Every effect"),
     },
     run: async (args) => {
-      if (args.clear) await unwrap(api.DELETE("/players/{player}/effects", who(args.player)), token);
-      for (const type of args.remove ?? [])
-        await unwrap(
-          api.DELETE("/players/{player}/effects/{effect}", { params: { path: { player: args.player, effect: type } } }),
-          token,
-        );
-      for (const body of args.add ?? [])
-        await unwrap(api.POST("/players/{player}/effects", { ...who(args.player), body }), token);
-      return unwrap(api.GET("/players/{player}/effects", who(args.player)), token);
+      type Step = { clear: true } | { remove: string } | { add: z.infer<typeof effect> };
+      const steps: Step[] = [
+        ...(args.clear ? [{ clear: true as const }] : []),
+        ...(args.remove ?? []).map((type) => ({ remove: type })),
+        ...(args.add ?? []).map((body) => ({ add: body })),
+      ];
+      const done = await inOrder(
+        steps,
+        (step) => ("add" in step ? { add: step.add.type } : step),
+        async (step) => {
+          if ("clear" in step) await unwrap(api.DELETE("/players/{player}/effects", who(args.player)), ctx.token);
+          else if ("remove" in step)
+            await unwrap(
+              api.DELETE("/players/{player}/effects/{effect}", {
+                params: { path: { player: args.player, effect: step.remove } },
+              }),
+              ctx.token,
+            );
+          else await unwrap(api.POST("/players/{player}/effects", { ...who(args.player), body: step.add }), ctx.token);
+          return {};
+        },
+      );
+      if (done.failed) return done;
+      return unwrap(api.GET("/players/{player}/effects", who(args.player)), ctx.token);
     },
   });
 
   tool(ctx, {
     name: "set_advancement",
     title: "Grant or revoke advancements",
-    description: `Complete every criterion of advancements for a player (done true), or take them all back (done false). ${OFFLINE_NOTE}`,
+    description: `Complete every criterion of advancements for a player, or take them all back. Each key is answered on its own. ${OFFLINE_NOTE}`,
     scope: "players:write",
     effect: "idempotent",
     input: {
       player,
-      keys: z
-        .array(z.string().min(1))
-        .min(1)
-        .max(50)
-        .describe('Advancement keys, such as ["minecraft:story/mine_diamond"]'),
+      keys: z.array(segment).min(1).max(50).describe('Such as ["minecraft:story/mine_diamond"]'),
       done: z.boolean().describe("false revokes"),
     },
     run: async (args) => {
-      const results = [];
-      for (const key of args.keys) {
-        const params = { params: { path: { player: args.player, key } } };
-        results.push({
-          key,
-          ...(await unwrap(
+      const results = await each(
+        args.keys,
+        (key) => ({ key }),
+        (key) => {
+          const params = { params: { path: { player: args.player, key } } };
+          return unwrap(
             args.done
               ? api.POST("/players/{player}/advancements/{key}", { ...params, body: {} })
               : api.DELETE("/players/{player}/advancements/{key}", params),
-            token,
-          )),
-        });
-      }
+            ctx.token,
+          );
+        },
+      );
       return results.length === 1 ? results[0] : results;
     },
   });

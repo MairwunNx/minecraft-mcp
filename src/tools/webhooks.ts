@@ -1,68 +1,61 @@
 import { z } from "zod";
 import { unwrap } from "../client.js";
+import { WEBHOOK_GUIDE } from "../guides.js";
 import { type Context, tool } from "../tool.js";
 
 const FORMATS = ["discord", "slack", "telegram", "teams", "google_chat", "json"] as const;
 const LANGUAGES = ["en", "ru", "es", "pt", "de"] as const;
 
 export function webhookTools(ctx: Context): void {
-  const { api, token } = ctx;
+  const { api } = ctx;
 
   tool(ctx, {
     name: "list_webhooks",
     title: "Webhooks",
     description:
-      "Webhooks that send server events to Discord, Slack, Telegram, Microsoft Teams, Google Chat, or a URL as JSON: each one's service, events, language, whether it's on, and its address with the secret part hidden. options adds what a webhook can be: the services, languages, every event with the permission it needs, and the message keys its own words may replace. Needs webhooks:manage.",
+      "Webhooks that send server events to Discord, Slack, Telegram, Microsoft Teams, Google Chat, or a URL as JSON: each one's service, events, language, whether it's on, and its address with the secret hidden. options adds the services, languages, every event with the permission it needs, the message keys its own words may replace, and a `guide` to how the user gets each service's URL or bot token.",
     scope: "webhooks:manage",
     effect: "read",
-    input: { options: z.boolean().optional().describe("Add the services, languages, events, and message keys") },
+    input: { options: z.boolean().optional().describe("Add what a webhook can be, and the guide") },
     run: async (args) => {
       const [webhooks, options] = await Promise.all([
-        unwrap(api.GET("/webhooks"), token),
-        args.options ? unwrap(api.GET("/webhooks/options"), token) : undefined,
+        unwrap(api.GET("/webhooks"), ctx.token),
+        args.options ? unwrap(api.GET("/webhooks/options"), ctx.token) : undefined,
       ]);
-      return options ? { webhooks, options } : webhooks;
+      return options ? { webhooks, options, guide: WEBHOOK_GUIDE } : webhooks;
     },
   });
 
   tool(ctx, {
     name: "manage_webhook",
     title: "Connect Discord, Slack, Telegram, and more",
-    description: `Connect the server to a chat: “send deaths to my Discord”, “post joins to Telegram in Russian”. action create makes one and sends a test message; update changes its events, language, own words, access, or pauses it (enabled false); delete removes it; test sends a test message; telegram_chats lists the chats a Telegram bot can write to.
-How the user gets what create needs:
-- discord: channel settings → Integrations → Webhooks → New Webhook → Copy Webhook URL.
-- slack: api.slack.com/apps → an app → Incoming Webhooks → Add New Webhook; Mattermost and Rocket.Chat take this format too.
-- teams: the channel → Workflows → “Post to a channel when a webhook request is received”, then its URL.
-- google_chat: the space → Apps & integrations → Webhooks.
-- telegram: make a bot with @BotFather and get its token; the user writes /start to the bot, or adds it to a group or channel; then telegram_chats with botToken lists chats, and one's id is chatId.
-- json: any HTTPS URL that takes the event as JSON; the answer holds a signing secret, shown once.
-These URLs and bot tokens are secrets: ask the user to paste them, never invent them, and don't repeat them back. topics are event ids, \`player.*\` for a prefix, or \`*\` for every notable event (joins, leaves, deaths, advancements, chat, raids, bosses, the server starting and stopping). By default a webhook sees no coordinates and no chat; permissions widens that, but only up to this token's own. Addresses must be https://, and ones on the server's machine or private network are refused, unless the owner allows them in config.yml. test works once per webhook every 10 seconds. Webhooks in config.yml change only there. Needs webhooks:manage.`,
+    description:
+      "Connect the server to a chat: “send deaths to my Discord”, “post joins to Telegram in Russian”. `create` makes one and sends a test message. `update` changes it, or pauses it. `test` works once per webhook every 10 seconds. `telegram_chats` lists the chats a Telegram bot can write to. list_webhooks with options has a `guide` to getting each service's URL or bot token. These are secrets: ask the user to paste them, never invent or repeat them. A webhook sees no coordinates and no chat unless permissions widen that, up to this token's own. Webhooks in config.yml change only there.",
     scope: "webhooks:manage",
     effect: "destructive",
     input: {
-      action: z.enum(["create", "update", "delete", "test", "telegram_chats"]).describe("What to do"),
+      action: z.enum(["create", "update", "delete", "test", "telegram_chats"]),
       name: z
         .string()
         .regex(/^[A-Za-z0-9_-]{1,32}$/)
         .optional()
-        .describe("The webhook; for create, a new name such as discord-deaths"),
+        .describe("For create, a new one such as discord-deaths"),
       format: z.enum(FORMATS).optional().describe("For create"),
-      url: z.string().url().optional().describe("For create, every format but telegram"),
-      botToken: z.string().optional().describe("For create and telegram_chats, the Telegram bot's token"),
-      chatId: z.string().optional().describe("For create with telegram"),
-      topics: z.array(z.string().min(1)).min(1).optional().describe('Such as ["player.death"], ["player.*"], or ["*"]'),
-      language: z.enum(LANGUAGES).optional().describe("Chat messages' language; English by default"),
+      url: z.string().url().optional().describe("For create, but not telegram"),
+      botToken: z.string().optional().describe("Telegram's"),
+      chatId: z.string().optional().describe("Telegram's"),
+      topics: z
+        .array(z.string().min(1))
+        .min(1)
+        .optional()
+        .describe('Event ids, such as ["player.death"], ["player.*"], or ["*"] for every notable one'),
+      language: z.enum(LANGUAGES).optional().describe("English by default"),
       messages: z
         .record(z.string(), z.string().min(1).max(500))
         .optional()
-        .describe(
-          'Its own words by message key, such as {"player.death": "RIP: {message}"}; list_webhooks with options shows the keys and placeholders',
-        ),
-      permissions: z
-        .array(z.string())
-        .optional()
-        .describe('What it may see, such as ["events:read", "chat:read"]; default: no coordinates, no chat'),
-      enabled: z.boolean().optional().describe("For update: false pauses it"),
+        .describe('Own words by message key, such as {"player.death": "RIP: {message}"}'),
+      permissions: z.array(z.string()).optional().describe('Such as ["chat:read"]'),
+      enabled: z.boolean().optional().describe("false pauses it"),
     },
     run: async (args) => {
       const need = <T>(value: T | undefined, what: string): T => {
@@ -86,7 +79,7 @@ These URLs and bot tokens are secrets: ask the user to paste them, never invent 
                 test: true,
               },
             }),
-            token,
+            ctx.token,
           );
         case "update":
           return unwrap(
@@ -100,19 +93,22 @@ These URLs and bot tokens are secrets: ask the user to paste them, never invent 
                 enabled: args.enabled,
               },
             }),
-            token,
+            ctx.token,
           );
         case "delete":
-          return unwrap(api.DELETE("/webhooks/{name}", { params: { path: { name: need(args.name, "name") } } }), token);
+          return unwrap(
+            api.DELETE("/webhooks/{name}", { params: { path: { name: need(args.name, "name") } } }),
+            ctx.token,
+          );
         case "test":
           return unwrap(
             api.POST("/webhooks/{name}/test", { params: { path: { name: need(args.name, "name") } }, body: {} }),
-            token,
+            ctx.token,
           );
         case "telegram_chats":
           return unwrap(
             api.POST("/webhooks/telegram/chats", { body: { botToken: need(args.botToken, "botToken") } }),
-            token,
+            ctx.token,
           );
       }
     },

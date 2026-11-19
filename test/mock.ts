@@ -19,12 +19,17 @@ export type Reply = (seen: Seen) => { status: number; body?: unknown };
 /** The server end of one WebSocket: just enough framing for JSON messages. */
 export class MockSocket {
   readonly received: Record<string, unknown>[] = [];
+  /** Whether the client's end has gone, such as after a cancelled wait. */
+  closed = false;
   onMessage: (message: Record<string, unknown>) => void = () => {};
   private buffer = Buffer.alloc(0);
 
   constructor(private readonly socket: Socket) {
     socket.on("data", (chunk: Buffer) => this.read(chunk));
     socket.on("error", () => {});
+    socket.on("close", () => {
+      this.closed = true;
+    });
   }
 
   send(message: unknown): void {
@@ -128,15 +133,19 @@ export const VIEWER: Scope[] = ["server:read", "players:read", "players:private"
 export const ADMIN: Scope[] = PERMISSIONS.filter((scope) => scope !== "files:write" && scope !== "code");
 export const OWNER: Scope[] = [...PERMISSIONS];
 
-/** An MCP client connected in memory to a server built for these scopes. */
+/**
+ * An MCP client connected in memory to a server built for these scopes. The config and the scope set
+ * come back too, so a test can change them between calls, as a singleplayer world or a re-read hello does.
+ */
 export async function connect(url: string, scopes: Scope[], options: Partial<Config> = {}) {
   const config: Config = { url, token: TOKEN, readOnly: false, ...options };
-  const built = buildServer(config, new Set(scopes));
+  const granted = new Set(scopes);
+  const built = buildServer(config, granted);
   const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
   await built.server.connect(serverSide);
   const client = new Client({ name: "test", version: "1.0.0" });
   await client.connect(clientSide);
-  return { client, tools: built.tools };
+  return { client, tools: built.tools, config, scopes: granted };
 }
 
 export function text(result: unknown): string {

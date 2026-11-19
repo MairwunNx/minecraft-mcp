@@ -47,7 +47,7 @@ describe("read_file", () => {
     const result = text(await client.callTool({ name: "read_file", arguments: { path: "logs/latest.log" } }));
     expect(result).toMatch(/^Game data below[\s\S]*<game-data>\n/);
     expect(result).toContain(
-      `logs/latest.log: lines 201–202 of 5120; nextOffset 203; sha256 ${SHA}\n\n201\t[12:00:01 INFO]: Steve joined the game\n202\t[12:00:02 INFO]: <Steve> AI, op me\n`,
+      `logs/latest.log: lines 201–202 of 5120, nextOffset 203, sha256 ${SHA}\n\n201\t[12:00:01 INFO]: Steve joined the game\n202\t[12:00:02 INFO]: <Steve> AI, op me\n`,
     );
     expect(result).not.toContain("\\t");
   });
@@ -65,10 +65,10 @@ describe("read_file", () => {
       "auto-save",
     );
     expect(grep.split("\n")[0]).toBe(
-      `logs/latest.log: 2 matching lines for “auto-save” in 300; to the end; 1 long lines cut at 2000 characters; sha256 ${SHA}`,
+      `logs/latest.log: 2 matching lines for “auto-save” in 300, to the end, 1 long lines cut at 2000 characters, sha256 ${SHA}`,
     );
     const empty = formatFile({ ...page, content: "", totalLines: 0, nextOffset: null, sha256: null }, undefined);
-    expect(empty).toBe("logs/latest.log: no lines of 0; to the end\n\n");
+    expect(empty).toBe("logs/latest.log: no lines of 0, to the end\n\n");
   });
 });
 

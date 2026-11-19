@@ -209,6 +209,17 @@ describe("requests reach WorldAPI in its shape", () => {
     ]);
   });
 
+  it("shows a pending restart in the status, even in read-only mode", async () => {
+    const { client, tools } = await connect(api.url, OWNER, { readOnly: true });
+    expect(tools).not.toContain("restart_server");
+    const result = await client.callTool({ name: "get_server_status", arguments: { include: ["restart"] } });
+    expect(api.seen.map((seen) => `${seen.method} ${seen.url}`).sort()).toEqual([
+      "GET /api/v1/server",
+      "GET /api/v1/server/restart",
+    ]);
+    expect(text(result)).toContain('"restart":{"ok":true}');
+  });
+
   it("searches commands and runs several in order", async () => {
     const { client } = await connect(api.url, ADMIN);
     await client.callTool({ name: "search_commands", arguments: { queries: ["home", "tp"], plugin: "Essentials" } });
@@ -335,11 +346,11 @@ describe("requests reach WorldAPI in its shape", () => {
     const { client } = await connect(api.url, ADMIN);
     await client.callTool({ name: "restart_server", arguments: { message: "updates" } });
     await client.callTool({ name: "restart_server", arguments: { action: "cancel" } });
-    await client.callTool({ name: "restart_server", arguments: { action: "status" } });
+    const status = await client.callTool({ name: "restart_server", arguments: { action: "status" } });
+    expect(status.isError).toBe(true);
     expect(api.seen.map((seen) => `${seen.method} ${seen.url}`)).toEqual([
       "POST /api/v1/server/restart",
       "DELETE /api/v1/server/restart",
-      "GET /api/v1/server/restart",
     ]);
     expect(api.seen[0]?.body).toEqual({ countdownSeconds: 60, message: "updates" });
   });
@@ -562,13 +573,18 @@ describe("text from outside the game is data too", () => {
     });
     const { client } = await connect(api.url, ADMIN);
     for (const [name, args] of [
-      ["get_audit_log", {}],
+      ["list_tokens", { audit: {} }],
       ["get_access", {}],
       ["list_plugins", {}],
       ["get_server_status", {}],
       ["get_recipes", { item: "minecraft:stone" }],
       ["get_player", { player: "Steve", advancements: "all" }],
       ["manage_access", { pardon: ["Steve"] }],
+      // Their answers hold names players chose.
+      ["spawn_entity", { type: "minecraft:cow", location: { world: "world", x: 0, y: 64, z: 0 } }],
+      ["teleport_player", { player: "Steve", worldSpawn: "world" }],
+      ["set_player_property", { player: "Steve", displayName: "x" }],
+      ["update_entity", { uuid: "0b8f6a3e-0000-0000-0000-000000000000", glowing: true }],
     ] as const) {
       const result = await client.callTool({ name, arguments: args });
       expect(text(result), name).toMatch(/^Game data below[\s\S]*<game-data>\n/);
@@ -654,5 +670,304 @@ describe("configuration", () => {
     await connect(api.url, VIEWER);
     expect(write).not.toHaveBeenCalled();
     write.mockRestore();
+  });
+});
+
+describe("paths stay inside their endpoint", () => {
+  it("refuses “.” and “..” in a plugin's path before calling WorldAPI", async () => {
+    const { client } = await connect(api.url, OWNER);
+    for (const path of ["../../server/commands", "players/../../../server/stop", "./afk", "..", "/"]) {
+      const read = await client.callTool({ name: "read_extension", arguments: { namespace: "mobosses", path } });
+      expect(read.isError, path).toBe(true);
+      const call = await client.callTool({
+        name: "call_extension",
+        arguments: { namespace: "mobosses", path, method: "post", body: { command: "op Steve" } },
+      });
+      expect(call.isError, path).toBe(true);
+    }
+    const empty = await client.callTool({ name: "read_extension", arguments: { namespace: "", path: "bosses" } });
+    expect(empty.isError).toBe(true);
+    expect(api.seen).toHaveLength(0);
+    // Dots inside a name are fine: only whole “.” and “..” segments climb.
+    await client.callTool({ name: "read_extension", arguments: { namespace: "mobosses", path: "players/a..b/x.y" } });
+    expect(api.seen[0]?.url).toBe("/api/v1/extensions/mobosses/players/a..b/x.y");
+  });
+
+  it("refuses “.” and “..” as any value that fills a path segment", async () => {
+    const { client } = await connect(api.url, OWNER);
+    for (const [name, args] of [
+      ["unload_java_script", { id: ".." }],
+      ["list_java_scripts", { id: "." }],
+      ["get_player", { player: ".." }],
+      ["get_player", { players: ["Steve", ".."] }],
+      ["teleport_player", { players: [".."], worldSpawn: "world" }],
+      ["get_world", { world: ".." }],
+      ["set_world", { world: "..", pvp: true }],
+      ["set_effects", { player: "Steve", remove: [".."] }],
+      ["set_effects", { player: "Steve", add: [{ type: ".." }] }],
+      ["set_advancement", { player: "Steve", keys: [".."], done: true }],
+      ["get_leaderboard", { statistics: [".."] }],
+      ["send_message", { players: [".."], message: "hi" }],
+      ["list_entities", { uuid: ".." }],
+      ["update_entity", { uuid: "..", glowing: true }],
+      ["remove_entity", { uuid: "." }],
+      ["edit_items", { action: "clear", player: ".." }],
+      ["edit_items", { action: "clear", block: { world: "..", x: 0, y: 64, z: 0 } }],
+      ["manage_access", { kick: [{ player: ".." }] }],
+      ["manage_webhook", { action: "delete", name: ".." }],
+    ] as const) {
+      const result = await client.callTool({ name, arguments: args });
+      expect(result.isError, `${name} ${JSON.stringify(args)}`).toBe(true);
+    }
+    expect(api.seen).toHaveLength(0);
+  });
+});
+
+describe("a failed step never hides the ones that worked", () => {
+  const fail = (match: (seen: { method: string; url: string; body: unknown }) => boolean) =>
+    (api.reply = (seen) =>
+      match(seen)
+        ? { status: 409, body: { error: { code: "player_offline", message: "Alex isn't online" } } }
+        : { status: 200, body: { ok: true } });
+
+  it("run_command stops at the first failure and says what ran and what didn't", async () => {
+    fail((seen) => (seen.body as { command?: string })?.command === "give Alex bread");
+    const { client } = await connect(api.url, ADMIN);
+    const result = await client.callTool({
+      name: "run_command",
+      arguments: { commands: ["give Steve bread", "give Alex bread", "say done"] },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(api.seen).toHaveLength(2);
+    const fenced = /<game-data>\n([\s\S]*)\n<\/game-data>$/.exec(text(result));
+    expect(JSON.parse(fenced?.[1] ?? "{}")).toEqual({
+      ran: [{ command: "give Steve bread", ok: true }],
+      failed: { command: "give Alex bread", error: "player_offline", message: "Alex isn't online" },
+      notRun: [{ command: "say done" }],
+    });
+    api.seen.length = 0;
+    fail(() => true);
+    const first = await client.callTool({ name: "run_command", arguments: { commands: ["a", "b"] } });
+    expect(first.isError).toBe(true);
+    expect(api.seen).toHaveLength(1);
+  });
+
+  it("set_effects stops at the first failure and says what was done", async () => {
+    fail((seen) => seen.method === "POST");
+    const { client } = await connect(api.url, ADMIN);
+    const result = await client.callTool({
+      name: "set_effects",
+      arguments: { player: "Steve", clear: true, add: [{ type: "minecraft:speed" }, { type: "minecraft:haste" }] },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(JSON.parse(text(result))).toEqual({
+      ran: [{ clear: true }],
+      failed: { add: "minecraft:speed", error: "player_offline", message: "Alex isn't online" },
+      notRun: [{ add: "minecraft:haste" }],
+    });
+    expect(api.seen.map((seen) => seen.method)).toEqual(["DELETE", "POST"]);
+  });
+
+  it("send_message, set_advancement, and teleport_player go on past a failed player or key", async () => {
+    fail((seen) => seen.url.includes("/Alex/") || seen.url.includes("adventure%2Froot"));
+    const { client } = await connect(api.url, ADMIN);
+    const sent = await client.callTool({
+      name: "send_message",
+      arguments: { players: ["Alex", "Steve"], message: "hi" },
+    });
+    expect(JSON.parse(text(sent))).toEqual([
+      { player: "Alex", error: "player_offline", message: "Alex isn't online" },
+      { player: "Steve", ok: true },
+    ]);
+    const granted = await client.callTool({
+      name: "set_advancement",
+      arguments: { player: "Steve", keys: ["minecraft:adventure/root", "minecraft:story/root"], done: true },
+    });
+    expect(JSON.parse(text(granted))).toMatchObject([
+      { key: "minecraft:adventure/root", error: "player_offline" },
+      { key: "minecraft:story/root", ok: true },
+    ]);
+    const moved = await client.callTool({
+      name: "teleport_player",
+      arguments: { players: ["Alex", "Steve"], worldSpawn: "world" },
+    });
+    expect(text(moved)).toContain('{"player":"Alex","error":"player_offline"');
+    expect(text(moved)).toContain('{"player":"Steve","ok":true}');
+    // Every player failed: the call fails, as one would.
+    const none = await client.callTool({ name: "send_message", arguments: { players: ["Alex"], message: "hi" } });
+    expect(none.isError).toBe(true);
+    expect(text(none)).toContain("player_offline");
+  });
+
+  it("manage_access answers each part and each kick", async () => {
+    fail((seen) => seen.url.endsWith("/server/bans") || seen.url.includes("/Alex/"));
+    const { client } = await connect(api.url, ADMIN);
+    const result = await client.callTool({
+      name: "manage_access",
+      arguments: {
+        whitelist: { add: ["Steve"] },
+        pardon: ["Griefer"],
+        kick: [{ player: "Alex" }, { player: "Bob", reason: "afk" }],
+      },
+    });
+    expect(result.isError).toBeFalsy();
+    const fenced = /<game-data>\n([\s\S]*)\n<\/game-data>$/.exec(text(result));
+    expect(JSON.parse(fenced?.[1] ?? "{}")).toEqual({
+      whitelist: { ok: true },
+      bans: { error: "player_offline", message: "Alex isn't online" },
+      kicked: [
+        { player: "Alex", error: "player_offline", message: "Alex isn't online" },
+        { player: "Bob", ok: true },
+      ],
+    });
+    expect(api.seen).toHaveLength(4);
+  });
+});
+
+describe("merged tools", () => {
+  it("list_tokens reads the audit log", async () => {
+    const { client } = await connect(api.url, ADMIN);
+    await client.callTool({ name: "list_tokens", arguments: { audit: { actor: "panel:owner", limit: 5 } } });
+    await client.callTool({ name: "list_tokens", arguments: { audit: {} } });
+    await client.callTool({ name: "list_tokens", arguments: {} });
+    expect(api.seen.map((seen) => seen.url)).toEqual([
+      "/api/v1/audit?actor=panel%3Aowner&limit=5",
+      "/api/v1/audit?limit=50",
+      "/api/v1/tokens",
+    ]);
+  });
+
+  it("set_world force-loads chunks and reports each one", async () => {
+    api.reply = (seen) =>
+      seen.url.endsWith("/chunks/1/1")
+        ? { status: 404, body: { error: { code: "chunk_not_generated", message: "Never generated" } } }
+        : { status: 200, body: { ok: true } };
+    const { client } = await connect(api.url, ADMIN);
+    const result = await client.callTool({
+      name: "set_world",
+      arguments: {
+        world: "world",
+        chunks: [
+          { x: 0, z: -1, forceLoaded: true },
+          { x: 1, z: 1, forceLoaded: false },
+        ],
+      },
+    });
+    expect(api.seen.map((seen) => `${seen.method} ${seen.url}`)).toEqual([
+      "PATCH /api/v1/worlds/world/chunks/0/-1",
+      "PATCH /api/v1/worlds/world/chunks/1/1",
+    ]);
+    expect(api.seen[0]?.body).toEqual({ forceLoaded: true });
+    expect(JSON.parse(text(result))).toEqual({
+      chunks: [
+        { x: 0, z: -1, ok: true },
+        { x: 1, z: 1, error: "chunk_not_generated", message: "Never generated" },
+      ],
+    });
+  });
+
+  it("set_world answers the parts that worked when one fails", async () => {
+    api.reply = (seen) =>
+      seen.url.endsWith("/border")
+        ? { status: 400, body: { error: { code: "invalid_request", message: "Too big" } } }
+        : { status: 200, body: { ok: true } };
+    const { client } = await connect(api.url, ADMIN);
+    const result = await client.callTool({
+      name: "set_world",
+      arguments: { pvp: false, border: { size: 1e9 } },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(JSON.parse(text(result))).toMatchObject({
+      world: {},
+      border: { error: "invalid_request", message: "Too big" },
+    });
+  });
+
+  it("teleport_player still takes one player, the user's own by default", async () => {
+    const { client } = await connect(api.url, ADMIN, { player: "Steve" });
+    await client.callTool({ name: "teleport_player", arguments: { toPlayer: "Alex" } });
+    expect(api.seen[0]).toMatchObject({ url: "/api/v1/players/Steve/teleport", body: { player: "Alex" } });
+  });
+
+  it("get_server_log caps limit at 1000", async () => {
+    const { client } = await connect(api.url, ADMIN);
+    expect((await client.callTool({ name: "get_server_log", arguments: { limit: 5000 } })).isError).toBe(true);
+    await client.callTool({ name: "get_server_log", arguments: { limit: 1000, level: "warn" } });
+    expect(api.seen.map((seen) => seen.url)).toEqual(["/api/v1/server/logs?level=warn&limit=1000"]);
+  });
+
+  it("list_webhooks hands out the guide with the options", async () => {
+    const { client } = await connect(api.url, OWNER);
+    const plain = await client.callTool({ name: "list_webhooks", arguments: {} });
+    expect(text(plain)).not.toContain("BotFather");
+    const result = JSON.parse(text(await client.callTool({ name: "list_webhooks", arguments: { options: true } })));
+    expect(Object.keys(result)).toEqual(["webhooks", "options", "guide"]);
+    expect(result.guide).toContain("@BotFather");
+    const { tools } = await client.listTools();
+    const manage = tools.find((tool) => tool.name === "manage_webhook");
+    expect(manage?.description).toContain("guide");
+    expect(manage?.description).not.toContain("BotFather");
+  });
+});
+
+describe("calls read the connection when they happen", () => {
+  it("redacts the token the config holds now, not the one at registration", async () => {
+    const { client, config } = await connect(api.url, VIEWER);
+    const next = "another-token-9876543210fedcba";
+    // Config's token is read-only: in singleplayer it's a getter. A plain object stands in for a world that changed.
+    (config as { token?: string }).token = next;
+    api.reply = () => ({ status: 200, body: { motd: next } });
+    const ok = await client.callTool({ name: "get_server_status", arguments: {} });
+    expect(text(ok)).not.toContain(next);
+    expect(text(ok)).toContain("[token]");
+  });
+
+  it("checks edit_items' permissions against the scopes as they are now", async () => {
+    const { client, scopes } = await connect(api.url, ADMIN);
+    scopes.delete("world:write");
+    const block = { world: "world", x: 0, y: 64, z: 0 };
+    const refused = await client.callTool({ name: "edit_items", arguments: { action: "clear", block } });
+    expect(refused.isError).toBe(true);
+    expect(text(refused)).toContain("world:write");
+    expect(api.seen).toHaveLength(0);
+    scopes.add("world:write");
+    await client.callTool({ name: "edit_items", arguments: { action: "clear", block } });
+    expect(api.seen).toHaveLength(1);
+  });
+});
+
+describe("wait_for_event", () => {
+  it("waits 50 seconds by default, under the SDK clients' 60", async () => {
+    const { client } = await connect(api.url, VIEWER);
+    const { tools } = await client.listTools();
+    const wait = tools.find((tool) => tool.name === "wait_for_event");
+    expect(wait?.inputSchema.properties?.timeoutSeconds).toMatchObject({ default: 50 });
+  });
+
+  it("closes its socket when the call is cancelled", async () => {
+    api.sockets.length = 0;
+    api.onSocket = () => {};
+    const { client } = await connect(api.url, VIEWER);
+    const controller = new AbortController();
+    const call = client
+      .callTool({ name: "wait_for_event", arguments: { types: ["player.join"] } }, undefined, {
+        signal: controller.signal,
+      })
+      .catch((error: Error) => error);
+    await vi.waitFor(() => expect(api.sockets).toHaveLength(1));
+    controller.abort();
+    await call;
+    await vi.waitFor(() => expect(api.sockets[0]?.closed).toBe(true));
+    api.onSocket = (socket) => socket.close();
+  });
+
+  it("answers no_world without a socket when no singleplayer world is open", async () => {
+    api.sockets.length = 0;
+    const { client } = await connect(api.url, VIEWER, { local: { folder: "/nonexistent/worldapi-local" } });
+    const result = await client.callTool({ name: "wait_for_event", arguments: { types: ["player.join"] } });
+    expect(result.isError).toBe(true);
+    expect(text(result)).toContain("no_world: ");
+    expect(text(result)).toMatch(/<\/game-data>\nCall setup_help/);
+    expect(api.sockets).toHaveLength(0);
   });
 });

@@ -1,47 +1,41 @@
 import { z } from "zod";
 import { unwrap } from "../client.js";
 import { type Context, tool } from "../tool.js";
+import { segment } from "./common.js";
 
-const API = [
-  "Scripts are Java, compiled and run inside the Minecraft server. This is arbitrary code: it needs the token's `code` permission and scripts.enabled in WorldAPI's config.",
-  "Only Java and the Paper/Bukkit API are visible (plus Adventure, Guava, Brigadier, JOML); process, file, reflection, and class-loading calls are blocked at compile time.",
-  "Interface: `com.mairwunnx.worldapi.script.api.WorldApiScript` with `Object run(ScriptContext ctx)`, `void enable(ScriptContext ctx)`, `void disable()`.",
-  "ScriptContext: `server()`, `log(String)`, `on(EventClass.class, e -> …)`, `on(type, priority, ignoreCancelled, handler)`, `later(ticks, task)`, `every(delay, period, task)`, `async(task)`, `sync(callable)`, `memory()`.",
-].join(" ");
+const SCRIPTS =
+  "Java run inside the server: arbitrary code, allowed by scripts.enabled in WorldAPI's config. Only Java and the Paper API (plus Adventure, Guava, Brigadier, JOML) are visible. Process, file, reflection, and class-loading calls fail to compile.";
 
 export function scriptTools(ctx: Context): void {
-  const { api, token } = ctx;
+  const { api } = ctx;
 
   tool(ctx, {
     name: "execute_java",
     untrusted: true,
     title: "Run Java once",
-    description: `${API} Send either a full public class implementing WorldApiScript, or just the body of run: \`ctx\` and \`server\` are in scope, and org.bukkit.*, org.bukkit.entity.*, org.bukkit.block.*, org.bukkit.inventory.*, java.util.*, and java.util.stream.* are imported. End with \`return <value>;\`: maps, lists, and primitives come back as JSON. Example: \`return server.getOnlinePlayers().stream().map(Player::getName).toList();\`. thread \`main\` (default) may touch the world but blocks the tick while it runs; \`async\` runs beside the server and must use ctx.sync(...) for world access. The script unloads as soon as it returns, with anything it registered.`,
+    description: `${SCRIPTS} Send a public class implementing \`com.mairwunnx.worldapi.script.api.WorldApiScript\` (\`Object run(ScriptContext ctx)\`), or just run's body, with \`ctx\` and \`server\` in scope and org.bukkit.* (with entity, block, and inventory), java.util.*, and java.util.stream.* imported. Return maps, lists, or primitives to get JSON: \`return server.getOnlinePlayers().stream().map(Player::getName).toList();\`. Thread \`main\` may touch the world but blocks the tick. \`async\` reaches the world through \`ctx.sync(callable)\`. \`ctx.log(String)\` writes to its log. The script unloads when it returns.`,
     scope: "code",
     effect: "destructive",
     input: {
       source: z.string().min(1).describe("Java class or run body"),
-      thread: z.enum(["main", "async"]).default("main").describe("Server thread or beside it"),
+      thread: z.enum(["main", "async"]).default("main"),
     },
-    run: (args) => unwrap(api.POST("/scripts/run", { body: args }), token),
+    run: (args) => unwrap(api.POST("/scripts/run", { body: args }), ctx.token),
   });
 
   tool(ctx, {
     name: "load_java_script",
     title: "Load a Java script",
-    description: `${API} Loads a resident script: a full public class implementing WorldApiScript whose enable(ctx) runs once on the server thread. Register listeners with ctx.on(...) and tasks with ctx.later/every/async — only those are removed on unload, so never register through Bukkit directly. persistent keeps it across restarts; replace swaps a script with the same id.`,
+    description: `${SCRIPTS} Loads a resident public class implementing \`com.mairwunnx.worldapi.script.api.WorldApiScript\`: \`void enable(ScriptContext ctx)\` runs once on the server thread, \`void disable()\` on unload. Register through ctx, never Bukkit, so unload removes it: \`on(EventClass.class, e -> …)\`, \`on(type, priority, ignoreCancelled, handler)\`, \`later(ticks, task)\`, \`every(delay, period, task)\`, \`async(task)\`, \`sync(callable)\`. Also \`server()\`, \`log(String)\`, \`memory()\`.`,
     scope: "code",
     effect: "destructive",
     input: {
-      id: z
-        .string()
-        .regex(/^[a-z0-9_-]{1,40}$/)
-        .describe("Lowercase letters, digits, dashes, underscores"),
+      id: z.string().regex(/^[a-z0-9_-]{1,40}$/),
       source: z.string().min(1).describe("Java class"),
       persistent: z.boolean().default(false).describe("Survives restarts"),
-      replace: z.boolean().default(false).describe("Swap the same id"),
+      replace: z.boolean().default(false).describe("Swaps a script with this id"),
     },
-    run: (args) => unwrap(api.POST("/scripts", { body: args }), token),
+    run: (args) => unwrap(api.POST("/scripts", { body: args }), ctx.token),
   });
 
   tool(ctx, {
@@ -49,21 +43,21 @@ export function scriptTools(ctx: Context): void {
     untrusted: true,
     title: "Loaded scripts",
     description:
-      "Resident scripts with their listener and task counts and error count. With id, that script with its source, plus the latest lines it wrote with ctx.log and errors from its handlers and tasks; logs false leaves the log out.",
+      "Resident scripts with their listener, task, and error counts. With id, that script with its source and, unless logs is false, the latest lines it wrote with ctx.log and its errors.",
     scope: "code",
     effect: "read",
     input: {
-      id: z.string().optional().describe("One script in full"),
-      logs: z.boolean().default(true).describe("With id: add its log"),
-      limit: z.number().int().min(1).max(10000).optional().describe("Log lines to return"),
+      id: segment.optional(),
+      logs: z.boolean().default(true),
+      limit: z.number().int().min(1).max(10000).optional().describe("Log lines"),
     },
     run: async (args) => {
-      if (!args.id) return unwrap(api.GET("/scripts"), token);
+      if (!args.id) return unwrap(api.GET("/scripts"), ctx.token);
       const path = { id: args.id };
       const [script, logs] = await Promise.all([
-        unwrap(api.GET("/scripts/{id}", { params: { path } }), token),
+        unwrap(api.GET("/scripts/{id}", { params: { path } }), ctx.token),
         args.logs
-          ? unwrap(api.GET("/scripts/{id}/logs", { params: { path, query: { limit: args.limit } } }), token)
+          ? unwrap(api.GET("/scripts/{id}/logs", { params: { path, query: { limit: args.limit } } }), ctx.token)
           : undefined,
       ]);
       return logs ? { script, logs } : { script };
@@ -74,17 +68,17 @@ export function scriptTools(ctx: Context): void {
     name: "unload_java_script",
     title: "Unload a script",
     description:
-      "Run the script's disable(), remove its listeners and tasks, and close its class loader. A persistent script's saved copy is deleted too, unless keepSaved is true; then it loads again on the next server start.",
+      "Run the script's disable(), remove its listeners and tasks, and close its class loader. A persistent script's saved copy goes too, unless keepSaved: then it loads again on the next start.",
     scope: "code",
     effect: "destructive",
     input: {
-      id: z.string().describe("Script id"),
-      keepSaved: z.boolean().optional().describe("Keep the saved copy"),
+      id: segment,
+      keepSaved: z.boolean().optional(),
     },
     run: (args) =>
       unwrap(
         api.DELETE("/scripts/{id}", { params: { path: { id: args.id }, query: { keepSaved: args.keepSaved } } }),
-        token,
+        ctx.token,
       ),
   });
 }
