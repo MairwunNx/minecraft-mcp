@@ -3,17 +3,17 @@
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars --force-device-scale-factor=2 --window-size=1280,640 --virtual-time-budget=3000 --screenshot=hero.png "file://$PWD/hero.html"
   magick hero.png -define webp:lossless=true ../hero.webp (README), and render with --force-device-scale-factor=1 for GitHub's social preview (under 1 MB).
 -->
-<!doctype html><html><head><meta charset="utf-8"><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
 html,body{margin:0;width:1280px;height:640px;overflow:hidden;background:#0b0d12;font-family:-apple-system,"SF Pro Display","Inter",sans-serif}
 #bg{position:absolute;left:0;top:0;width:1280px;height:640px;object-fit:cover;filter:blur(1.2px) saturate(1.05)}
 .shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,8,20,.84) 0%,rgba(10,8,20,.62) 38%,rgba(10,8,20,.2) 62%,rgba(10,8,20,.1) 100%)}
 .text{position:absolute;left:64px;top:0;bottom:0;width:500px;display:flex;flex-direction:column;justify-content:center;color:#fff}
-.text h1,.text p{text-shadow:0 2px 18px rgba(0,0,0,.45)}
 .tag{display:inline-flex;align-items:center;gap:14px;font-size:18px;font-weight:700;color:#b4a6ff;letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px}
 .tag img{width:34px;height:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 h1{margin:0;font-size:60px;line-height:1.02;font-weight:800;letter-spacing:-.02em}
 h1 span{color:#9d8cff}
 p{margin:22px 0 0;font-size:22px;line-height:1.4;color:#d3d6df;max-width:470px}
+.text h1,.text p{text-shadow:0 2px 18px rgba(0,0,0,.45)}
 .chips{margin-top:26px;display:flex;flex-wrap:wrap;gap:10px}
 .chips b{font-weight:600;font-size:16px;color:#e6e8ee;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);padding:7px 12px;border-radius:8px;backdrop-filter:blur(6px)}
 .powered{margin-top:24px;display:flex;align-items:center;gap:8px;font-size:15px;color:rgba(255,255,255,.72)}
@@ -38,15 +38,15 @@ p{margin:22px 0 0;font-size:22px;line-height:1.4;color:#d3d6df;max-width:470px}
 .tbar i{width:11px;height:11px;border-radius:50%}.tbar i:nth-child(1){background:#ff5f57}.tbar i:nth-child(2){background:#febc2e}.tbar i:nth-child(3){background:#28c840}
 .tbar span{margin-left:auto;margin-right:auto;transform:translateX(-24px);font:500 12px/1 -apple-system,sans-serif;color:#8e8e93}
 </style></head><body>
-<img id="bg" src="../hero-background.png">
+<img id="bg" src="../hero-background.png" alt="">
 <div class="shade"></div>
-<div class="term"><img src="claude-code.png"></div>
+<div class="term"><img src="claude-code.png" alt=""></div>
 <div class="text">
-<div class="tag"><img src="../icon.png">Minecraft MCP</div>
+<div class="tag"><img src="../icon.png" alt="">Minecraft MCP</div>
 <h1>Let an AI agent <span>run your server</span></h1>
 <p>50 tools for Claude, Cursor, and any MCP client, through&nbsp;WorldAPI.</p>
 <div class="chips"><b>Paper</b><b>Fabric</b><b>NeoForge</b><b>Singleplayer</b></div>
-<div class="powered"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>Powered by <strong>MairwunNx/minecraft-worldapi</strong></span></div>
+<div class="powered"><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>Powered by <strong>MairwunNx/minecraft-worldapi</strong></span></div>
 </div>
 <div class="made">Made by Pavel Erokhin</div>
 </body></html>
