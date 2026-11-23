@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.0.1
+
+- 🔒 **Safer HTTP transport.** Hono, which the MCP SDK serves HTTP through, moves to 4.13.21 and its patched advisories.
+
 ## 5.0.0
 
 The agent calls plugins’ own actions and reads what their data takes, with 50 tools instead of 51 and schemas about a quarter smaller, so every session starts lighter. A round of fixes closes the ways a token or a game text could go where it shouldn’t. Three tools folded into others, so a prompt that names one needs its new form (below). It needs WorldAPI 4.6.0. With an older one, the server warns at start and `call_extension` fails.
