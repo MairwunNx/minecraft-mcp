@@ -6,8 +6,8 @@ export const VERSION: string = (
   JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string }
 ).version;
 
-/** The oldest WorldAPI whose endpoints match the generated client: call_extension needs 4.6.0. */
-export const MIN_WORLDAPI = "4.6.0";
+/** The oldest WorldAPI whose endpoints match the generated client: get_events' words and private messages need 4.7.0. */
+export const MIN_WORLDAPI = "4.7.0";
 
 /** Compares two x.y.z versions; anything that isn't one (a dev build) counts as new enough. */
 export function olderThan(version: string, minimum: string): boolean {

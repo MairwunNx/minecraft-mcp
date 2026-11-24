@@ -87,7 +87,7 @@ export function registerPrompts(server: McpServer): void {
       ask([
         `Help find out who damaged ${where ? `the build at ${where}` : "a build"}${player ? `, and whether ${player} had a part in it` : ""}. Be fair: collect evidence, don't accuse.`,
         "WorldAPI doesn't log who broke or placed which block in the past; it only streams block.break and block.place live. Say so if the answer needs that history, and suggest a block logger such as CoreProtect.",
-        "1. get_events for joins, leaves, and deaths around the time: they show who was online when. get_events with player.chat, if the token reads chat, for what people said.",
+        "1. get_events for joins, leaves, and deaths around the time: they show who was online when. get_events with player.chat, if the token reads chat, for what people said, and `around` a moment for the talk then.",
         "2. If get_server_log is there, search it for the players' names: it holds the commands they ran and what protection plugins logged, such as claims and denied actions. For days before the server's last start, read_file the logs under logs/ with grep.",
         where
           ? "3. At the place: find_containers around it and get_block on chests and signs (contents and text), get_entity_summary and list_entities around it for dropped items, TNT, or mobs, and get_player for who logged out nearby."

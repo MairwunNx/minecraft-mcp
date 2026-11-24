@@ -9,9 +9,9 @@ describe("olderThan", () => {
     expect(olderThan("2.0.0-beta.1", "2.0.1")).toBe(true);
   });
 
-  it("expects the WorldAPI call_extension needs", () => {
-    expect(MIN_WORLDAPI).toBe("4.6.0");
-    expect(olderThan("4.5.9", MIN_WORLDAPI)).toBe(true);
+  it("expects the WorldAPI get_events' words need", () => {
+    expect(MIN_WORLDAPI).toBe("4.7.0");
+    expect(olderThan("4.6.2", MIN_WORLDAPI)).toBe(true);
   });
 
   it("lets dev builds through", () => {

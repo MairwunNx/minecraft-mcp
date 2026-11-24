@@ -467,6 +467,32 @@ describe("requests reach WorldAPI in its shape", () => {
     expect(text(result)).toMatch(/<game-data>/);
   });
 
+  it("reads the talk around a moment, finds words, and a player's conversations", async () => {
+    const { client } = await connect(api.url, VIEWER);
+    api.reply = () => ({ status: 200, body: { items: [] } });
+    await client.callTool({
+      name: "get_events",
+      arguments: { types: ["player.chat", "player.whisper"], around: "2026-11-24T10:00:00Z" },
+    });
+    expect(api.seen[0]?.url).toBe(
+      "/api/v1/events?type=player.chat%2Cplayer.whisper&from=2026-11-24T09%3A55%3A00.000Z&to=2026-11-24T10%3A05%3A00.000Z&order=oldest&limit=50",
+    );
+    await client.callTool({
+      name: "get_events",
+      arguments: { types: ["player.chat"], player: "Steve", words: ["diamond", "алмаз"], match: "any" },
+    });
+    expect(api.seen[1]?.url).toBe(
+      "/api/v1/events?type=player.chat&words=diamond%2C%D0%B0%D0%BB%D0%BC%D0%B0%D0%B7&match=any&player=Steve&limit=50",
+    );
+    await client.callTool({
+      name: "get_events",
+      arguments: { types: ["player.chat", "player.whisper"], player: "Alex" },
+    });
+    expect(api.seen[2]?.url).toBe("/api/v1/events?type=player.chat%2Cplayer.whisper&involving=Alex&limit=50");
+    const wrong = await client.callTool({ name: "get_events", arguments: { around: "yesterday" } });
+    expect(wrong.isError).toBe(true);
+  });
+
   it("schedules and calls off a stop", async () => {
     const { client } = await connect(api.url, ADMIN);
     await client.callTool({ name: "restart_server", arguments: { action: "stop", countdownSeconds: 30 } });
