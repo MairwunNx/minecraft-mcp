@@ -1,5 +1,14 @@
 # Changelog
 
+## 5.1.0
+
+The agent reads chat the way a moderator does: private messages, local chat, several words at once, and the talk around a line. It needs WorldAPI 4.7.0. With an older one, the server warns at start, `words` finds nothing it should, and private messages fail.
+
+- 💬 **Private and local chat.** `get_events` reads `player.whisper`, the private messages players send with `/msg` or `/r`, with `logs:read`, once the server's owner turns them on in WorldAPI (`events.whispers`). Chat lines a chat plugin kept to players nearby say `channel: local` and who heard them.
+- 🔎 **Several words at once.** `words` finds events with any of them, or with every one through `match: "all"`, ignoring case and accents, so “алмаз” and “diamond” go in one call.
+- 🕰️ **The talk around a line.** `around` reads the 5 minutes before and after a moment, oldest first.
+- 👥 **A player's conversations.** With `player.whisper` in `types`, `player` also finds the private messages sent to that player.
+
 ## 5.0.1
 
 - 🔒 **Safer HTTP transport.** Hono, which the MCP SDK serves HTTP through, moves to 4.13.21 and its patched advisories.
