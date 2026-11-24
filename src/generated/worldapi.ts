@@ -186,8 +186,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Event history: joins, deaths, advancements, skipped nights, boss kills, and more
-         * @description Newest first by default. Recorded types: `player.join`, `player.leave`, `player.kick`, `player.death`, `player.advancement`, `player.chat`, `world.night_skipped`, `entity.boss_killed`, `raid.start`, `raid.finish`, `server.status`. With `text`, a page reads at most 20,000 events: it may hold fewer items than `limit` and still have a `nextCursor` to search on.
+         * Event history: joins, deaths, advancements, chat, skipped nights, boss kills, and more
+         * @description Newest first by default. Recorded types: `player.join`, `player.leave`, `player.kick`, `player.death`, `player.advancement`, `player.chat`, `player.whisper`, `world.night_skipped`, `entity.boss_killed`, `raid.start`, `raid.finish`, `server.status`. With `text` or `words`, a page reads at most 20,000 events: it may hold fewer items than `limit` and still have a `nextCursor` to search on.
          *
          *     Permission: `events:read`.
          */
@@ -2183,7 +2183,7 @@ export interface paths {
          *
          *     Then subscribe: `{"op":"subscribe","topics":["player.join","world.time"],"filter":{"player":"Steve"}}`. The server answers `subscribed`, a `snapshot` of the current state where a topic has one, then `event` messages as things happen. `heartbeat` arrives every few seconds; `dropped` says how many events a slow client missed.
          *
-         *     Topics: `player.join`, `player.leave`, `player.kick`, `player.death`, `player.respawn`, `player.advancement`, `player.chat`, `player.command`, `player.move`, `player.world_change`, `player.portal`, `player.health`, `player.damage`, `player.kill`, `player.inventory`, `player.gamemode`, `player.level_up`, `player.sleep`, `player.fish`, `player.craft`, `player.enchant`, `player.trade`, `world.time`, `world.weather`, `world.night_skipped`, `world.lightning`, `world.load`, `world.unload`, `entity.boss_killed`, `entity.death`, `entity.explode`, `raid.start`, `raid.finish`, `block.break`, `block.place`, `server.performance`, `server.status`, `server.plugin`, `server.console`, `script.log`.
+         *     Topics: `player.join`, `player.leave`, `player.kick`, `player.death`, `player.respawn`, `player.advancement`, `player.chat`, `player.whisper`, `player.command`, `player.move`, `player.world_change`, `player.portal`, `player.health`, `player.damage`, `player.kill`, `player.inventory`, `player.gamemode`, `player.level_up`, `player.sleep`, `player.fish`, `player.craft`, `player.enchant`, `player.trade`, `world.time`, `world.weather`, `world.night_skipped`, `world.lightning`, `world.load`, `world.unload`, `entity.boss_killed`, `entity.death`, `entity.explode`, `raid.start`, `raid.finish`, `block.break`, `block.place`, `server.performance`, `server.status`, `server.plugin`, `server.console`, `script.log`.
          *
          *     Permission: `events:read`; each topic may need its own, such as `chat:read` or `logs:read`.
          */
@@ -4634,16 +4634,22 @@ export interface operations {
                 cursor?: string;
                 /** @description Only these types, separated by commas */
                 type?: string;
-                /** @description Only events of this player, by UUID or name */
-                player?: string;
                 /** @description ISO-8601 time or epoch milliseconds; events at or after it */
                 from?: string;
                 /** @description ISO-8601 time or epoch milliseconds; events before it */
                 to?: string;
-                /** @description Newest first or oldest first */
-                order?: "newest" | "oldest";
                 /** @description Only events whose data holds this, ignoring case: words in chat, a death message, an advancement. Needs players:private, since it matches coordinates too */
                 text?: string;
+                /** @description Only events holding any of these words, separated by commas, or every one with `match=all`. Ignores case, accents, ё, and colors. Needs players:private, as `text` does */
+                words?: string;
+                /** @description Whether an event needs any of `text` and `words` or all of them */
+                match?: "any" | "all";
+                /** @description Only events of this player, by UUID or name */
+                player?: string;
+                /** @description Only events of this player, by UUID or name, and private messages sent to them */
+                involving?: string;
+                /** @description Newest first or oldest first */
+                order?: "newest" | "oldest";
             };
             header?: never;
             path?: never;
